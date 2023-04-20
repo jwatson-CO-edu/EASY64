@@ -1,2 +1,3 @@
 # EASY64
-Easy and Awesome Scripting for You!  64bit
+### **E**asy and **A**wesome **S**cripting for **Y**ou!  **64**bit
+Yeah, I guess I'm truly insane?
