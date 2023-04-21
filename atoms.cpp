@@ -40,6 +40,7 @@ enum E_Expr{
     ASSIGN,
     LITERAL,
     RHV,
+    DEFINE,
 };
 
 struct AST_Expr{
