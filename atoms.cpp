@@ -93,6 +93,9 @@ void init_reserved(){
     RESERVED_WORDS["float"] = "floatDecl"; // Float declaration
 }
 
+bool p_reserved_token( string token ){  return (RESERVED_TOKENS.count( token ) > 0);  }
+bool p_reserved_word(  string word  ){  return (RESERVED_TOKENS.count( word  ) > 0);  }
+
 
 ////////// PARSER //////////////////////////////////////////////////////////////////////////////////
 // The parder recognizes structures that can be converted to ASTs
