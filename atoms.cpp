@@ -93,8 +93,30 @@ void init_reserved(){
     RESERVED_WORDS["float"] = "floatDecl"; // Float declaration
 }
 
-bool p_reserved_token( string token ){  return (RESERVED_TOKENS.count( token ) > 0);  }
-bool p_reserved_word(  string word  ){  return (RESERVED_TOKENS.count( word  ) > 0);  }
+bool p_reserved_token( string token ){  return (RESERVED_TOKENS.count( token ) > 0);  } // Is this a reserved token?
+bool p_reserved_word(  string word  ){  return (RESERVED_TOKENS.count( word  ) > 0);  } // Is this a reserved word?
+
+string find_reserved_token( string token ){
+    // Return the name of the reserved token, Otherwise return empty string if DNE
+    if( p_reserved_token( token ) )
+        return RESERVED_TOKENS[ token ];
+    else
+        return "";
+}
+
+string find_reserved_word( string word ){
+    // Return the name of the reserved word, Otherwise return empty string if DNE
+    if( p_reserved_word( word ) )
+        return RESERVED_WORDS[ word ];
+    else
+        return "";
+}
+
+vector<string> tokenize_ws( string expStr ){
+    // Return a vector of tokenized strings that a separated by whitespace within `expStr`
+    vector<string> tokens;
+    // FIXME, START HERE: LINE 50 of "lexer.d"
+}
 
 
 ////////// PARSER //////////////////////////////////////////////////////////////////////////////////

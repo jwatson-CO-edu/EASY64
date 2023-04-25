@@ -33,4 +33,7 @@ Spelled EASY64, Easy64, EASY, Easy
 * Flow programming
 * Piles and piles of absolute, frothing nonsense
 
-
+# Implementation
+## Lexer
+* Reserved tokens ALWAYS stand on their own and are NEVER part of an identifier
+* Reserved words CAN stand on their own ONLY when they are NOT part of an identifier
