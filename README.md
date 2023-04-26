@@ -7,7 +7,7 @@ Spelled EASY64, Easy64, EASY, Easy
 * I am the victim of urges I can barely contain; Please send help.
 ## Statement of Purpose
 * A typed, interpreted scripting language written in C++ with the minimum working structure to be Turing Complete and Interesting to me.
-* The sequel to [SPARROW](https://github.com/jwatson-CO-edu/SPARROW), which was dynamic, interpreted [Scheme](https://mitpress.mit.edu/9780262560993/the-little-schemer/) variant written in [D](https://dlang.org/).
+* The sequel to [SPARROW](https://github.com/jwatson-CO-edu/SPARROW), which was a dynamic, interpreted [Scheme](https://mitpress.mit.edu/9780262560993/the-little-schemer/) variant written in [D](https://dlang.org/).
 * This is for my own entertainment and edification.  
 * No claims of utility or functionality are made or implied.
 
