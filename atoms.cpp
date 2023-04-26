@@ -10,11 +10,28 @@ using std::vector;
 #include <sstream>
 using std::istringstream;
 #include <iostream>
-using std::noskipws, std::skipws;
+using std::noskipws, std::skipws, std::cout, std::endl, std::flush, std::ostream;
 
 /// Aliases ///
 typedef unsigned long  ulong;
 typedef vector<string> vstr;
+
+
+
+////////// HELPER FUNCTIONS ////////////////////////////////////////////////////////////////////////
+
+template<typename T>
+ostream& operator<<( ostream& os , const vector<T>& vec ) { 
+    // ostream '<<' operator for vectors
+    // NOTE: This function assumes that the ostream '<<' operator for T has already been defined
+    os << "[ ";
+    for (size_t i = 0; i < vec.size(); i++) {
+        os << (T) vec[i];
+        if (i + 1 < vec.size()) { os << ", "; }
+    }
+    os << " ]";
+    return os; // You must return a reference to the stream!
+}
 
 
 
@@ -39,7 +56,7 @@ struct Var64{
     // A container for a variable
     T /*-*/ data;
     E_Type  type;
-    E_Error err
+    E_Error err;
     // ulong  refCount; // 2023-04-20: Not used?
 };
 
@@ -94,6 +111,7 @@ map<string,string> RESERVED_TOKENS; // Reserved tokens ALWAYS stand on their own
 map<string,string> RESERVED_WORDS; //- Reserved words CAN stand on their own ONLY when they are NOT part of an identifier
 
 void init_reserved(){
+    // Set aliases for reserved tokens and words
     // Reserved tokens ALWAYS stand on their own and are NEVER part of an identifier
     RESERVED_TOKENS[";"] = "semicolon"; // Semicolon
     RESERVED_TOKENS["("] = "open_parn"; // Open  paren
@@ -140,14 +158,18 @@ vstr tokenize_ws( string expStr ){
 
     // 0. Apply the postfix hack
     expStr.push_back(' ');
+    // cout << "There are " << expStr.size() << " characters to examine! ";
+    // cout << string(";").size() << endl;
     // 1. For every character in the string
     for( char ch_i : expStr ){
         // 2. Fetch character
         c    = ch_i;
         cStr = string(1,c);
+        cout << cStr << endl;
         // 3. Either add char to present token or create a new one
         // A. Case Reserved
         if( p_reserved_token( cStr ) ){  
+            // cout << "Reserved Token: " << find_reserved_token( cStr ) << endl;
             if( token.size() > 0 ){  stow_token();  }
             stow_char();  
         // B. Case separator
@@ -181,14 +203,61 @@ struct AST_Node{
     E_Expr /*------*/ exp; // Expression type
     E_Type /*------*/ typ; // Datatype it resolves to
     E_Error /*-----*/ err; // Error at this level of parsing
+    string /*------*/ msg; // Message to user
     vector<AST_Node*> opr; // Operands
     void* /*-------*/ dat; // Data payload
+    ulong /*-------*/ lin; // Line number of source
 };
+
+map<string,AST_Node*(*)(const vstr&)> RESERVED_PARSERS;
+
+void init_parsers(){
+
+    /// Integer Declaration ///
+    RESERVED_PARSERS["int"] = [](const vstr& args)->AST_Node*{ 
+        
+        // 1. Set identifier name
+        AST_Node* name = new AST_Node{};
+        name->exp = LITERAL;
+        name->typ = STRNG;
+        name->err = OKAY;
+        name->dat = new Var64<string>{ args[0], STRNG, OKAY };
+
+        // 2. Set parent
+        AST_Node* node = new AST_Node{};
+        node->exp = DEFINE;
+        node->typ = INTGR;
+        node->err = OKAY;
+        node->opr.push_back( name );
+
+        // N. Return
+        return node;
+    };
+}
+
+class EASY_Parser{ public:
+    // Parsing Finite State Machine for EASY64: As if parsing were ever easy!
+
+    /// Members ///
+    E_Expr currMode; //- Current mode of the parser
+    E_Expr nextMode; //- Next mode returned by the parslet
+    vstr   tokenExpr; // Expression we are attempting to parse
+    ulong  tokenDex; //- Index of `tokenExpr` to parse
+
+    // FIXME, START HERE: MAKE DECISIONS ABOUT PARSING, SEE "README.md"
+
+    // AST_Node* parse_tokens( const vstr& tokens ){
+    //     // Turn the sequence of tokens into an Abstract Syntax Tree
+    // }
+};
+
 
 
 
 ////////// TESTS ///////////////////////////////////////////////////////////////////////////////////
 
 int main(){
+    init_reserved();
+    cout << tokenize_ws(  "int i;"  )  << endl;
     return 0;
 }
