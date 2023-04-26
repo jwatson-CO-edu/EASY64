@@ -1,5 +1,6 @@
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 
+/// Imports ///
 #include <string>
 using std::string;
 #include <map>
@@ -11,23 +12,31 @@ using std::istringstream;
 #include <iostream>
 using std::noskipws, std::skipws;
 
-typedef unsigned long ulong;
+/// Aliases ///
+typedef unsigned long  ulong;
+typedef vector<string> vstr;
+
+
 
 ////////// ATOMS ///////////////////////////////////////////////////////////////////////////////////
 
 enum E_Type{
-    FLOAT,
-    INTGR,
-    U_INT,
-    ERROR,
+    // Primitive Data Types
+    FLOAT, // `double`
+    INTGR, // `long`
+    U_INT, // `unsigned long`
+    STRNG, // `string`
+    ERROR, // `string`
 };
 
 enum E_Error{
+    // Basic Error Types
     OKAY,
 };
 
 template <typename T>
 struct Var64{
+    // A container for a variable
     T /*-*/ data;
     E_Type  type;
     E_Error err
@@ -35,15 +44,19 @@ struct Var64{
 };
 
 
+
 ////////// CONTEXT /////////////////////////////////////////////////////////////////////////////////
 
 struct Context{
+    // Container for data in this context
     Context* /*-------------*/ parent;
     map<string, Var64<double>> flotStore;
     map<string, Var64<long>>   intrStore;
     map<string, Var64<ulong>>  uintStore;
     map<string, Var64<string>> strnStore;
 };
+
+
 
 ////////// LEXER ///////////////////////////////////////////////////////////////////////////////////
 // The lexer recognizes tokens
@@ -112,19 +125,49 @@ string find_reserved_word( string word ){
         return "";
 }
 
-vector<string> tokenize_ws( string expStr ){
+vstr tokenize_ws( string expStr ){
     // Return a vector of tokenized strings that a separated by whitespace within `expStr`
-    vector<string> tokens;
-    // FIXME, START HERE: LINE 50 of "lexer.d"
+    vstr   tokens;
+    char   c;
+    string cStr;
+    string token  = "";
+
+    // Helpers //
+    auto stow_token = [&]{  tokens.push_back( token );  token = "";  };
+    auto stow_char  = [&]{  tokens.push_back( string(1,c) );  };
+    auto cache_char = [&]{  token.push_back( c );  };
+
+    // 0. Apply the postfix hack
+    expStr.push_back(' ');
+    // 1. For every character in the string
+    for( char ch_i : expStr ){
+        // 2. Fetch character
+        c    = ch_i;
+        cStr = string(1,c);
+        // 3. Either add char to present token or create a new one
+        // A. Case Reserved
+        if( p_reserved_token( cStr ) ){  
+            if( token.size() > 0 ){  stow_token();  }
+            stow_char();  
+        // B. Case separator
+        }else if( isspace(c) ){
+            if(token.size() > 0){  stow_token();  }
+        // C. Case any other char
+        }else{  cache_char();  } 
+    }
+    // N. Return the vector of tokens
+    return tokens;
 }
 
 
+
 ////////// PARSER //////////////////////////////////////////////////////////////////////////////////
-// The parder recognizes structures that can be converted to ASTs
+// The parser recognizes structures that can be converted to ASTs
 
 ///// ABSTRACT SYNTAX TREE ///////////////////////
 
 enum E_Expr{
+    // Types of AST Node
     ASSIGN,
     LITERAL,
     RHV,
@@ -132,11 +175,19 @@ enum E_Expr{
     MATH,
 };
 
-struct AST_Expr{
+struct AST_Node{
+    // Node of an Abstract Syntax Tree
     E_Expr /*------*/ exp; // Expression type
     E_Type /*------*/ typ; // Datatype it resolves to
     E_Error /*-----*/ err; // Error at this level of parsing
-    vector<AST_Expr*> opr; // Operands
+    vector<AST_Node*> opr; // Operands
     void* /*-------*/ dat; // Data payload
 };
 
+
+
+////////// TESTS ///////////////////////////////////////////////////////////////////////////////////
+
+int main(){
+    return 0;
+}
