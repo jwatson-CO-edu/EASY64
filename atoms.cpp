@@ -95,15 +95,16 @@ map<string,string> RESERVED_WORDS; //- Reserved words CAN stand on their own ONL
 
 void init_reserved(){
     // Reserved tokens ALWAYS stand on their own and are NEVER part of an identifier
+    RESERVED_TOKENS[";"] = "semicolon"; // Semicolon
     RESERVED_TOKENS["("] = "open_parn"; // Open  paren
     RESERVED_TOKENS[")"] = "clos_parn"; // Close paren
-    RESERVED_TOKENS[";"] = "semicolon"; // Semicolon
     RESERVED_TOKENS["{"] = "open_crly"; // Open  curly brace
     RESERVED_TOKENS["}"] = "clos_crly"; // Close curly brace
     // Reserved words CAN stand on their own ONLY when they are NOT part of an identifier
-    RESERVED_WORDS["int"  ] = "integerDc"; // Integer declaration
-    RESERVED_WORDS["uint" ] = "unsignedD"; // Unsigned integer declaration
-    RESERVED_WORDS["float"] = "floatDecl"; // Float declaration
+    RESERVED_WORDS["int"   ] = "integerDc"; // Integer declaration
+    RESERVED_WORDS["uint"  ] = "unsignedD"; // Unsigned integer declaration
+    RESERVED_WORDS["float" ] = "floatDecl"; // Float declaration
+    RESERVED_WORDS["string"] = "stringDcl"; // String declaration
 }
 
 bool p_reserved_token( string token ){  return (RESERVED_TOKENS.count( token ) > 0);  } // Is this a reserved token?
