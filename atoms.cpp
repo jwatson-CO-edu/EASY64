@@ -1,3 +1,5 @@
+// g++ atoms.cpp -std=c++17
+
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 
 /// Imports ///
@@ -7,6 +9,8 @@ using std::string;
 using std::map;
 #include <vector>
 using std::vector;
+#include <stack>
+using std::stack;
 #include <sstream>
 using std::istringstream;
 #include <iostream>
@@ -190,11 +194,14 @@ vstr tokenize_ws( string expStr ){
 ///// ABSTRACT SYNTAX TREE ///////////////////////
 
 enum E_Expr{
+    // Parser Modes
+    INPUT, // - Begin parser
+    TERM, // -- Halt parser
     // Types of AST Node
-    ASSIGN,
-    LITERAL,
+    DEFINE, //- Identifier definition
+    ASSIGN, //- Identifier assignment
+    LITERAL, // Primitive data
     RHV,
-    DEFINE,
     MATH,
 };
 
@@ -235,20 +242,63 @@ void init_parsers(){
     };
 }
 
+struct EASY_Job{
+    ulong  tokenDex; //- Index of `tokenExpr` to parse
+    E_Expr currMode; //- Current mode of the parser
+};
+
 class EASY_Parser{ public:
     // Parsing Finite State Machine for EASY64: As if parsing were ever easy!
 
     /// Members ///
-    E_Expr currMode; //- Current mode of the parser
-    E_Expr nextMode; //- Next mode returned by the parslet
-    vstr   tokenExpr; // Expression we are attempting to parse
-    ulong  tokenDex; //- Index of `tokenExpr` to parse
+    vstr /*-------*/ tokenExpr; // Expression we are attempting to parse
+    stack<EASY_Job*> jobs; // ---- Stack of jobs for parslets
+    
+    void flush_jobs(){
+        // Erase all jobs
+        while( !jobs.empty() ){
+            if( jobs.top() )  delete jobs.top();
+            jobs.pop();
+        }
+    }
 
-    // FIXME, START HERE: MAKE DECISIONS ABOUT PARSING, SEE "README.md"
+    void init(){
+        // Flush jobs and push the initial job
+        EASY_Job* initJob = new EASY_Job{ 0, INPUT };
+        flush_jobs();
+        jobs.push( initJob );
+    }
 
-    // AST_Node* parse_tokens( const vstr& tokens ){
-    //     // Turn the sequence of tokens into an Abstract Syntax Tree
-    // }
+    EASY_Job* pop_job(){
+        // Pop and return the top job on the stack, If no jobs, then return `nullptr`
+        EASY_Job* rtnJob = nullptr;
+        if( !jobs.empty() ){
+            rtnJob = jobs.top();
+            jobs.pop();
+        }
+        return rtnJob;
+    }
+
+    bool p_jobs_exist(){  return (!jobs.empty());  } // Are there jobs to process?
+
+    AST_Node* parse_tokens( const vstr& tokens ){
+        // Turn the sequence of tokens into an Abstract Syntax Tree
+        AST_Node* ASTexpr = nullptr; // Fully parsed expression
+        EASY_Job* currJob = nullptr; // Current parselet job
+        
+        // 0. Copy the token expression
+        tokenExpr = tokens; 
+        
+        // 1. While jobs exist, process jobs
+        while( p_jobs_exist() ){
+            // Fetch job
+            currJob = pop_job();
+            // Handle job
+            // Delete job
+        }
+
+        return ASTexpr;
+    }
 };
 
 
