@@ -53,6 +53,10 @@ enum E_Type{
 enum E_Error{
     // Basic Error Types
     OKAY,
+    UNK_TYPE,
+    END_INPUT,
+    SYNTAX,
+    PARSER,
 };
 
 template <typename T>
@@ -205,54 +209,116 @@ enum E_Expr{
     MATH,
 };
 
-struct AST_Node{
+struct AST_Job{
+    // Container struct pulling double duty as a parser job and an AST node
+
+    // Job Header
+    E_Expr mode; //- Current mode of the parser
+    ulong  tokenDex; //- Index of `tokenExpr` to parse
+    
     // Node of an Abstract Syntax Tree
-    E_Expr /*------*/ exp; // Expression type
-    E_Type /*------*/ typ; // Datatype it resolves to
-    E_Error /*-----*/ err; // Error at this level of parsing
-    string /*------*/ msg; // Message to user
-    vector<AST_Node*> opr; // Operands
-    void* /*-------*/ dat; // Data payload
-    ulong /*-------*/ lin; // Line number of source
+    E_Type /*-----*/ type; // Datatype it resolves to
+    E_Error /*----*/ error; // Error at this level of parsing
+    string /*-----*/ msg; // Message to user
+    vector<AST_Job*> operands; // Operands
+    void* /*------*/ data; // Data payload
+    ulong /*------*/ line; // Line number of source
 };
 
-map<string,AST_Node*(*)(const vstr&)> RESERVED_PARSERS;
+map<E_Expr,AST_Job*(*)(AST_Job*, const vstr&)> PARSELETS; // Parsing job handlers
 
-void init_parsers(){
+bool p_primitive_name( string name ){
+    // Does this string name a primitive type?
+    if( name == "int" )     return true;
+    if( name == "uint" )    return true;
+    if( name == "float" )   return true;
+    if( name == "string" )  return true;
+    return false;
+}
 
-    /// Integer Declaration ///
-    RESERVED_PARSERS["int"] = [](const vstr& args)->AST_Node*{ 
+void init_parser(){
+
+    ///// Parser Init ////////////////////////////
+
+    PARSELETS[ INPUT ] = []( AST_Job* job, const vstr& tokens )->AST_Job*{ 
+        if( p_primitive_name( tokens[ job->tokenDex ] ) ){
+            job->mode = DEFINE;
+        }else{
+            job->mode  = TERM;
+            job->type  = ERROR;
+            job->error = SYNTAX;
+            job->msg   = "Unknown: " + tokens[ job->tokenDex ];
+        }        
+        return job;
+    };
+
+    ///// Primitive Declaration //////////////////
+
+    PARSELETS[ DEFINE ] = []( AST_Job* job, const vstr& tokens )->AST_Job*{ 
         
-        // 1. Set identifier name
-        AST_Node* name = new AST_Node{};
-        name->exp = LITERAL;
-        name->typ = STRNG;
-        name->err = OKAY;
-        name->dat = new Var64<string>{ args[0], STRNG, OKAY };
+        AST_Job* result  = new AST_Job{};
+        ulong    i /*-*/ = job->tokenDex;
+        string   defType = tokens[i];
+        string   msg;
 
-        // 2. Set parent
-        AST_Node* node = new AST_Node{};
-        node->exp = DEFINE;
-        node->typ = INTGR;
-        node->err = OKAY;
-        node->opr.push_back( name );
+        // 0. Are there enough arguments?
+        if( i >= (tokens.size()-1) ){
+            result->mode  = TERM;
+            result->type  = ERROR;
+            result->error = END_INPUT;
+            result->msg   = "There was no identifier given for the declaration!";
+            return result;
+        }else{
+            msg = tokens[i+1];
+        }
+
+        // 1. Found enough args, construct a definition node
+        AST_Job* node = new AST_Job{};
+        node->mode = DEFINE;
+        if( defType == "int" ){
+            node->type  = INTGR;
+            node->error = OKAY;
+            node->msg   = msg;
+        }else if( defType == "uint" ){
+            node->type  = U_INT;
+            node->error = OKAY;
+            node->msg   = msg;
+        }else if( defType == "float" ){
+            node->type  = FLOAT;
+            node->error = OKAY;
+            node->msg   = msg;
+        }else if( defType == "string" ){
+            node->type  = STRNG;
+            node->error = OKAY;
+            node->msg   = msg;
+        
+        // No matching typename found, return error and terminate
+        }else{
+            result->mode  = TERM;
+            result->type  = ERROR;
+            result->error = UNK_TYPE;
+            result->msg   = "Unknown type: " + defType;
+            delete node;
+            return result;
+        }
 
         // N. Return
-        return node;
+        result->mode     = TERM;
+        result->tokenDex = i+2;
+        result->error    = OKAY;
+        result->operands.push_back( node );
+        return result;
     };
 }
 
-struct EASY_Job{
-    ulong  tokenDex; //- Index of `tokenExpr` to parse
-    E_Expr currMode; //- Current mode of the parser
-};
+
 
 class EASY_Parser{ public:
     // Parsing Finite State Machine for EASY64: As if parsing were ever easy!
 
     /// Members ///
-    vstr /*-------*/ tokenExpr; // Expression we are attempting to parse
-    stack<EASY_Job*> jobs; // ---- Stack of jobs for parslets
+    vstr /*------*/ tokenExpr; // Expression we are attempting to parse
+    stack<AST_Job*> jobs; // ---- Stack of jobs for parslets
     
     void flush_jobs(){
         // Erase all jobs
@@ -264,14 +330,16 @@ class EASY_Parser{ public:
 
     void init(){
         // Flush jobs and push the initial job
-        EASY_Job* initJob = new EASY_Job{ 0, INPUT };
+        AST_Job* initJob = new AST_Job{};
         flush_jobs();
+        initJob->mode     = INPUT;
+        initJob->tokenDex = 0;
         jobs.push( initJob );
     }
 
-    EASY_Job* pop_job(){
+    AST_Job* pop_job(){
         // Pop and return the top job on the stack, If no jobs, then return `nullptr`
-        EASY_Job* rtnJob = nullptr;
+        AST_Job* rtnJob = nullptr;
         if( !jobs.empty() ){
             rtnJob = jobs.top();
             jobs.pop();
@@ -281,21 +349,66 @@ class EASY_Parser{ public:
 
     bool p_jobs_exist(){  return (!jobs.empty());  } // Are there jobs to process?
 
-    AST_Node* parse_tokens( const vstr& tokens ){
+    AST_Job* panic_state(){
+        // The parser didn't like that
+        AST_Job* rtnJob = new AST_Job{};
+        rtnJob->mode  = TERM;
+        rtnJob->type  = ERROR;
+        rtnJob->error = PARSER;
+        rtnJob->msg   = "THE PARSER DID NOT LIKE THAT";
+        return rtnJob;
+    }
+
+    AST_Job* parse_tokens( const vstr& tokens ){
         // Turn the sequence of tokens into an Abstract Syntax Tree
-        AST_Node* ASTexpr = nullptr; // Fully parsed expression
-        EASY_Job* currJob = nullptr; // Current parselet job
+        AST_Job* ASTexpr = nullptr; // Fully parsed expression
+        AST_Job* currJob = nullptr; // Current parselet job
+        E_Expr   mode;
         
         // 0. Copy the token expression
         tokenExpr = tokens; 
         
         // 1. While jobs exist, process jobs
         while( p_jobs_exist() ){
-            // Fetch job
+            
+            /// Fetch job ///
             currJob = pop_job();
-            // Handle job
-            // Delete job
+            if( !currJob ){  
+                currJob = panic_state();  
+                currJob->msg = "EMPTY JOB";
+            }
+            
+            /// Handle job ///
+            mode = currJob->mode;
+
+            // If there is a parslet case written
+            if( PARSELETS.count( mode ) > 0 ){
+                jobs.push( PARSELETS[mode](
+                    currJob,
+                    tokenExpr
+                ) );
+
+            // Else if parser received a termination message
+            }else if(mode == TERM){
+                if( currJob->error == OKAY ){
+                    cout << "EVERYTHING IS GOOD" << endl;
+                }else{
+                    cout << "EVERYTHING IS BAD" << endl;
+                    cout << currJob->msg << endl;
+                }
+                flush_jobs();
+            // Else the parser is LOST
+            }else{
+                delete currJob;
+                currJob = panic_state();
+                currJob->msg = "UNHANDLED CASE";
+                jobs.push(  currJob  );
+            }        
         }
+
+        flush_jobs();
+        delete currJob;
+        cout << "PARSER OVER" << endl;
 
         return ASTexpr;
     }
