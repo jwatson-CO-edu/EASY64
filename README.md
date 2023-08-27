@@ -46,6 +46,7 @@ Spelled EASY64, Easy64, EASY, Easy
 * `[Y]` Numeric data types, 2023-08-26: Simplest possible, using unions
 * `[>]` Math calculations, stack model
 * `[ ]` Tree parser
+    - Expectations about future branches?
 * `[ ]` String representation of `AST_Node`
 * `[ ]` String representation of AST
 * `[ ]` Parser probably needs a FSM as SPARROW had!
