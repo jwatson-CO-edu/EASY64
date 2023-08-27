@@ -7,7 +7,7 @@ Spelled EASY64, Easy64, EASY, Easy
 * I am the victim of urges I can barely contain; Please send help.
 ## Statement of Purpose
 * A typed, interpreted scripting language written in C++ with the minimum working structure to be Turing Complete and Interesting to me.
-* The sequel to [SPARROW](https://github.com/jwatson-CO-edu/SPARROW), which was dynamic, interpreted [Scheme](https://mitpress.mit.edu/9780262560993/the-little-schemer/) variant written in [D](https://dlang.org/).
+* The sequel to [SPARROW](https://github.com/jwatson-CO-edu/SPARROW), which was a dynamic, interpreted [Scheme](https://mitpress.mit.edu/9780262560993/the-little-schemer/) variant written in [D](https://dlang.org/).
 * This is for my own entertainment and edification.  
 * No claims of utility or functionality are made or implied.
 
@@ -35,5 +35,19 @@ Spelled EASY64, Easy64, EASY, Easy
 
 # Implementation
 ## Lexer
+* Lexer returns a vector of string tokens to be parsed
 * Reserved tokens ALWAYS stand on their own and are NEVER part of an identifier
 * Reserved words CAN stand on their own ONLY when they are NOT part of an identifier
+## Parser
+* Parser case handlers are called "parslets"
+* Each parslet should provide a cue of how to fill in needed data
+
+# `DEV PLAN`
+* `[ ]` String representation of `AST_Node`
+* `[ ]` String representation of AST
+* `[ ]` Parser probably needs a FSM as SPARROW had!
+    - `[ ]` Each parslet returns {Next Mode?, Pointer to where the next node is needed?}
+    - `[ ]` Keeps track of what token to parse next?
+    - `[ ]` Job stack?
+    - `[ ]` State struct?
+* `[ ]` Add line number to `AST_Node` for user debugging
