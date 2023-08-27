@@ -15,10 +15,12 @@ enum ParseStatus{
     FAILURE,
 };
 
-struct ParseToken{
-    // Smallest parsable unit
-    string token;
-    uint   line;
+struct ParseMessage{
+    // Bidirectional parslet message - Down: Smallest parsable unit, Up: Parslet result
+    ParseStatus status;
+    string /**/ token;
+    uint /*--*/ line;
+    string /**/ msg;
 };
 
 class SourceNode{ public:
