@@ -4,28 +4,37 @@ using std::vector;
 using std::shared_ptr;
 #include <string>
 using std::string;
+#include <stack>
+using std::stack;
 
 
-enum CPT_Status{
+enum ParseStatus{
     INITIAL,
     RUNNING,
     SUCCESS,
     FAILURE,
 };
 
-struct CPT_Token{
+struct ParseToken{
     string token;
     uint   line;
 };
 
-class CST_Node{ public:
-    shared_ptr<CST_Node> /*---*/ parent;
-    vector<shared_ptr<CST_Node>> children;
+class SourceNode{ public:
+    shared_ptr<SourceNode> /*---*/ parent;
+    vector<shared_ptr<SourceNode>> children;
 };
 
-class CPT_Node{ public:
+class ParseNode{ public:
     string /*-----------------*/ name;
-    CPT_Status /*-------------*/ status;
-    shared_ptr<CPT_Node> /*---*/ parent;
-    vector<shared_ptr<CPT_Node>> children;
+    ParseStatus /*-------------*/ status;
+    shared_ptr<ParseNode> /*---*/ parent;
+    vector<shared_ptr<ParseNode>> children;
+};
+
+class Parse_Machine{
+    stack<string>   thing1;
+    stack<ParseNode> thing2;
+    shared_ptr<SourceNode> source;
+    shared_ptr<ParseNode> parseTree;
 };
