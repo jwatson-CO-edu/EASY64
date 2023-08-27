@@ -16,23 +16,28 @@ enum ParseStatus{
 };
 
 struct ParseToken{
+    // Smallest parsable unit
     string token;
     uint   line;
 };
 
 class SourceNode{ public:
+    // Node of a Concrete Source Tree
     shared_ptr<SourceNode> /*---*/ parent;
     vector<shared_ptr<SourceNode>> children;
+    uint /*---------------------*/ line;
 };
 
 class ParseNode{ public:
-    string /*-----------------*/ name;
+    // Superclass of nestable parslets, inspired by Behavior Trees
+    string /*------------------*/ name;
     ParseStatus /*-------------*/ status;
     shared_ptr<ParseNode> /*---*/ parent;
     vector<shared_ptr<ParseNode>> children;
 };
 
 class Parse_Machine{
+    // Parser: Mediates parsing by the parslet tree, resulting in CST
     stack<string>   thing1;
     stack<ParseNode> thing2;
     shared_ptr<SourceNode> source;

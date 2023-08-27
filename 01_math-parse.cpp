@@ -10,8 +10,10 @@ using std::ostream;
 using std::vector;
 #include <string>
 using std::string;
-#include <functional>
-using std::function;
+#include <memory>
+using std::shared_ptr;
+#include <stack>
+using std::stack;
 
 /// Aliases ///
 typedef unsigned long  ulong;
@@ -211,6 +213,19 @@ ostream& operator<<( ostream& os , const Data64& dat ){
     return os; // You must return a reference to the stream!
 }
 
+template<typename T>
+ostream& operator<<( ostream& os , const vector<T>& vec ) { 
+    // ostream '<<' operator for vectors
+    // NOTE: This function assumes that the ostream '<<' operator for T has already been defined
+    os << "[ ";
+    for (size_t i = 0; i < vec.size(); i++) {
+        os << (T) vec[i];
+        if (i + 1 < vec.size()) { os << ", "; }
+    }
+    os << " ]";
+    return os; // You must return a reference to the stream!
+}
+
 
 
 ////////// MATH LEXER //////////////////////////////////////////////////////////////////////////////
@@ -223,7 +238,8 @@ bool p_reserved_char( char c ){
            ( c == '-' ) ||
            ( c == '*' ) ||
            ( c == '/' ) ||
-           ( c == '=' );
+           ( c == '=' ) ||
+           ( c == ';' );
 }
 
 vstr tokenize( string expStr, char sepChar = ' ' ){
@@ -244,9 +260,10 @@ vstr tokenize( string expStr, char sepChar = ' ' ){
     for( char ch_i : expStr ){
         // 2. Fetch character
         c = ch_i;
-        if( p_reserved_char( c ) ) 
+        if( p_reserved_char( c ) ){ 
+            if(token.size() > 0){  stow_token();  }
             stow_char();
-        else if( c == sepChar){
+        }else if( c == sepChar){
             if(token.size() > 0){  stow_token();  }
         // D. Case any other char
         }else{  cache_char();  } 
@@ -255,33 +272,54 @@ vstr tokenize( string expStr, char sepChar = ' ' ){
     return tokens;
 }
 
-// FIXME, START HERE: IMPLEMENT THE GRECO STACK
-// IDEA: BEHAVIOR TREE OR PARSER TREE THAT BUILDS ITSELF AND LEAVES BEHIND A CONCRETE SOURCE TREE WHEN IT EXITS
+enum E_Math_Op{
+    // Primitive Data Types
+    ADD, // Add
+    SUB, // Subtract
+    MLT, // Multiply
+    DIV, // Divide
+};
+
+struct MathNode{
+    // Nestable math operation
+    E_Math_Op /*------*/ type;
+    shared_ptr<MathNode> parent;
+    shared_ptr<MathNode> leftOp;
+    shared_ptr<MathNode> rghtOp;
+
+    Data64 evaluate(){
+        // Evaluate the math expression at this node
+    }
+};
+
+struct Calculator{
+    shared_ptr<MathNode> root;
+    shared_ptr<MathNode> curr;
+    stack<Data64> /*--*/ stck;
+
+    void parse( vstr tokens ){
+        // Turn a vector of string `tokens` into a tree of `MathNode`
+        for( string token : tokens ){
+            // FIXME, START HERE: https://stackoverflow.com/a/16575025
+            // Test float, has a decimal or is numeric with terminal lowercase f
+            // Test unsigned, numeric non-negative
+            // Test int, numeric negative
+        }
+    }
+
+    Data64 evaluate(){
+        // Evaluate the math expression from the `root`
+    }
+};
 
 ////////// TESTING /////////////////////////////////////////////////////////////////////////////////
 
 
 int main(){
-    Data64 A;  A.set_float( 1.0 );
-    Data64 B;  B.set_int( 2 );
-    Data64 C;  C.set_uint( 3 );
-    Data64 D = A + B;
-    Data64 E = A + C;
-    Data64 F = B + C;
-
-    cout << A << endl;
-    cout << B << endl;
-    cout << C << endl;
-    cout << D << endl;
-    cout << E << endl;
-    cout << F << endl;
-
-    cout << endl;
-
-    cout << A.type << endl;
-    cout << B.type << endl;
-    cout << C.type << endl;
-    cout << D.type << endl;
-    cout << E.type << endl;
-    cout << F.type << endl;
+    string expr1 = "C=A+B;";
+    vstr   tkns1 = tokenize( expr1 );
+    string expr2 = "AA BB CC;";
+    vstr   tkns2 = tokenize( expr2 );
+    cout << tkns1 << endl;
+    cout << tkns2 << endl;
 }
