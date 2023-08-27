@@ -43,6 +43,9 @@ Spelled EASY64, Easy64, EASY, Easy
 * Each parslet should provide a cue of how to fill in needed data
 
 # `DEV PLAN`
+* `[Y]` Numeric data types, 2023-08-26: Simplest possible, using unions
+* `[>]` Math calculations, stack model
+* `[ ]` Tree parser
 * `[ ]` String representation of `AST_Node`
 * `[ ]` String representation of AST
 * `[ ]` Parser probably needs a FSM as SPARROW had!
