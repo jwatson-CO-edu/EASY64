@@ -14,6 +14,7 @@ using std::string;
 using std::shared_ptr;
 #include <stack>
 using std::stack;
+#include <cmath>
 
 /// Aliases ///
 typedef unsigned long  ulong;
@@ -26,6 +27,7 @@ enum E_Type_N{
     FLOAT, // `double`
     INTGR, // `long`
     U_INT, // `unsigned long`
+    NaNum, // Not a Number
 };
 
 union N64{
@@ -53,6 +55,11 @@ struct Data64{
     void set_uint( ulong ulng ){     
         data.u = ulng; 
         type   = U_INT;
+    }
+
+    void set_NaN(){
+        data.f = nan("");
+        type   = NaNum;
     }
 };
 
@@ -242,6 +249,13 @@ bool p_reserved_char( char c ){
            ( c == ';' );
 }
 
+bool p_reserved_char( string c ){
+    // Is the one-character string a reserved character? 
+    char ch = c[0];
+    if( c.size() > 1 )  return false;
+    return p_reserved_char( ch );
+}
+
 vstr tokenize( string expStr, char sepChar = ' ' ){
     // Separate an expression string into tokens
     vstr tokens;
@@ -292,6 +306,18 @@ struct MathNode{
     }
 };
 
+Data64 number_from_string( string token ){
+    // Attempt to conver the string to a `Data64` number
+    Data64 datum;
+    datum.set_NaN(); // If all tests fail, fall thru to NaN
+    if( token.size() > 0 ){
+        // FIXME, START HERE FIND '.' OR 'e' IN STRING
+        // FIXME: FIND '-' IN STRING
+        // FIXME: NON-NEGATIVE INT
+    }
+    return datum;
+}
+
 struct Calculator{
     shared_ptr<MathNode> root;
     shared_ptr<MathNode> curr;
@@ -300,6 +326,14 @@ struct Calculator{
     void parse( vstr tokens ){
         // Turn a vector of string `tokens` into a tree of `MathNode`
         for( string token : tokens ){
+
+            if( p_reserved_char( token ) ){
+
+            }else{
+
+            }
+
+
             // FIXME, START HERE: https://stackoverflow.com/a/16575025
             // Test float, has a decimal or is numeric with terminal lowercase f
             // Test unsigned, numeric non-negative
