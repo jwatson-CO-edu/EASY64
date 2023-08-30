@@ -20,6 +20,9 @@ using std::stack;
 typedef unsigned long  ulong;
 typedef vector<string> vstr;
 
+/// Forward Declarations ///
+struct MathNode;  typedef shared_ptr<MathNode> mathPtr;
+
 ////////// NUMERIC ATOMS ///////////////////////////////////////////////////////////////////////////
 
 enum E_Type_N{
@@ -300,10 +303,22 @@ enum E_Math_Op{
 
 struct MathNode{
     // Nestable math operation
-    E_Math_Op /*------*/ type;
-    shared_ptr<MathNode> parent;
-    shared_ptr<MathNode> leftOp;
-    shared_ptr<MathNode> rghtOp;
+    E_Math_Op type;
+    mathPtr   parent;
+    mathPtr   opLeft;
+    mathPtr   opRght;
+    dataPtr   nmLeft;
+    dataPtr   nmRght;
+
+    MathNode(){
+        // Default math operation node
+        type   = ERR;
+        parent = nullptr;
+        opLeft = nullptr;
+        opRght = nullptr;
+        nmLeft = nullptr;
+        nmRght = nullptr;
+    }
 
     Data64 evaluate(){
         // Evaluate the math expression at this node
@@ -311,27 +326,29 @@ struct MathNode{
 };
 typedef shared_ptr<MathNode> mathPtr;
 
-Data64 number_from_string( string token ){
+dataPtr number_from_string( string token ){
     // Attempt to conver the string to a `Data64` number
-    Data64 datum;
-    datum.set_NaN(); // If all tests fail, fall thru to NaN
+    dataPtr datum = dataPtr( new Data64{} );
+    datum->set_NaN(); // If all tests fail, fall thru to NaN
     if( token.size() > 0 ){
         // If '.' or 'e' is in the token, attempt float conversion
         if(token.find( 'e' ) || token.find( '.' )){
-            try{  datum.set_float( stod( token ) );  }catch(...){  cout << "Float conversion FAILED!: " << token << endl;  }
+            try{  datum->set_float( stod( token ) );  }catch(...){  cout << "Float conversion FAILED!: " << token << endl;  }
         }else if(token.find( '-' )){
-            try{  datum.set_int( stol( token ) );  }catch(...){  cout << "Int conversion FAILED!: " << token << endl;  }
+            try{  datum->set_int( stol( token ) );  }catch(...){  cout << "Int conversion FAILED!: " << token << endl;  }
         }else{
-            try{  datum.set_uint( stoul( token ) );  }catch(...){  cout << "Uint conversion FAILED!: " << token << endl;  }
+            try{  datum->set_uint( stoul( token ) );  }catch(...){  cout << "Uint conversion FAILED!: " << token << endl;  }
         }
     }
     return datum;
 }
 
 struct Calculator{
-    mathPtr /*--*/ root;
-    mathPtr /*--*/ curr;
-    mathPtr /*--*/ mNod;
+    // Tree-based calculator
+    mathPtr /*--*/ root = nullptr;
+    mathPtr /*--*/ curr = nullptr;
+    mathPtr /*--*/ mNod = nullptr;
+    dataPtr /*--*/ dNod = nullptr;
     stack<dataPtr> dStk;
     stack<mathPtr> mStk;
 
@@ -340,23 +357,37 @@ struct Calculator{
         vstr tokens = tokenize( strExpr );
         for( string token : tokens ){
 
+            // Conversion to node
+
             if( p_reserved_char( token ) ){
                 mNod = shared_ptr<MathNode>( new MathNode{} );
                 /**/ if( token == "+" ){  mNod->type = ADD;  } 
                 else if( token == "-" ){  mNod->type = SUB;  }  
                 else if( token == "*" ){  mNod->type = MLT;  } 
                 else if( token == "/" ){  mNod->type = DIV;  }  
-                /*--------------*/ else{  mNod->type = ERR;  }
+                else{  
+                    cout << "UNKNOWN math operator!: " << token << endl;
+                    break;
+                }
                 mStk.push( mNod );
             }else{
-
+                dNod = number_from_string( token );
+                if( dNod->p_NaN() ){
+                    cout << "Numeric conversion FAILED!: " << token << endl;
+                    break;
+                }
+                dStk.push( dNod );
             }
 
-
-            // FIXME, START HERE: https://stackoverflow.com/a/16575025
-            // Test float, has a decimal or is numeric with terminal lowercase f
-            // Test unsigned, numeric non-negative
-            // Test int, numeric negative
+            // Handle node
+            while( mStk.size() ){
+                curr = mStk.top();
+                mStk.pop();
+                if( !root ){
+                    root = curr;
+                }
+                // FIXME, START HERE: HANDLE POINTERS AND TREE CONSTRUCTION
+            }
         }
     }
 
