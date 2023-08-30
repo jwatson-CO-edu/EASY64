@@ -5,6 +5,9 @@
         "vector": "cpp",
         "__split_buffer": "cpp",
         "iostream": "cpp",
-        "ostream": "cpp"
+        "ostream": "cpp",
+        "random": "cpp",
+        "queue": "cpp",
+        "stack": "cpp"
     }
 }

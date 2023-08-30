@@ -9,7 +9,7 @@ using std::ostream;
 #include <vector>
 using std::vector;
 #include <string>
-using std::string;
+using std::string, std::stod, std::stol, std::stoul;
 #include <memory>
 using std::shared_ptr;
 #include <stack>
@@ -61,7 +61,10 @@ struct Data64{
         data.f = nan("");
         type   = NaNum;
     }
+
+    bool p_NaN(){  return (type == NaNum);  }
 };
+typedef shared_ptr<Data64> dataPtr;
 
 
 
@@ -292,6 +295,7 @@ enum E_Math_Op{
     SUB, // Subtract
     MLT, // Multiply
     DIV, // Divide
+    ERR, // ERROR
 };
 
 struct MathNode{
@@ -305,30 +309,45 @@ struct MathNode{
         // Evaluate the math expression at this node
     }
 };
+typedef shared_ptr<MathNode> mathPtr;
 
 Data64 number_from_string( string token ){
     // Attempt to conver the string to a `Data64` number
     Data64 datum;
     datum.set_NaN(); // If all tests fail, fall thru to NaN
     if( token.size() > 0 ){
-        // FIXME, START HERE FIND '.' OR 'e' IN STRING
-        // FIXME: FIND '-' IN STRING
-        // FIXME: NON-NEGATIVE INT
+        // If '.' or 'e' is in the token, attempt float conversion
+        if(token.find( 'e' ) || token.find( '.' )){
+            try{  datum.set_float( stod( token ) );  }catch(...){  cout << "Float conversion FAILED!: " << token << endl;  }
+        }else if(token.find( '-' )){
+            try{  datum.set_int( stol( token ) );  }catch(...){  cout << "Int conversion FAILED!: " << token << endl;  }
+        }else{
+            try{  datum.set_uint( stoul( token ) );  }catch(...){  cout << "Uint conversion FAILED!: " << token << endl;  }
+        }
     }
     return datum;
 }
 
 struct Calculator{
-    shared_ptr<MathNode> root;
-    shared_ptr<MathNode> curr;
-    stack<Data64> /*--*/ stck;
+    mathPtr /*--*/ root;
+    mathPtr /*--*/ curr;
+    mathPtr /*--*/ mNod;
+    stack<dataPtr> dStk;
+    stack<mathPtr> mStk;
 
-    void parse( vstr tokens ){
+    void parse( string strExpr ){
         // Turn a vector of string `tokens` into a tree of `MathNode`
+        vstr tokens = tokenize( strExpr );
         for( string token : tokens ){
 
             if( p_reserved_char( token ) ){
-
+                mNod = shared_ptr<MathNode>( new MathNode{} );
+                /**/ if( token == "+" ){  mNod->type = ADD;  } 
+                else if( token == "-" ){  mNod->type = SUB;  }  
+                else if( token == "*" ){  mNod->type = MLT;  } 
+                else if( token == "/" ){  mNod->type = DIV;  }  
+                /*--------------*/ else{  mNod->type = ERR;  }
+                mStk.push( mNod );
             }else{
 
             }
