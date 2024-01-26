@@ -379,15 +379,8 @@ struct Calculator{
                 dStk.push( dNod );
             }
 
-            // Handle node
-            while( mStk.size() ){
-                curr = mStk.top();
-                mStk.pop();
-                if( !root ){
-                    root = curr;
-                }
-                // FIXME, START HERE: HANDLE POINTERS AND TREE CONSTRUCTION
-            }
+            // Handle token
+            // FIXME, START HERE: HANDLE TOKEN
         }
     }
 
