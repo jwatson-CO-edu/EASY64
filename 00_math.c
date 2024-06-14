@@ -5,7 +5,7 @@
 
 /// Aliases ///
 typedef unsigned long ulong;
-typedef unsigned char ubyte;
+typedef unsigned char ubyte; // Use this instead of bool
 
 
 
@@ -44,6 +44,7 @@ typedef struct{
 ///// Constructors ///////////////////////////////
 
 Data64 make_float( double dbbl ){  
+    // Return a floating point primitive
     Data64 rtn;
     rtn.type   = FLOAT;
     rtn.data.f = dbbl;
@@ -52,6 +53,7 @@ Data64 make_float( double dbbl ){
 }
 
 Data64 make_int( long lng ){ 
+    // Return an integer primitive
     Data64 rtn;
     rtn.type   = INTGR;
     rtn.data.i = lng;  
@@ -60,6 +62,7 @@ Data64 make_int( long lng ){
 }
 
 Data64 make_uint( ulong ulng ){     
+    // Return an unsigned integer primitive
     Data64 rtn;
     rtn.type   = U_INT;
     rtn.data.u = ulng; 
@@ -124,6 +127,14 @@ typedef struct{
     void* next;
 }StackNode;
 
+Stack* make_StackNode( void ){
+    // Return an empty `StackNode`
+    StackNode* rtnNode = (StackNode*) malloc( sizeof( StackNode ) );
+    rtnNode->data = NULL;
+    rtnNode->next = NULL;
+    return rtnNode;
+}
+
 void del_StackNode( StackNode* node ){
     // Erase `node`
     free( node->data );
@@ -136,6 +147,14 @@ typedef struct{
     StackNode* top;
     ulong /**/ len;
 }Stack;
+
+Stack* make_Stack( void ){
+    // Return an empty `Stack`
+    Stack* rtnStk = (Stack*) malloc( sizeof( Stack ) );
+    rtnStk->top = NULL;
+    rtnStk->len = 0;
+    return rtnStk;
+}
 
 void push_Stack( Stack* stck, void* elemData ){
     // Push data onto stack
@@ -168,3 +187,5 @@ void del_Stack( Stack* stck ){
 
 
 ////////// BASIC MATH //////////////////////////////////////////////////////////////////////////////
+// FIXME: TOKENIZE  A MATH EXPRESSION
+// FIXME: EVALUTATE A MATH EXPRESSION
