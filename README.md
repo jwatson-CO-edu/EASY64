@@ -57,6 +57,7 @@ Spelled EASY64, Easy64, EASY, Easy
 # Future Possibilities
 * 3D Turtle Mode
 * Native Geometric Algebra
+* OpenCL backend
 * Parallel Model: Jobs & Places
     - Jobs: EASY interpreter running in a separate, asynchronous process
         * No Sharing: Must copy all necessary data to run the job

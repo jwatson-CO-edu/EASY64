@@ -19,16 +19,18 @@ enum E_Type{
     INTGR, // `long`
     U_INT, // `unsigned long`
     STRNG, // string
+    POINT, // pointer
 };
 typedef enum E_Type E_Type;
 
 
 union D64{
     // All acceptable 64 bit types
-    double f;
-    long   i;
-    ulong  u;
-    char*  s;
+    double f; // `double`
+    long   i; // `long`
+    ulong  u; // `unsigned long`
+    char*  s; // string
+    void*  p; // pointer
 };
 typedef union D64 D64;
 
