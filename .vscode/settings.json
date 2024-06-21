@@ -66,6 +66,7 @@
         "__hash_table": "c",
         "__tree": "c",
         "__tuple": "c",
-        "__node_handle": "c"
+        "__node_handle": "c",
+        "easy64.h": "c"
     }
 }
