@@ -22,7 +22,7 @@ void append_char_String( String* str, const char c ){
     ulong nxtDex  = (str->len) % _STR_CHUNK_LEN;
     void* dataArr = NULL;
     // If the previous buffer has filled, then create new
-    if( (nxtDex == 0) && ((str->len) != 0) ){
+    if( (nxtDex == 0) && ((str->len) > 0) ){
         dataArr = malloc( _STR_CHUNK_LEN * sizeof( char ) );
         push_back_Q( str->q, dataArr );
     }
@@ -38,7 +38,9 @@ void append_char_array_String( String* str, const char* chunk ){
     char  c = chunk[0];
     while( c != '\0' ){
         append_char_String( str, c );
+        // printf( "(%c,%lu):%lu, ", c, i, str->len );
         c = chunk[ ++i ];
+        
     }
 }
 
@@ -48,16 +50,22 @@ char* get_String_as_char_array( String* str ){
     ulong N /*-*/ = str->len;
     char* rtnArr  = (char*) malloc( (N+1) * sizeof( char ) );
     ulong i /*-*/ = 0;
-    char* segment = NULL;
+    Elem* segment = str->q->front;
     ulong nxtDex;
     while( i < N ){
         nxtDex = i % _STR_CHUNK_LEN;
-        // FIXME, START HERE: CONVERTING TO AN ARRAY SHOULD *NOT* BE **DESTRUCTIVE**!!
-        if( nxtDex == 0 ){  segment = (char*) pop_front_Q( str->q );  }
-        rtnArr[ ++i ] = segment[ nxtDex ];
+        if( (nxtDex == 0) && (i > 0) ){  segment = segment->next;  }
+        // printf( "(%p,%lu):", segment->data, i );
+        rtnArr[ i++ ] = ((char*) segment->data)[ nxtDex ];
+        // printf( "%c, ", rtnArr[ i-1 ] );
     }
     rtnArr[i] = '\0';
     return rtnArr;
 }
 
-// FIXME: DELETE STRING STRUCTURE
+
+void del_String( String* str ){
+    // Remove the string from the heap
+    del_Queue( str->q );
+    free( str );
+}

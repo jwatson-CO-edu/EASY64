@@ -6,6 +6,8 @@
 /// Imports ///
 #include <stddef.h> // NULL, etc.
 #include <ctype.h> //- Character tests, etc.
+#include <stdio.h> //- `printf`
+#include <stdlib.h> // `malloc`
 
 /// Aliases ///
 typedef unsigned long ulong;
@@ -81,6 +83,7 @@ String* make_String( void ); // -------------------------------------- Create a 
 void    append_char_String( String* str, const char c ); // ---------- Store one char, Expand if needed
 void    append_char_array_String( String* str, const char* chunk ); // Read in the char array and store
 char*   get_String_as_char_array( String* str ); // ------------------ Convert `str` contents to a char array
+void    del_String( String* str ); // -------------------------------- Remove the string from the heap
     
 
 #endif

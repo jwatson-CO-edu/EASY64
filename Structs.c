@@ -57,7 +57,6 @@ void* pop_Stack( Stack* stck ){
 
 void del_Stack( Stack* stck ){
     // Erase `stck` and all nodes contained therein
-    Elem* stkTop = NULL;
     void* data_i;
     while( stck->len ){  
         data_i = pop_Stack( stck );  
@@ -106,7 +105,6 @@ void* pop_front_Q( Queue* q ){
 
 void del_Queue( Queue* q ){
     // Erase `q` and all nodes contained therein
-    Elem* stkTop = NULL;
     void* data_i;
     while( q->len ){  
         data_i = pop_front_Q( q );

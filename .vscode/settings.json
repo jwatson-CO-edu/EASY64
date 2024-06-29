@@ -67,6 +67,7 @@
         "__tree": "c",
         "__tuple": "c",
         "__node_handle": "c",
-        "easy64.h": "c"
+        "easy64.h": "c",
+        "stddef.h": "c"
     }
 }
