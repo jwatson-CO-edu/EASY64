@@ -38,38 +38,38 @@ typedef struct{
 
 ///// Constructors ///////////////////////////////
 
-Data64 make_float( double dbbl ){  
+Data64* make_float( double dbbl ){  
     // Return a floating point primitive
-    Data64 rtn;
-    rtn.type   = FLOAT;
-    rtn.data.f = dbbl;
-    rtn.size   = 1;
+    Data64* rtn = (Data64*) malloc( sizeof( Data64 ) );
+    rtn->type   = FLOAT;
+    rtn->data.f = dbbl;
+    rtn->size   = 1;
     return rtn;
 }
 
-Data64 make_int( long lng ){ 
+Data64* make_int( long lng ){ 
     // Return an integer primitive
-    Data64 rtn;
-    rtn.type   = INTGR;
-    rtn.data.i = lng;  
-    rtn.size   = 1;
+    Data64* rtn = (Data64*) malloc( sizeof( Data64 ) );
+    rtn->type   = INTGR;
+    rtn->data.i = lng;  
+    rtn->size   = 1;
     return rtn;
 }
 
-Data64 make_uint( ulong ulng ){     
+Data64* make_uint( ulong ulng ){     
     // Return an unsigned integer primitive
-    Data64 rtn;
-    rtn.type   = U_INT;
-    rtn.data.u = ulng; 
-    rtn.size   = 1;
+    Data64* rtn = (Data64*) malloc( sizeof( Data64 ) );
+    rtn->type   = U_INT;
+    rtn->data.u = ulng; 
+    rtn->size   = 1;
     return rtn;
 }
 
-Data64 make_string( char* str, ulong Nchrs ){     
-    Data64 rtn;
-    rtn.type   = STRNG;
-    rtn.data.s = str; 
-    rtn.size   = Nchrs;
+Data64* make_string( char* str, ulong Nchrs ){     
+    Data64* rtn = (Data64*) malloc( sizeof( Data64 ) );
+    rtn->type   = STRNG;
+    rtn->data.s = str; 
+    rtn->size   = Nchrs;
     return rtn;
 }
 
@@ -124,9 +124,13 @@ enum TokenMode{
     GOT_DEC, // Incoming decimal    character
     GOT_SPC, // Incoming whitespace character
     GOT_RES, // Incoming reserved   character
+    GOT_TRM, // Incoming terminator character
     GOT_CHR, // All other characters
     TKN_BGN,
     TKN_UIN,
+    TKN_FLT,
+    TKN_INT,
+    TKN_STR,
 };
 typedef enum TokenMode TokenMode;
 
@@ -146,39 +150,111 @@ TokenMode character_test( char c ){
     if( c == '-' /*-----*/ )  return GOT_MNS;
     if( isspace( c ) /*-*/ )  return GOT_SPC;
     if( reserved_test( c ) )  return GOT_RES;
-    return GOT_CHR;
+    if( c == '\0' /*----*/ )  return GOT_TRM;
+    /*---------------------*/ return GOT_CHR;
 }
 
-// Queue* tokenize_math_expr( const char* exprStr, ulong Nchrs ){
-//     // Return a queue of tokens relating to a math expression
-//     Queue*    rtnQ  = make_Queue();
-//     Queue*    token = make_Queue();
-//     TokenMode mode = TKN_BGN;
-//     TokenMode cTyp = NO_CHAR;
-//     char /**/ c_i;
-//     for( ulong i = 0; i < Nchrs; ++i ){
-//         c_i  = exprStr[i];
-//         cTyp = character_test( c_i );
-//         switch( mode ){
+Queue* tokenize_math_expr( const char* exprStr, ulong Nchrs ){
+    // Return a queue of tokens relating to a math expression
+    
+    /// Init ///
+    Queue*    rtnQ  = make_Queue(); // Instantiate a linear struct for tokens
+    String*   token = make_String(); // Dyn. String representation of a single token
+    TokenMode mode  = TKN_BGN; // Init mode
+    TokenMode cTyp  = NO_CHAR; // Init char flag
+    char /**/ c_i;
+    char*     ptr;
+    
+    /// Tokenizer Loop ///
+    for( ulong i = 0; i < Nchrs; ++i ){
+        c_i  = exprStr[i];
+        cTyp = character_test( c_i );
+        switch( mode ){
 
-//             /// State: Token Begin ///////////////
-//             case TKN_BGN:
-//                 switch (cTyp){
-//                     case GOT_DGT:
-//                         push_back_Q( token )
-//                         break;
+            /// State: Token Begin ///////////////
+            case TKN_BGN:
+                switch (cTyp){
+
+                    case GOT_DGT:
+                        append_char_String( token, c_i );
+                        mode = TKN_UIN;
+                        break;
+
+                    case GOT_DEC:
+                        append_char_String( token, '0' );
+                        append_char_String( token, c_i );
+                        mode = TKN_FLT;
+                        break;
+
+                    case GOT_MNS:
+                        append_char_String( token, c_i );
+                        mode = TKN_INT;
+                        break;
+
+                    case GOT_CHR:
+                        append_char_String( token, c_i );
+                        mode = TKN_STR;
+                        break;
+
+                    case GOT_TRM:
+                        mode = NO_CHAR;
+                        break;
                     
-//                     default:
-//                         break;
-//                 }
-//                 break;
+                    default:
+                        printf( "WARNING, UNHANDLED CHAR: %c in initial mode!", c_i );
+                        break;
+                }
+                break;
             
+            /// State: Token Unsigned Int ///////////////
+            case TKN_UIN:
+                switch (cTyp){
+                    
+                    case GOT_DGT:
+                        append_char_String( token, c_i );
+                        mode = TKN_UIN;
+                        break;
 
+                    case GOT_DEC:
+                        append_char_String( token, c_i );
+                        mode = TKN_FLT;
+                        break;
 
-//             default:
-//                 break;
-//         }
-//     }
-// }
+                    case GOT_MNS:
+                    case GOT_RES:
+                    case GOT_SPC:
+
+                        push_back_Q( rtnQ, (void*) make_uint( strtoul( 
+                            dump_String_as_char_array( token ), 
+                            &ptr, 
+                            10
+                        ) ) );
+                        clear_String( token );
+
+                        if( cTyp != GOT_SPC ){
+                            append_char_String( token, c_i );
+                            push_back_Q( rtnQ, (void*) make_string( get_String_as_char_array( token ), token->len ) );
+                            clear_String( token );
+                        }
+
+                        mode = TKN_BGN;
+                        break;
+
+                    case GOT_CHR:
+                        append_char_String( token, c_i );
+                        mode = TKN_STR;
+                        break;
+                    
+                    default:
+                        printf( "WARNING, UNHANDLED CHAR: %c in initial mode!", c_i );
+                        break;
+                }
+                break;
+
+            default:
+                break;
+        }
+    }
+}
 
 // FIXME: EVALUTATE A MATH EXPRESSION

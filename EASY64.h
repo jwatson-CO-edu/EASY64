@@ -80,6 +80,7 @@ typedef struct{
 }String;
 
 String* make_String( void ); // -------------------------------------- Create a `String` on the heap
+void    clear_String( String* str ); // ------------------------------ Erase current contents and prep for insertion
 void    append_char_String( String* str, const char c ); // ---------- Store one char, Expand if needed
 void    append_char_array_String( String* str, const char* chunk ); // Read in the char array and store
 char*   get_String_as_char_array( String* str ); // ------------------ Convert `str` contents to a char array

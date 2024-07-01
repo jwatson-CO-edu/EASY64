@@ -17,6 +17,16 @@ String* make_String( void ){
 }
 
 
+void clear_String( String* str ){
+    // Erase current contents and prep for insertion
+    void* dataArr = malloc( _STR_CHUNK_LEN * sizeof( char ) );
+    del_Queue( str->q );
+    str->q   = make_Queue();
+    str->len = 0;
+    push_back_Q( str->q, dataArr );
+}
+
+
 void append_char_String( String* str, const char c ){
     // Store one char, Expand if needed
     ulong nxtDex  = (str->len) % _STR_CHUNK_LEN;
@@ -57,6 +67,25 @@ char* get_String_as_char_array( String* str ){
         if( (nxtDex == 0) && (i > 0) ){  segment = segment->next;  }
         // printf( "(%p,%lu):", segment->data, i );
         rtnArr[ i++ ] = ((char*) segment->data)[ nxtDex ];
+        // printf( "%c, ", rtnArr[ i-1 ] );
+    }
+    rtnArr[i] = '\0';
+    return rtnArr;
+}
+
+
+char* dump_String_as_char_array( String* str ){
+    // Empty `str` contents to a char array
+    ulong N /*-*/ = str->len;
+    char* rtnArr  = (char*) malloc( (N+1) * sizeof( char ) );
+    ulong i /*-*/ = 0;
+    char* segment = NULL;
+    ulong nxtDex;
+    while( i < N ){
+        nxtDex = i % _STR_CHUNK_LEN;
+        if( nxtDex == 0 ){  segment = (char*) pop_front_Q( str->q );  }
+        // printf( "(%p,%lu):", segment->data, i );
+        rtnArr[ i++ ] = segment[ nxtDex ];
         // printf( "%c, ", rtnArr[ i-1 ] );
     }
     rtnArr[i] = '\0';
