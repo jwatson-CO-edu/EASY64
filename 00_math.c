@@ -257,4 +257,10 @@ Queue* tokenize_math_expr( const char* exprStr, ulong Nchrs ){
     }
 }
 
+
+////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
+
 // FIXME: EVALUTATE A MATH EXPRESSION
+int main(){
+    Queue* mathExpr = tokenize_math_expr( "2+3", 3 );
+}
