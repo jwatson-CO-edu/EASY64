@@ -274,6 +274,8 @@ void print_math_token_Queue( Queue* mq ){
     // FIXME: PRINT EACH TOKEN (`Data64`) IN ORDER
 }
 
+// https://inspirnathan.com/posts/156-abstract-syntax-trees-with-shunting-yard-algorithm
+
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
 
