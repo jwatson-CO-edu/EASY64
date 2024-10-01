@@ -1,3 +1,5 @@
+// gcc -o mathTest.out 00_math.c String.c Structs.c -lm
+
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 #include "EASY64.h"
 
@@ -74,6 +76,14 @@ Data64* make_string( char* str, ulong Nchrs ){
 }
 
 
+///// Printing ////////////////////////////////////////////////////////////
+
+void print_Data64( Data64* d64 ){
+    // Print the datum
+    // FIXME, START HERE: PRINT EACH TYPE
+}
+
+
 ///// Status & Errors /////////////////////////////////////////////////////
 // WARNING: ??? YAGNI ???
 
@@ -97,19 +107,21 @@ typedef struct{
 
 enum E_Op{
     // Primitive Data Types
+    NUM, // Number Literal
     ADD, // Add
     SUB, // Subtract
     MUL, // Multiply
-    DIV, // Multiply
+    DIV, // Divide
 };
 typedef enum E_Op E_Op;
 
 typedef struct{
     // A container for status and errors
-    void*  left;
-    void*  right;
-    Data64 data;
-    E_Op   oprtr;
+    void*  left; //- Left  Child
+    void*  right; // Right Child
+    Data64 data; //- Data Payload
+    E_Op   oprtr; // Operator represented by this node
+    ubyte  prec; //- Precedence of this operation (Higher done first!)
 }AMT_Node;
 
 
@@ -225,7 +237,7 @@ Queue* tokenize_math_expr( const char* exprStr, ulong Nchrs ){
                     case GOT_SPC:
 
                         push_back_Q( rtnQ, (void*) make_uint( strtoul( 
-                            dump_String_as_char_array( token ), 
+                            get_String_as_char_array( token ), 
                             &ptr, 
                             10
                         ) ) );
@@ -255,6 +267,11 @@ Queue* tokenize_math_expr( const char* exprStr, ulong Nchrs ){
                 break;
         }
     }
+}
+
+void print_math_token_Queue( Queue* mq ){
+    // Print the math tokens in order
+    // FIXME: PRINT EACH TOKEN (`Data64`) IN ORDER
 }
 
 
