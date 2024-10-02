@@ -85,7 +85,7 @@ void print_Data64( Data64* d64 ){
             printf( "<D64:FLOAT=%f>", d64->data.f );
             break;
         case INTGR: // `long`
-            printf( "<D64:INTGR=%d>", d64->data.i );
+            printf( "<D64:INTGR=%ld>", d64->data.i );
             break;
         case U_INT: // `unsigned long`
             printf( "<D64:U_INT=%lu>", d64->data.u );
@@ -301,7 +301,7 @@ Queue* tokenize_math_expr( const char* exprStr, ulong Nchrs ){
 
             /// State: Token Unsigned Int ////////
             case ALL_END:
-                print( "TOKENIZER HALTED\n" );
+                printf( "TOKENIZER HALTED\n" );
                 break;
 
             /// State: UNKNOWN ///////////////////
@@ -310,6 +310,7 @@ Queue* tokenize_math_expr( const char* exprStr, ulong Nchrs ){
                 break;
         }
     }
+    return rtnQ;
 }
 
 void print_math_token_Queue( Queue* mq ){

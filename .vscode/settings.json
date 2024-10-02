@@ -69,5 +69,6 @@
         "__node_handle": "c",
         "easy64.h": "c",
         "stddef.h": "c"
-    }
+    },
+    "makefile.configureOnOpen": false
 }
