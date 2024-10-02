@@ -80,7 +80,25 @@ Data64* make_string( char* str, ulong Nchrs ){
 
 void print_Data64( Data64* d64 ){
     // Print the datum
-    // FIXME, START HERE: PRINT EACH TYPE
+    switch( d64->type ){
+        case FLOAT: // `double`
+            printf( "<D64:FLOAT=%f>", d64->data.f );
+            break;
+        case INTGR: // `long`
+            printf( "<D64:INTGR=%d>", d64->data.i );
+            break;
+        case U_INT: // `unsigned long`
+            printf( "<D64:U_INT=%lu>", d64->data.u );
+            break;
+        case STRNG: // string
+            printf( "<D64:STRNG=\"%s\">", d64->data.s );
+            break;
+        case POINT: // pointer
+            printf( "<D64:POINT=0x%p>", d64->data.p );
+            break;
+        default:
+            printf( "<D64:ERROR-UNK-TYPE>" );
+    }
 }
 
 
@@ -131,6 +149,7 @@ typedef struct{
 enum TokenMode{
     // Tokenizer flags
     NO_CHAR, // Invalid
+    ALL_END, // Termination
     GOT_DGT, // Incoming digit      character
     GOT_MNS, // Incoming minus      character
     GOT_DEC, // Incoming decimal    character
@@ -181,6 +200,9 @@ Queue* tokenize_math_expr( const char* exprStr, ulong Nchrs ){
     for( ulong i = 0; i < Nchrs; ++i ){
         c_i  = exprStr[i];
         cTyp = character_test( c_i );
+
+        if( i >= (Nchrs-1) ){  mode = ALL_END;  }
+
         switch( mode ){
 
             /// State: Token Begin ///////////////
@@ -198,9 +220,27 @@ Queue* tokenize_math_expr( const char* exprStr, ulong Nchrs ){
                         mode = TKN_FLT;
                         break;
 
+                    case GOT_SPC:
+                        mode = TKN_BGN;
+                        break;
+
                     case GOT_MNS:
                         append_char_String( token, c_i );
                         mode = TKN_INT;
+                        break;
+
+                    case GOT_RES:
+                        append_char_String( token, c_i );
+                        push_back_Q( rtnQ, (void*) make_string( 
+                            get_String_as_char_array( token ),
+                            1     
+                        ) );
+                        clear_String( token );
+                        mode = TKN_BGN;
+                        break;
+
+                    case GOT_TRM:
+                        mode = ALL_END;
                         break;
 
                     case GOT_CHR:
@@ -208,17 +248,13 @@ Queue* tokenize_math_expr( const char* exprStr, ulong Nchrs ){
                         mode = TKN_STR;
                         break;
 
-                    case GOT_TRM:
-                        mode = NO_CHAR;
-                        break;
-                    
                     default:
-                        printf( "WARNING, UNHANDLED CHAR: %c in initial mode!", c_i );
+                        printf( "WARNING, UNHANDLED CHAR: %c in initial mode!\n", c_i );
                         break;
                 }
                 break;
             
-            /// State: Token Unsigned Int ///////////////
+            /// State: Token Unsigned Int ////////
             case TKN_UIN:
                 switch (cTyp){
                     
@@ -258,12 +294,19 @@ Queue* tokenize_math_expr( const char* exprStr, ulong Nchrs ){
                         break;
                     
                     default:
-                        printf( "WARNING, UNHANDLED CHAR: %c in initial mode!", c_i );
+                        printf( "WARNING, UNHANDLED CHAR: %c in initial mode!\n", c_i );
                         break;
                 }
                 break;
 
+            /// State: Token Unsigned Int ////////
+            case ALL_END:
+                print( "TOKENIZER HALTED\n" );
+                break;
+
+            /// State: UNKNOWN ///////////////////
             default:
+                printf( "WARNING, UNHANDLED TOKENIZER MODE: %i\n", (int) mode );
                 break;
         }
     }
@@ -271,7 +314,7 @@ Queue* tokenize_math_expr( const char* exprStr, ulong Nchrs ){
 
 void print_math_token_Queue( Queue* mq ){
     // Print the math tokens in order
-    // FIXME: PRINT EACH TOKEN (`Data64`) IN ORDER
+    // FIXME, START HERE: PRINT EACH TOKEN (`Data64`) IN ORDER
 }
 
 // https://inspirnathan.com/posts/156-abstract-syntax-trees-with-shunting-yard-algorithm
