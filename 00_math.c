@@ -193,20 +193,20 @@ Queue* tokenize_math_expr( const char* exprStr, ulong Nchrs ){
     String*   token = make_String(); // Dyn. String representation of a single token
     TokenMode mode  = TKN_BGN; // Init mode
     TokenMode cTyp  = NO_CHAR; // Init char flag
-    char /**/ c_i;
-    char*     ptr;
+    char /**/ c_i   = 0;
+    char*     ptr   = NULL;
     
     /// Tokenizer Loop ///
-    for( ulong i = 0; i < Nchrs; ++i ){
-        c_i  = exprStr[i];
-        cTyp = character_test( c_i );
-
-        if( i >= (Nchrs-1) ){  mode = ALL_END;  }
-
+    for( ulong i = 0; i < Nchrs+1; ++i ){
+        if( i < Nchrs ){
+            c_i  = exprStr[i];
+            cTyp = character_test( c_i );
+        }else{  cTyp = GOT_TRM;  }
         switch( mode ){
 
             /// State: Token Begin ///////////////
             case TKN_BGN:
+                printf( "Iteration: %ld, Mode: TKN_BGN\n", i+1 );
                 switch (cTyp){
 
                     case GOT_DGT:
@@ -256,6 +256,7 @@ Queue* tokenize_math_expr( const char* exprStr, ulong Nchrs ){
             
             /// State: Token Unsigned Int ////////
             case TKN_UIN:
+                printf( "Iteration: %ld, Mode: TKN_UIN\n", i+1 );
                 switch (cTyp){
                     
                     case GOT_DGT:
@@ -268,6 +269,8 @@ Queue* tokenize_math_expr( const char* exprStr, ulong Nchrs ){
                         mode = TKN_FLT;
                         break;
 
+                    case GOT_TRM:
+                        mode = ALL_END;
                     case GOT_MNS:
                     case GOT_RES:
                     case GOT_SPC:
@@ -279,7 +282,7 @@ Queue* tokenize_math_expr( const char* exprStr, ulong Nchrs ){
                         ) ) );
                         clear_String( token );
 
-                        if( cTyp != GOT_SPC ){
+                        if( (cTyp != GOT_SPC) && (cTyp != GOT_TRM) ){
                             append_char_String( token, c_i );
                             push_back_Q( rtnQ, (void*) make_string( get_String_as_char_array( token ), token->len ) );
                             clear_String( token );
@@ -309,21 +312,50 @@ Queue* tokenize_math_expr( const char* exprStr, ulong Nchrs ){
                 printf( "WARNING, UNHANDLED TOKENIZER MODE: %i\n", (int) mode );
                 break;
         }
+        // if( i >= (Nchrs-1) ){  mode = ALL_END;  }
     }
     return rtnQ;
 }
 
 void print_math_token_Queue( Queue* mq ){
     // Print the math tokens in order
-    // FIXME, START HERE: PRINT EACH TOKEN (`Data64`) IN ORDER
+    Elem* elem = mq->front;
+    printf( "[" );
+    do{
+        print_Data64( (Data64*) elem->data );
+        elem->next ? printf( ", " ) : printf( "," );
+        elem = elem->next;
+    }while( elem );
+    printf( "]\n" );
 }
 
-// https://inspirnathan.com/posts/156-abstract-syntax-trees-with-shunting-yard-algorithm
+/* https://inspirnathan.com/posts/156-abstract-syntax-trees-with-shunting-yard-algorithm
 
+/// Order of Operations ///
+Parentheses
+Addition
+Subtraction
+Multiplication
+Division
+Exponentiation
+Unary operations (for negative numbers)
+
+
+*/
+
+AMT_Node* tokens_to_abstract_math_tree( Queue* tokens ){
+    // Implements the Shunting Yard Algorithm for simple math expressions
+    // https://inspirnathan.com/posts/156-abstract-syntax-trees-with-shunting-yard-algorithm
+    AMT_Node* rtnRoot = NULL;
+    Data64*   token   = NULL; // (Data64*) pop_front_Q( tokens );
+    if( !token ){  return NULL;  }
+    // FIXME, START HERE: https://inspirnathan.com/posts/156-abstract-syntax-trees-with-shunting-yard-algorithm#finished-code
+}
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
 
 // FIXME: EVALUTATE A MATH EXPRESSION
 int main(){
     Queue* mathExpr = tokenize_math_expr( "2+3", 3 );
+    print_math_token_Queue( mathExpr );
 }
