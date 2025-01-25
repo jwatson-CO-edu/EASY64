@@ -74,6 +74,11 @@ typedef shared_ptr<Data64> dataPtr;
 ////////// MATH OPERATIONS /////////////////////////////////////////////////////////////////////////
 
 // FIXME: THERE IS A LOT OF REPEAT CODE HERE: std::variant: A Type-Safe Union, https://dev.to/pauljlucas/unions-stdvariant-in-c-2op1
+/*
+std::variant<int, std::string> v = 42;
+std::cout << "Index: " << v.index() << std::endl; // Output: 0 (int is the first type)
+*/
+
 
 Data64 dispatch_operation( const Data64& left, const Data64& rght, N64 ){
 
