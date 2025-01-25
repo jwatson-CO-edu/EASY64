@@ -73,7 +73,11 @@ typedef shared_ptr<Data64> dataPtr;
 
 ////////// MATH OPERATIONS /////////////////////////////////////////////////////////////////////////
 
-// FIXME: THERE IS A LOT OF REPEAT CODE HERE, USE A STRATEGY PATTERN
+// FIXME: THERE IS A LOT OF REPEAT CODE HERE: std::variant: A Type-Safe Union, https://dev.to/pauljlucas/unions-stdvariant-in-c-2op1
+
+Data64 dispatch_operation( const Data64& left, const Data64& rght, N64 ){
+
+}
 
 Data64 operator+( const Data64& left, const Data64& rght ){
     // Handle type escalation and return result of addition
