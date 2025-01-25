@@ -73,6 +73,7 @@ typedef shared_ptr<Data64> dataPtr;
 
 ////////// MATH OPERATIONS /////////////////////////////////////////////////////////////////////////
 
+// FIXME: THERE IS A LOT OF REPEAT CODE HERE, USE A STRATEGY PATTERN
 
 Data64 operator+( const Data64& left, const Data64& rght ){
     // Handle type escalation and return result of addition
