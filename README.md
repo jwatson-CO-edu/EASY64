@@ -58,8 +58,14 @@ Spelled EASY64, Easy64, EASY, Easy
 * 3D Turtle Mode
 * Native Geometric Algebra
 * OpenCL backend
+* Transpilation to C/++
+* Piles and piles of absolute, frothing nonsense (See below sections).
+
+# Networked Programming Language
+* A process as a first-class object
+* Imagine using the Bash pipe operator, but as a language
 * Parallel Model: Jobs & Places
-    - Jobs: EASY interpreter running in a separate, asynchronous process
+    - Jobs: EASY interpreter running in a separate, asynchronous process, first-class object
         * No Sharing: Must copy all necessary data to run the job
         * No control of the job once spawned
     - Places: Structs that both hold the job result and the status of the job
@@ -68,6 +74,17 @@ Spelled EASY64, Easy64, EASY, Easy
         * Idea: Places can be updated more than once
             - Tagged with freshness metadata
             - Main program has choice to wait for update or to proceed with stale data
-* Transpilation to C/++
-* Flow programming
-* Piles and piles of absolute, frothing nonsense
+* [Communication Between Processes on Same Machine](https://stackoverflow.com/questions/670891/is-there-a-way-for-multiple-processes-to-share-a-listening-socket)
+    - [Unix Domain Socket (UDS)](https://en.wikipedia.org/wiki/Unix_domain_socket#Socket_instantiation)
+    - [UDS Example](https://medium.com/swlh/getting-started-with-unix-domain-sockets-4472c0db4eb1)
+    - [Shared Memory Between Processes](https://man7.org/linux/man-pages/man7/shm_overview.7.html)
+        * [`shm_open` Example](https://gist.github.com/garcia556/8231e844a90457c99cc72e5add8388e4)
+
+# Built-in Backchain Solver
+* Give the system something to do in the background
+* Probabilistic?
+* BDI Paradigm?
+* Allow the programmer to swap the solver engine
+
+# Possible Names
+* Bryozoa: Networked Programming
