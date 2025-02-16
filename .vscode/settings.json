@@ -68,7 +68,10 @@
         "__tuple": "c",
         "__node_handle": "c",
         "easy64.h": "c",
-        "stddef.h": "c"
+        "stddef.h": "c",
+        "complex": "cpp",
+        "filesystem": "cpp",
+        "variant": "cpp"
     },
     "makefile.configureOnOpen": false
 }
