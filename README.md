@@ -41,7 +41,7 @@ Spelled EASY64, Easy64, EASY, Easy
 
 # `DEV PLAN`
 * `[>]` Basic Math Expressions
-    - `[Y]` Numeric data types, 2023-08-26: Simplest possible, using unions
+    - `[>]` Numeric data types, Simplest possible, using [`std::variant`](https://en.cppreference.com/w/cpp/utility/variant)
     - `[>]` Math calculations, stack model
 * `[ ]` Tree parser
     - Expectations about future branches?

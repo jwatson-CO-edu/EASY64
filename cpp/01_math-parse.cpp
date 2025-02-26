@@ -15,10 +15,13 @@ using std::shared_ptr;
 #include <stack>
 using std::stack;
 #include <cmath>
+#include <variant>
+using std::variant, std::get;
 
 /// Aliases ///
-typedef unsigned long  ulong;
-typedef vector<string> vstr;
+typedef unsigned long /*--------*/ ulong;
+typedef vector<string> /*-------*/ vstr;
+typedef variant<double,long,ulong> N64;
 
 /// Forward Declarations ///
 struct MathNode;  typedef shared_ptr<MathNode> mathPtr;
@@ -31,14 +34,14 @@ enum E_Type_N{
     INTGR, // `long`
     U_INT, // `unsigned long`
     NaNum, // Not a Number
+    ERROR, // Error
 };
 
-union N64{
-    // Numeric union
-    double f;
-    long   i;
-    ulong  u;
+
+enum E_Type_E{
+    UNDEF_TYPE, // This type is NOT recognized
 };
+
 
 struct Data64{
     // A container for data
@@ -46,24 +49,36 @@ struct Data64{
     N64 /**/ data;
 
     void set_float( double dbbl ){  
-        data.f = dbbl; 
-        type   = FLOAT;
+        data = dbbl; 
+        type = FLOAT;
     }
 
     void set_int( long lng ){ 
-        data.i = lng;  
-        type   = INTGR;
+        data = lng;  
+        type = INTGR;
     }
 
     void set_uint( ulong ulng ){     
-        data.u = ulng; 
-        type   = U_INT;
+        data = ulng; 
+        type = U_INT;
     }
 
     void set_NaN(){
-        data.f = nan("");
-        type   = NaNum;
+        data = nan("");
+        type = NaNum;
     }
+
+    void set_error( ulong code ){
+        data = code;
+        type = ERROR;
+    }
+
+    double get_float(){  return get<double>( data );  }
+    double get_int(){    return get<long>( data );    }
+    double get_uint(){   return get<ulong>( data );   }
+    double get_NaN(){    return nan("");              }
+    double get_code(){   return get<ulong>( data );   }
+
 
     bool p_NaN(){  return (type == NaNum);  }
 };
@@ -80,39 +95,35 @@ std::cout << "Index: " << v.index() << std::endl; // Output: 0 (int is the first
 */
 
 
-Data64 dispatch_operation( const Data64& left, const Data64& rght, N64 ){
-
-}
-
 Data64 operator+( const Data64& left, const Data64& rght ){
     // Handle type escalation and return result of addition
     Data64 rtnObj;
     switch( left.type ){
         case FLOAT: 
             switch( rght.type ){
-                case FLOAT:  rtnObj.set_float( left.data.f + rght.data.f ); /**/ break;
-                case INTGR:  rtnObj.set_float( left.data.f + rght.data.i*1.0 );  break;
-                case U_INT:  rtnObj.set_float( left.data.f + rght.data.u*1.0 );  break;
-                default:     cout << "ERROR: BAD TYPE!" << endl;  exit( 1 );
+                case FLOAT:  rtnObj.set_float( get<double>(left.data) + get<double>(rght.data)); /**/ break;
+                case INTGR:  rtnObj.set_float( get<double>(left.data) + get<long>(rght.data));  break;
+                case U_INT:  rtnObj.set_float( get<double>(left.data) + get<ulong>(rght.data) );  break;
+                default:     rtnObj.set_error( UNDEF_TYPE );
             }
             break;
         case INTGR: 
             switch( rght.type ){
-                case FLOAT:  rtnObj.set_float( left.data.i*1.0 + rght.data.f );   break;
-                case INTGR:  rtnObj.set_int( left.data.i + rght.data.i ); /*---*/ break;
-                case U_INT:  rtnObj.set_int( left.data.i + (long) rght.data.u );  break;
-                default:     cout << "ERROR: BAD TYPE!" << endl;  exit( 1 );
+                case FLOAT:  rtnObj.set_float( get<long>(left.data) + get<double>(rght.data) );   break;
+                case INTGR:  rtnObj.set_int(   get<long>(left.data) + get<long>(rght.data) ); /*---*/ break;
+                case U_INT:  rtnObj.set_int(   get<long>(left.data) + get<ulong>(rght.data) );  break;
+                default:     rtnObj.set_error( UNDEF_TYPE );
             }
             break;
         case U_INT: 
             switch( rght.type ){
-                case FLOAT:  rtnObj.set_float( left.data.u*1.0 + rght.data.f );   break;
-                case INTGR:  rtnObj.set_int( (long) left.data.u + rght.data.i );  break;
-                case U_INT:  rtnObj.set_uint( left.data.u + rght.data.u ); /*--*/ break;
-                default:     cout << "ERROR: BAD TYPE!" << endl;  exit( 1 );
+                case FLOAT:  rtnObj.set_float( get<ulong>(left.data) + get<double>(rght.data) );   break;
+                case INTGR:  rtnObj.set_int(   get<ulong>(left.data) + get<long>(rght.data) );  break;
+                case U_INT:  rtnObj.set_uint(  get<ulong>(left.data) + get<ulong>(rght.data) ); /*--*/ break;
+                default:     rtnObj.set_error( UNDEF_TYPE );
             }
             break;
-        default:  cout << "ERROR: BAD TYPE!" << endl;  exit( 1 );
+        default:  rtnObj.set_error( UNDEF_TYPE );
     }
     return rtnObj;
 }
@@ -123,29 +134,29 @@ Data64 operator-( const Data64& left, const Data64& rght ){
     switch( left.type ){
         case FLOAT: 
             switch( rght.type ){
-                case FLOAT:  rtnObj.set_float( left.data.f - rght.data.f ); /**/ break;
-                case INTGR:  rtnObj.set_float( left.data.f - rght.data.i*1.0 );  break;
-                case U_INT:  rtnObj.set_float( left.data.f - rght.data.u*1.0 );  break;
-                default:     cout << "ERROR: BAD TYPE!" << endl;  exit( 1 );
+                case FLOAT:  rtnObj.set_float( get<double>(left.data) - get<double>(rght.data)); /**/ break;
+                case INTGR:  rtnObj.set_float( get<double>(left.data) - get<long>(rght.data));  break;
+                case U_INT:  rtnObj.set_float( get<double>(left.data) - get<ulong>(rght.data) );  break;
+                default:     rtnObj.set_error( UNDEF_TYPE );
             }
             break;
         case INTGR: 
             switch( rght.type ){
-                case FLOAT:  rtnObj.set_float( left.data.i*1.0 - rght.data.f );   break;
-                case INTGR:  rtnObj.set_int( left.data.i - rght.data.i ); /*---*/ break;
-                case U_INT:  rtnObj.set_int( left.data.i - (long) rght.data.u );  break;
-                default:     cout << "ERROR: BAD TYPE!" << endl;  exit( 1 );
+                case FLOAT:  rtnObj.set_float( get<long>(left.data) - get<double>(rght.data) );   break;
+                case INTGR:  rtnObj.set_int(   get<long>(left.data) - get<long>(rght.data) ); /*---*/ break;
+                case U_INT:  rtnObj.set_int(   get<long>(left.data) - get<ulong>(rght.data) );  break;
+                default:     rtnObj.set_error( UNDEF_TYPE );
             }
             break;
         case U_INT: 
             switch( rght.type ){
-                case FLOAT:  rtnObj.set_float( left.data.u*1.0 - rght.data.f );   break;
-                case INTGR:  rtnObj.set_int( (long) left.data.u - rght.data.i );  break;
-                case U_INT:  rtnObj.set_uint( left.data.u - rght.data.u ); /*--*/ break;
-                default:     cout << "ERROR: BAD TYPE!" << endl;  exit( 1 );
+                case FLOAT:  rtnObj.set_float( get<ulong>(left.data) - get<double>(rght.data) );   break;
+                case INTGR:  rtnObj.set_int(   get<ulong>(left.data) - get<long>(rght.data) );  break;
+                case U_INT:  rtnObj.set_uint(  get<ulong>(left.data) - get<ulong>(rght.data) ); /*--*/ break;
+                default:     rtnObj.set_error( UNDEF_TYPE );
             }
             break;
-        default:  cout << "ERROR: BAD TYPE!" << endl;  exit( 1 );
+        default:  rtnObj.set_error( UNDEF_TYPE );
     }
     return rtnObj;
 }
@@ -156,29 +167,29 @@ Data64 operator*( const Data64& left, const Data64& rght ){
     switch( left.type ){
         case FLOAT: 
             switch( rght.type ){
-                case FLOAT:  rtnObj.set_float( left.data.f * rght.data.f ); /**/ break;
-                case INTGR:  rtnObj.set_float( left.data.f * rght.data.i*1.0 );  break;
-                case U_INT:  rtnObj.set_float( left.data.f * rght.data.u*1.0 );  break;
-                default:     cout << "ERROR: BAD TYPE!" << endl;  exit( 1 );
+                case FLOAT:  rtnObj.set_float( get<double>(left.data) * get<double>(rght.data)); /**/ break;
+                case INTGR:  rtnObj.set_float( get<double>(left.data) * get<long>(rght.data));  break;
+                case U_INT:  rtnObj.set_float( get<double>(left.data) * get<ulong>(rght.data) );  break;
+                default:     rtnObj.set_error( UNDEF_TYPE );
             }
             break;
         case INTGR: 
             switch( rght.type ){
-                case FLOAT:  rtnObj.set_float( left.data.i*1.0 * rght.data.f );   break;
-                case INTGR:  rtnObj.set_int( left.data.i * rght.data.i ); /*---*/ break;
-                case U_INT:  rtnObj.set_int( left.data.i * (long) rght.data.u );  break;
-                default:     cout << "ERROR: BAD TYPE!" << endl;  exit( 1 );
+                case FLOAT:  rtnObj.set_float( get<long>(left.data) * get<double>(rght.data) );   break;
+                case INTGR:  rtnObj.set_int(   get<long>(left.data) * get<long>(rght.data) ); /*---*/ break;
+                case U_INT:  rtnObj.set_int(   get<long>(left.data) * get<ulong>(rght.data) );  break;
+                default:     rtnObj.set_error( UNDEF_TYPE );
             }
             break;
         case U_INT: 
             switch( rght.type ){
-                case FLOAT:  rtnObj.set_float( left.data.u*1.0 * rght.data.f );   break;
-                case INTGR:  rtnObj.set_int( (long) left.data.u * rght.data.i );  break;
-                case U_INT:  rtnObj.set_uint( left.data.u * rght.data.u ); /*--*/ break;
-                default:     cout << "ERROR: BAD TYPE!" << endl;  exit( 1 );
+                case FLOAT:  rtnObj.set_float( get<ulong>(left.data) * get<double>(rght.data) );   break;
+                case INTGR:  rtnObj.set_int(   get<ulong>(left.data) * get<long>(rght.data) );  break;
+                case U_INT:  rtnObj.set_uint(  get<ulong>(left.data) * get<ulong>(rght.data) ); /*--*/ break;
+                default:     rtnObj.set_error( UNDEF_TYPE );
             }
             break;
-        default:  cout << "ERROR: BAD TYPE!" << endl;  exit( 1 );
+        default:  rtnObj.set_error( UNDEF_TYPE );
     }
     return rtnObj;
 }
@@ -186,36 +197,35 @@ Data64 operator*( const Data64& left, const Data64& rght ){
 Data64 operator/( const Data64& left, const Data64& rght ){
     // Handle type escalation and return result of division
     Data64 rtnObj;
-    if( (rght.data.f == 0.0) || (rght.data.i == 0) || (rght.data.u == 0) ){
-        cout << "ERROR: DIVIDE BY ZERO!" << endl;  
-        exit( 1 );
-    }
-    switch( left.type ){
+    switch( rght.type ){
         case FLOAT: 
-            switch( rght.type ){
-                case FLOAT:  rtnObj.set_float( left.data.f / rght.data.f ); /**/ break;
-                case INTGR:  rtnObj.set_float( left.data.f / rght.data.i*1.0 );  break;
-                case U_INT:  rtnObj.set_float( left.data.f / rght.data.u*1.0 );  break;
-                default:     cout << "ERROR: BAD TYPE!" << endl;  exit( 1 );
+            if( get<double>(left.data) == 0.0 ){  rtnObj.set_NaN();  break;  }
+            switch( left.type ){
+                case FLOAT:  rtnObj.set_float( get<double>(left.data) / get<double>(rght.data));  break;
+                case INTGR:  rtnObj.set_float( get<long>(left.data) / get<double>(rght.data));    break;
+                case U_INT:  rtnObj.set_float( get<ulong>(left.data) / get<double>(rght.data) );  break;
+                default:     rtnObj.set_error( UNDEF_TYPE );
             }
             break;
         case INTGR: 
-            switch( rght.type ){
-                case FLOAT:  rtnObj.set_float( left.data.i*1.0 / rght.data.f );   break;
-                case INTGR:  rtnObj.set_int( left.data.i / rght.data.i ); /*---*/ break;
-                case U_INT:  rtnObj.set_int( left.data.i / (long) rght.data.u );  break;
-                default:     cout << "ERROR: BAD TYPE!" << endl;  exit( 1 );
+            if( get<long>(left.data) == 0 ){  rtnObj.set_NaN();  break;  }
+            switch( left.type ){
+                case FLOAT:  rtnObj.set_float( get<double>(left.data) / get<long>(rght.data) );  break;
+                case INTGR:  rtnObj.set_int(   get<long>(left.data) / get<long>(rght.data) );    break;
+                case U_INT:  rtnObj.set_int(   get<ulong>(left.data) / get<long>(rght.data) );   break;
+                default:     rtnObj.set_error( UNDEF_TYPE );
             }
             break;
         case U_INT: 
-            switch( rght.type ){
-                case FLOAT:  rtnObj.set_float( left.data.u*1.0 / rght.data.f );   break;
-                case INTGR:  rtnObj.set_int( (long) left.data.u / rght.data.i );  break;
-                case U_INT:  rtnObj.set_uint( left.data.u / rght.data.u ); /*--*/ break;
-                default:     cout << "ERROR: BAD TYPE!" << endl;  exit( 1 );
+            if( get<ulong>(left.data) == 0 ){  rtnObj.set_NaN();  break;  }
+            switch( left.type ){
+                case FLOAT:  rtnObj.set_float( get<double>(left.data) / get<ulong>(rght.data) );  break;
+                case INTGR:  rtnObj.set_int(   get<long>(left.data) / get<ulong>(rght.data) );    break;
+                case U_INT:  rtnObj.set_uint(  get<ulong>(left.data) / get<ulong>(rght.data) );   break;
+                default:     rtnObj.set_error( UNDEF_TYPE );
             }
             break;
-        default:  cout << "ERROR: BAD TYPE!" << endl;  exit( 1 );
+        default:  rtnObj.set_error( UNDEF_TYPE );
     }
     return rtnObj;
 }
@@ -228,10 +238,10 @@ Data64 operator/( const Data64& left, const Data64& rght ){
 ostream& operator<<( ostream& os , const Data64& dat ){ 
     // Print data
     switch( dat.type ){
-        case FLOAT:  os << dat.data.f;  break;
-        case INTGR:  os << dat.data.i;  break;
-        case U_INT:  os << dat.data.u;  break;
-        default:     cout << "ERROR: BAD TYPE!" << endl;  exit( 1 );
+        case FLOAT:  os << get<double>(dat.data);  break;
+        case INTGR:  os << get<long>(dat.data);    break;
+        case U_INT:  os << get<ulong>(dat.data);   break;
+        default:     cout << "CANNOT PRINT: BAD TYPE!" << endl;
     }
     return os; // You must return a reference to the stream!
 }

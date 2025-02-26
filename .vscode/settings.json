@@ -70,17 +70,8 @@
         "easy64.h": "c",
         "stddef.h": "c",
         "complex": "cpp",
-        "list": "cpp",
-        "set": "cpp",
-        "fstream": "cpp",
-        "iomanip": "cpp",
-        "ranges": "cpp",
-        "cinttypes": "cpp",
-        "codecvt": "cpp",
-        "forward_list": "cpp",
-        "unordered_set": "cpp",
-        "typeindex": "cpp",
-        "format": "cpp"
+        "filesystem": "cpp",
+        "variant": "cpp"
     },
     "makefile.configureOnOpen": false
 }
