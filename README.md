@@ -31,6 +31,7 @@ Spelled EASY64, Easy64, EASY, Easy
 * `float` (double)
 * `int` (long)
 * `uint` (unsigned long)
+* `char` (unsigned long), 64 bits of char data?
 ### Code
 * How to handle code as a first-class type?
 ### Composites
