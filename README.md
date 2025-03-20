@@ -39,16 +39,20 @@ Spelled EASY64, Easy64, EASY, Easy
 ### User-Defined Types: Component System Units
 * ???
 ### Control Flow
-* Idea: All conditionals are their **own code blocks** so that _bookkeeping_ and _computation_ can be **kept separate if desired**!
-* `while{}`
-* `do{}`-`while{}`
-* `for`
-    - Traditional
-    - Iterator
-* `if`-`then`-`else`
-    - `if`: Regular block of code, evaluate with `eval`, If the keyword is omitted, then the truth of the last statement is considered the result
-    - `then`: Block executed if `eval` is true-like
-    - `else`: Block executed if `eval` is false-like
+* Idea: All conditionals can be their **own code blocks** so that _bookkeeping_ and _computation_ can be **kept separate if desired**!
+    - All the codeblocks in the same conditional share a scope, They are (kind of) the same code block under the hood
+    - Conditionals are regular blocks of code, the truth of which is determined by `eval`, If the keyword is omitted, then the truth of the last statement is considered the result
+    - `while{}{}`
+    - `do{}`-`while{}`
+    - `for{}`
+    - `if{}`-`then{}`-`else{}`
+        * `if`: Conditional
+        * `then`: Block executed if `eval` is true-like
+        * `else`: Block executed if `eval` is false-like
+* Also offer the traditional versions
+    - `for()`
+        * Traditional
+        * Iterator
 
 # Implementation
 ## Lexer
@@ -76,6 +80,7 @@ Spelled EASY64, Easy64, EASY, Easy
 * `[ ]` Add line number to `AST_Node` for user debugging
 
 # Future Possibilities
+* How does the interpreter keep from defining a variable multiple times? - Just check if it exists whenever the statement is run!
 * Primitive Type: Bit Block - 64 addressable booleans
 * Domains
     - 3D Turtle Mode
