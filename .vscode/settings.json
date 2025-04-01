@@ -71,7 +71,18 @@
         "stddef.h": "c",
         "complex": "cpp",
         "filesystem": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "list": "cpp",
+        "set": "cpp",
+        "fstream": "cpp",
+        "iomanip": "cpp",
+        "ranges": "cpp",
+        "cinttypes": "cpp",
+        "codecvt": "cpp",
+        "forward_list": "cpp",
+        "unordered_set": "cpp",
+        "typeindex": "cpp",
+        "format": "cpp"
     },
     "makefile.configureOnOpen": false
 }
