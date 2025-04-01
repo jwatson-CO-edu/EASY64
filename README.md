@@ -17,6 +17,13 @@ Spelled EASY64, Easy64, EASY, Easy
 * Interpreted
 * Only 64-bit primitive types offered {`double`, `long int`, `unsigned long int`}
 * Interpreter with REPL and file execution capabilities
+* Component System Units: Favor Composition Over Inheritance
+    - Unit = Components (Members) + System (Methods)
+        * A semi-contained struct that is meant to be part of a larger entity
+        * Defines a certain combination of components
+        * Defines methods that operate on the specified components; the system. When the system follows the unit, so do capabilities associated with the unit
+    - Also allow the class itself to define methods
+* Inheritance supported but discouraged! 
 
 # Specification
 ## Types
@@ -24,10 +31,29 @@ Spelled EASY64, Easy64, EASY, Easy
 * `float` (double)
 * `int` (long)
 * `uint` (unsigned long)
+* `char` (unsigned long), 64 bits of char data?
+### Code
+* How to handle code as a first-class type?
 ### Composites
 * Arrays (zero-based)
-### User-Defined Types
-* ? Interfaces + Entity Component System ? + ???
+* Strings
+### User-Defined Types: Component System Units
+* ???
+### Control Flow
+* Idea: All conditionals can be their **own code blocks** so that _bookkeeping_ and _computation_ can be **kept separate if desired**!
+    - All the codeblocks in the same conditional share a scope, They are (kind of) the same code block under the hood
+    - Conditionals are regular blocks of code, the truth of which is determined by `eval`, If the keyword is omitted, then the truth of the last statement is considered the result
+    - `while{}{}`
+    - `do{}`-`while{}`
+    - `for{}`
+    - `if{}`-`then{}`-`else{}`
+        * `if`: Conditional
+        * `then`: Block executed if `eval` is true-like
+        * `else`: Block executed if `eval` is false-like
+* Also offer the traditional versions
+    - `for()`
+        * Traditional
+        * Iterator
 
 # Implementation
 ## Lexer
@@ -55,23 +81,33 @@ Spelled EASY64, Easy64, EASY, Easy
 * `[ ]` Add line number to `AST_Node` for user debugging
 
 # Future Possibilities
-* 3D Turtle Mode
-* Native Geometric Algebra
-* OpenCL backend
-* Transpilation to C/++
+* How does the interpreter keep from defining a variable multiple times? - Just check if it exists whenever the statement is run!
+* Primitive Type: Bit Block - 64 addressable booleans
+* Domains
+    - 3D Turtle Mode
+    - Native Behavior Trees
+    - Native Geometric Algebra
+    - Deep Learning / QDN
+    - Machine Learning
+* GPU Compute backend
+    - OpenGL?: Do this if graphics come first 
+    - OpenCL?: Do this for a scientific/distributed computing context
+* Transpilation to C/++ --> Compilation pipeline
 * Piles and piles of absolute, frothing nonsense (See below sections).
 
-# Networked Programming Language
+# Bryozoa: Networked Flow Programming Language (DANGER: This is insane!)
 * A process as a first-class object
+* Do I need a `synchronized` keyword like Java?
 * Imagine using the Bash pipe operator, but as a language
-* Parallel Model: Jobs & Places
-    - Jobs: EASY interpreter running in a separate, asynchronous process, first-class object
+* Parallel Model: Hosts & Jobs
+    - Host: EASY interpreter instance
+        * One Instance, One Process
         * No Sharing: Must copy all necessary data to run the job
         * No control of the job once spawned
-    - Places: Structs that both hold the job result and the status of the job
-        * Main program can check a place to confirm that the result is ready
-        * Main program can wait for a place to be ready if desired
-        * Idea: Places can be updated more than once
+    - Job: Struct that both holds work definition, work status, and computation result 
+        * Main program can check a job to confirm that the result is ready
+        * Main program can wait for a job to be ready if desired
+        * Idea: Jobs can be updated more than once
             - Tagged with freshness metadata
             - Main program has choice to wait for update or to proceed with stale data
 * [Communication Between Processes on Same Machine](https://stackoverflow.com/questions/670891/is-there-a-way-for-multiple-processes-to-share-a-listening-socket)
@@ -79,12 +115,9 @@ Spelled EASY64, Easy64, EASY, Easy
     - [UDS Example](https://medium.com/swlh/getting-started-with-unix-domain-sockets-4472c0db4eb1)
     - [Shared Memory Between Processes](https://man7.org/linux/man-pages/man7/shm_overview.7.html)
         * [`shm_open` Example](https://gist.github.com/garcia556/8231e844a90457c99cc72e5add8388e4)
+* [Communication Between Hosts on a Local Network](https://claude.site/artifacts/f7b0532a-e795-4a3d-976c-06ae89ea4c83)
 
-# Built-in Backchain Solver
-* Give the system something to do in the background
-* Probabilistic?
-* BDI Paradigm?
-* Allow the programmer to swap the solver engine
-
-# Possible Names
-* Bryozoa: Networked Programming
+# Just, Positively Insane Ideas
+* EASY64 as a creative coding / visualization console
+* Make Bryozoa with the components needed to rapidly define cognitive architectures
+    - Call Python programs (including Tensorflow/PyTorch) as sub-processes
