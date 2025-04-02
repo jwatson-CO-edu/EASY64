@@ -166,8 +166,7 @@ vstr tokenize_ws( string expStr ){
 
     // 0. Apply the postfix hack
     expStr.push_back(' ');
-    // cout << "There are " << expStr.size() << " characters to examine! ";
-    // cout << string(";").size() << endl;
+
     // 1. For every character in the string
     for( char ch_i : expStr ){
         // 2. Fetch character

@@ -15,6 +15,10 @@ using std::variant, std::get;
 #include <memory>
 using std::shared_ptr;
 
+/// Aliases ///
+typedef unsigned long  ulong;
+typedef vector<string> vstr;
+
 
 ////////// LANGUAGE CONSTANTS //////////////////////////////////////////////////////////////////////
 
@@ -56,6 +60,8 @@ bool p_reserved( const string& q ){
     for( const string& sym : RESERVED ){  if( q == sym ){  return true;  }  }
     return false;
 }
+
+bool p_symbol( const string& q ){  return p_special(q) || p_reserved(q);  }
 
 bool p_letter( const char& q ){
     // Return True if `q` matches a letter, otherwise return False
@@ -108,9 +114,12 @@ enum C_Type{
 
 typedef vector<string> Enum;
 
-template<typename T>
-class Subrange{
-    vector<T> values;
+class ValRange{
+    vector<P_Val> values;
+};
+
+class StrRange{
+    vstr values;
 };
 
 typedef vector<P_Val> Array;
@@ -122,7 +131,7 @@ class Struct{ public: // WARNING: ASSUMPTION
 
 class Record{ public: 
     map<string,P_Val> pVars; // Variables, Primitive Types
-    map<string,vector<string>> condFields; // Conditional Fields
+    map<string,vstr>  condFields; // Conditional Fields
 };
 
 
@@ -131,12 +140,101 @@ class Set{
     set<T> values;
 };
 
+class File{ public:
 
-////////// VARIABLE LEXING /////////////////////////////////////////////////////////////////////////
-class BlockFrame;
-typedef shared_ptr<BlockFrame> BlkPtr;
-
-class BlockFrame{ public: // WARNING: ASSUMPTION
-    BlkPtr /*------*/ parent; // The frame that contains this one
-    map<string,P_Val> pVars; // Variables, Primitive Types
 };
+
+class Pointer{ public:
+    // Pointer explanation is VERY UNCLEAR
+};
+
+
+
+////////// COMPONENTS //////////////////////////////////////////////////////////////////////////////
+class ValStore{ public:
+    // Lookup for values by name
+    map<string,string>   pAlias; // Aliases for primitive types
+    map<string,P_Val>    var; // -- Variables of primitive types
+    map<string,ValRange> valrange; 
+    map<string,StrRange> strrange; 
+    map<string,Enum>     namedEnum; 
+    map<string,Array>    namedArray; 
+    map<string,File>     file; 
+    map<string,Record>   record; 
+};
+
+
+vstr tokenize( string expStr, char sepChr ){
+    // Return a vector of tokenized strings that a separated by whitespace within `expStr`
+    vstr   tokens;
+    char   c;
+    string cStr;
+    string token  = "";
+
+    // Helpers //
+    auto stow_token = [&]{  tokens.push_back( token );  token = "";  };
+    auto stow_char  = [&]{  tokens.push_back( string(1,c) );  };
+    auto cache_char = [&]{  token.push_back( c );  };
+
+    // 0. Apply the postfix hack
+    expStr.push_back( sepChr );
+
+    // 1. For every character in the string
+    for( char ch_i : expStr ){
+        // 2. Fetch character
+        c    = ch_i;
+        cStr = string(1,c);
+        // 3. Either add char to present token or create a new one
+        // A. Case Reserved
+        if( p_symbol( cStr ) ){  
+            // cout << "Reserved Token: " << find_reserved_token( cStr ) << endl;
+            if( token.size() > 0 ){  stow_token();  }
+            stow_char();  
+        // B. Case separator
+        }else if( c == sepChr ){
+            if(token.size() > 0){  stow_token();  }
+        // C. Case any other char
+        }else{  cache_char();  } 
+    }
+    // N. Return the vector of tokens
+    return tokens;
+}
+
+
+
+////////// TYPES ///////////////////////////////////////////////////////////////////////////////////
+void define_types( ValStore& types, string defText ){
+
+}
+
+
+////////// CONSTANTS ///////////////////////////////////////////////////////////////////////////////
+void define_constants( ValStore& constants, string defText ){
+
+}
+
+
+////////// VARIABLES ///////////////////////////////////////////////////////////////////////////////
+void define_variables( ValStore& variables, string defText ){
+
+}
+
+
+////////// INTERPRETER /////////////////////////////////////////////////////////////////////////////
+
+class Interpreter{ public:
+    // Runs programs
+    ValStore types;
+    ValStore constants;
+    ValStore vars;
+};
+
+
+// ////////// VARIABLE LEXING /////////////////////////////////////////////////////////////////////////
+// class BlockFrame;
+// typedef shared_ptr<BlockFrame> BlkPtr;
+
+// class BlockFrame{ public: // WARNING: ASSUMPTION
+//     BlkPtr /*------*/ parent; // The frame that contains this one
+//     map<string,P_Val> pVars; // Variables, Primitive Types
+// };
