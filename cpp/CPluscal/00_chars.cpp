@@ -83,7 +83,12 @@ enum P_Type{
     BOOL, 
     CHAR, 
 };
-typedef variant<long,double,bool,char> P_Val; // Primitive Values
+typedef variant<long,double,bool,char> P_Val; // Primitive Values // WARNING: ASSUMPTION
+
+struct P_Var{
+    P_Type type;
+    P_Val  value;
+};
 
 
 ////////// COMPOUND TYPES //////////////////////////////////////////////////////////////////////////
@@ -103,6 +108,6 @@ enum C_Type{
 
 
 ////////// VARIABLE LEXING /////////////////////////////////////////////////////////////////////////
-class ScopeFrame{ public:
-
+class BlockFrame{ public: // WARNING: ASSUMPTION
+    map<string,P_Var> pVars;
 };
