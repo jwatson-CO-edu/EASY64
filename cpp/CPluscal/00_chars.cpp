@@ -2,12 +2,18 @@
 
 #include <array>
 using std::array;
+#include <vector>
+using std::vector;
+#include <set>
+using std::set;
 #include <string>
 using std::string;
 #include <map>
 using std::map;
 #include <variant>
 using std::variant, std::get;
+#include <memory>
+using std::shared_ptr;
 
 
 ////////// LANGUAGE CONSTANTS //////////////////////////////////////////////////////////////////////
@@ -100,9 +106,37 @@ enum C_Type{
     POINTER, // ???
 };
 
+typedef vector<string> Enum;
+
+template<typename T>
+class Subrange{
+    vector<T> values;
+};
+
+typedef vector<P_Val> Array;
+
+class Struct{ public: // WARNING: ASSUMPTION
+    bool /*--------*/ packed;
+    map<string,P_Val> pVars; // Variables, Primitive Types
+};
+
+class Record{ public: 
+    map<string,P_Val> pVars; // Variables, Primitive Types
+    map<string,vector<string>> condFields; // Conditional Fields
+};
+
+
+template<typename T>
+class Set{
+    set<T> values;
+};
 
 
 ////////// VARIABLE LEXING /////////////////////////////////////////////////////////////////////////
+class BlockFrame;
+typedef shared_ptr<BlockFrame> BlkPtr;
+
 class BlockFrame{ public: // WARNING: ASSUMPTION
-    map<string,P_Val> pVars;
+    BlkPtr /*------*/ parent; // The frame that contains this one
+    map<string,P_Val> pVars; // Variables, Primitive Types
 };
