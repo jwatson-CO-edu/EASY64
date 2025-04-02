@@ -85,11 +85,6 @@ enum P_Type{
 };
 typedef variant<long,double,bool,char> P_Val; // Primitive Values // WARNING: ASSUMPTION
 
-struct P_Var{
-    P_Type type;
-    P_Val  value;
-};
-
 
 ////////// COMPOUND TYPES //////////////////////////////////////////////////////////////////////////
 enum C_Type{
@@ -109,5 +104,5 @@ enum C_Type{
 
 ////////// VARIABLE LEXING /////////////////////////////////////////////////////////////////////////
 class BlockFrame{ public: // WARNING: ASSUMPTION
-    map<string,P_Var> pVars;
+    map<string,P_Val> pVars;
 };
