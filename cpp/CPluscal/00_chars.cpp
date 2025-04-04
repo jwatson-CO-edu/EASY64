@@ -115,7 +115,7 @@ string strip( const string& inputStr ){
     if( inputStr.empty() ){  return inputStr;  }
     string::size_type i,j;
     i = 0;
-    while( i < inputStr.size() && isspace( inputStr[i]) ){  ++i  };
+    while( i < inputStr.size() && isspace( inputStr[i]) ){  ++i;  }
     if( i == inputStr.size() ){  return string();  } // empty string
     j = inputStr.size() - 1;
     while( isspace( inputStr[j] ) ){  --j;  }
