@@ -82,7 +82,9 @@
         "forward_list": "cpp",
         "unordered_set": "cpp",
         "typeindex": "cpp",
-        "format": "cpp"
+        "format": "cpp",
+        "ios": "cpp",
+        "locale": "cpp"
     },
     "makefile.configureOnOpen": false
 }
