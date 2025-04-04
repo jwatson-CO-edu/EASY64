@@ -194,6 +194,7 @@ struct TextPortions{ public:
 
 TextPortions segment_source_file( string path ){
     // Load sections of the program into the struct so that we can lex/interpret them
+    // FIXME: READ FILE IN A SEPARATE FUNCTION
     enum Section{ TYPE, CONST, VAR, COMMENT, OTHER };
 
     ifstream     inputFile;
