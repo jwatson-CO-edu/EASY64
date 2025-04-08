@@ -4,6 +4,8 @@
 using std::array;
 #include <vector>
 using std::vector;
+#include <deque>
+using std::deque;
 #include <set>
 using std::set;
 #include <string>
@@ -102,7 +104,7 @@ bool p_identifier( const string& q ){
 }
 
 
-bool p_section_header( const string& q ){
+bool p_section_header( const string& q ){ // WARNING, ASSUMPTION: SECTION HEADINGS OCCUPY THEIR OWN LINE
     // Return True if `q` matches a section name, otherwise return False
     for( const string& nam : SECTION_NAMES ){  if( q == nam ){  return true;  }  }
     return false;
@@ -120,6 +122,30 @@ string strip( const string& inputStr ){
     j = inputStr.size() - 1;
     while( isspace( inputStr[j] ) ){  --j;  }
     return inputStr.substr( i, j-i+1 );
+}
+
+
+size_t q_line_begins_comment( const string& q ){
+    // Does the stripped line begin a comment?
+    string stripped = strip(q);
+    size_t rtnIndex = string::npos;
+    rtnIndex = stripped.find( COMMENT_OPEN[0], 0 );
+    if( rtnIndex != string::npos ){  return rtnIndex;  }
+    rtnIndex = stripped.find( COMMENT_OPEN[1], 0 );
+    if( rtnIndex != string::npos ){  return rtnIndex;  }
+    return string::npos;
+}
+
+
+size_t q_line_ends_comment( const string& q ){
+    // Does the stripped line end a comment?
+    string stripped = strip(q);
+    size_t rtnIndex = string::npos;
+    rtnIndex = stripped.rfind( COMMENT_CLOS[0], 0 );
+    if( rtnIndex != string::npos ){  return rtnIndex + COMMENT_CLOS[0].size();  }
+    rtnIndex = stripped.rfind( COMMENT_CLOS[1], 0 );
+    if( rtnIndex != string::npos ){  return rtnIndex + COMMENT_CLOS[1].size();  }
+    return string::npos;
 }
 
 
@@ -183,27 +209,25 @@ vector<vstr> segment_statements( vstr& tokens ){
 ////////// FILE LEXING /////////////////////////////////////////////////////////////////////////////
 struct TextPortions{ public:
     // Separates text of a file into portions so that we can treat each differently
+    /// Sections ///
     string type;
     string cnst;
     string var;
+    /// Modules ///
     string func;
     string proc;
+    /// Main ///
     string prog;
 };
 
 
-TextPortions segment_source_file( string path ){
-    // Load sections of the program into the struct so that we can lex/interpret them
-    // FIXME: READ FILE IN A SEPARATE FUNCTION
-    enum Section{ TYPE, CONST, VAR, COMMENT, OTHER };
-
+vstr read_file_to_lines( string path ){
+    // Read plain text to a vector of strings, separated by newlines
     ifstream     inputFile;
     stringstream buffer;
-    vstr /*---*/ totLines;
-    string /*-*/ line, trimLine;
-    Section /**/ mode   = OTHER;
     string /*-*/ errStr = "Could not open ";
-    
+    string /*-*/ line;
+    vstr /*---*/ totLines;
     inputFile.open( path );
     if( !inputFile.is_open() ){
         cerr << "Error opening " << path << "!" << endl;
@@ -217,10 +241,47 @@ TextPortions segment_source_file( string path ){
         }
         inputFile.close();
     }
-    for( const string& line : totLines ){
+    return totLines;
+}
+
+
+TextPortions segment_source_file( const vstr& totLines ){
+    // Load sections of the program into the struct so that we can lex/interpret them
+    enum Section{ TYPE, CONST, VAR, COMMENT, OTHER };
+    /**/ string /*--*/ trimLine;
+    /**/ string /*--*/ line;
+    /**/ Section /*-*/ mode     = OTHER;
+    /**/ size_t /*--*/ cmmntBgn = string::npos;
+    /**/ size_t /*--*/ cmmntEnd = string::npos;
+    /**/ size_t /*--*/ N /*--*/ = totLines.size();
+    /**/ size_t /*--*/ i /*--*/ = 0;
+    /**/ deque<string> qLines;
+    /**/ TextPortions  rtnSctns;
+
+    // 0. Load queue with lines
+    for( const string& vLine : totLines ){  qLines.push_back( vLine );  }
+
+    // 1. Process each line
+    while( qLines.size() ){
+
+        // 2. Fetch line
+        line = qLines.at(0);
+        qLines.pop_front();
         trimLine = strip( line );
-        if( mode == COMMENT ){} // FIXME: CHECK FOR COMMENT END
-        if( p_section_header( trimLine ) ){
+        
+        // 3. Handle comments
+        cmmntBgn = q_line_begins_comment( trimLine );
+        if( cmmntBgn == 0 ){  mode = COMMENT;  }
+        else if( cmmntBgn != string::npos ){
+            qLines.push_front( trimLine.substr( cmmntBgn ) );
+            qLines.push_front( trimLine.substr( 0, cmmntBgn ) );
+            continue;
+        }
+        cmmntEnd = q_line_ends_comment( trimLine );
+        if( cmmntEnd != string::npos ){  qLines.push_front( trimLine.substr(cmmntEnd) );  }
+        
+        // 3. Handle section headers
+        if( p_section_header( trimLine ) ){ // WARNING, ASSUMPTION: SECTION HEADINGS OCCUPY THEIR OWN LINE
             if( trimLine == "type" ){
                 mode = TYPE;
             }else if( trimLine == "const" ){
@@ -228,8 +289,20 @@ TextPortions segment_source_file( string path ){
             }else if( trimLine == "var" ){
                 mode = VAR;
             }
+            continue;
+        }
+
+        // 4. Accrue text to sections
+        switch( mode ){
+            case TYPE:   rtnSctns.type += trimLine;  break;
+            case CONST:  rtnSctns.cnst += trimLine;  break;
+            case VAR:    rtnSctns.var  += trimLine;  break;
+            case OTHER:  rtnSctns.prog += trimLine;  break;            
+            default:
+                break;
         }
     }
+    return rtnSctns;
 }
 
 
