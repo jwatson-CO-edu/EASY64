@@ -1,3 +1,39 @@
+# CPluscal
+A (loose) C++ interpreter for ISO 7185 "Standard" Pascal
+
+## Why would you even do this?
+* To get out of the Scheme/LISP rut!
+* To learn about programming languages.
+* A stepping stone to my own language.
+
+## Compiler?
+Yes, Pascal had a compiler, but that comes later. This is just an interpreter for now.
+
+## Added Features
+Please try not to implement any additional features whatsoever!
+
+&nbsp;  
+&nbsp;  
+
+# CPluscal+
+## `Stepping Stones`
+* `[ ]` Add REPL
+* `[ ]` Add Abstract Source Trees (AST)
+* `[ ]` C-style comments
+* `[ ]` Convert code blocks to `{}`
+* `[ ]` `parfor`?
+
+&nbsp;  
+&nbsp;  
+
+# CPluscal++
+## `Stepping Stones`
+* `[ ]` ????? COMPILER ?????
+
+
+&nbsp;  
+&nbsp;  
+
 # EASY64
 ## **E**asy and **A**wesome **S**cripting for **Y**ou!  **64**bit
 Spelled EASY64, Easy64, EASY, Easy
