@@ -28,6 +28,7 @@ using std::stringstream, std::getline;
 /// Aliases ///
 typedef unsigned long  ulong;
 typedef vector<string> vstr;
+typedef vector<vstr>   vvstr;
 
 
 ////////// LANGUAGE CONSTANTS //////////////////////////////////////////////////////////////////////
@@ -149,20 +150,19 @@ size_t q_line_ends_comment( const string& q ){
 }
 
 
-vstr tokenize( string expStr, char sepChr ){
+vstr tokenize( const string& totStr, char sepChr = ' ' ){
     // Return a vector of tokenized strings that a separated by whitespace within `expStr`
     vstr   tokens;
     char   c;
     string cStr;
     string token  = "";
+    bool   sepWs  = (sepChr == ' ');
+    string expStr = totStr + sepChr; // Apply the postfix hack
 
     // Helpers //
     auto stow_token = [&]{  tokens.push_back( token );  token = "";  };
     auto stow_char  = [&]{  tokens.push_back( string(1,c) );  };
     auto cache_char = [&]{  token.push_back( c );  };
-
-    // 0. Apply the postfix hack
-    expStr.push_back( sepChr );
 
     // 1. For every character in the string
     for( char ch_i : expStr ){
@@ -176,7 +176,7 @@ vstr tokenize( string expStr, char sepChr ){
             if( token.size() > 0 ){  stow_token();  }
             stow_char();  
         // B. Case separator
-        }else if( c == sepChr ){
+        }else if( (c == sepChr) || (sepWs && isspace(c)) ){
             if(token.size() > 0){  stow_token();  }
         // C. Case any other char
         }else{  cache_char();  } 
@@ -186,10 +186,11 @@ vstr tokenize( string expStr, char sepChr ){
 }
 
 
-vector<vstr> segment_statements( vstr& tokens ){
+vvstr segment_statements( const vstr& tokens_ ){
     // Separate a token vector into a vector of token vectors, each representing a statement
     vector<vstr> statements;
     vstr /*---*/ statement;
+    vstr /*---*/ tokens = tokens_;
     tokens.push_back( ";" ); // Terminator Hack
     for( const string& token : tokens ){
         if( token == ";" ){
@@ -204,6 +205,11 @@ vector<vstr> segment_statements( vstr& tokens ){
     return statements;
 }
 
+
+vvstr text_block_to_tokenized_statements( const string& textBlock ){
+    // Render a large block of text as a series of statements, each made of string tokens
+    return segment_statements( tokenize( textBlock ) );
+}
 
 
 ////////// FILE LEXING /////////////////////////////////////////////////////////////////////////////
@@ -226,7 +232,7 @@ vstr read_file_to_lines( string path ){
     ifstream     inputFile;
     stringstream buffer;
     string /*-*/ errStr = "Could not open ";
-    string /*-*/ line;
+    string /*-*/ line, addLine;
     vstr /*---*/ totLines;
     inputFile.open( path );
     if( !inputFile.is_open() ){
@@ -237,7 +243,8 @@ vstr read_file_to_lines( string path ){
     }else{
         buffer << inputFile.rdbuf(); // https://stackoverflow.com/a/2602258
         while( getline( buffer, line, '\n' ) ){ // https://stackoverflow.com/a/13172579
-            totLines.push_back( line );
+            addLine = line + '\n';
+            totLines.push_back( addLine );
         }
         inputFile.close();
     }
@@ -268,6 +275,8 @@ TextPortions segment_source_file( const vstr& totLines ){
         line = qLines.at(0);
         qLines.pop_front();
         trimLine = strip( line );
+
+        cout << trimLine << endl;
         
         // 3. Handle comments
         cmmntBgn = q_line_begins_comment( trimLine );
@@ -283,10 +292,13 @@ TextPortions segment_source_file( const vstr& totLines ){
         // 3. Handle section headers
         if( p_section_header( trimLine ) ){ // WARNING, ASSUMPTION: SECTION HEADINGS OCCUPY THEIR OWN LINE
             if( trimLine == "type" ){
+                cout << endl << "segment_source_file: Defining `type`s!" << endl << endl;
                 mode = TYPE;
             }else if( trimLine == "const" ){
+                cout << endl << "segment_source_file: Defining `const`ants!" << endl << endl;
                 mode = CONST;
             }else if( trimLine == "var" ){
+                cout << endl << "segment_source_file: Defining `var`iables!" << endl << endl;
                 mode = VAR;
             }
             continue;
@@ -327,7 +339,7 @@ enum C_Type{
     ARRAY,
     RECORD,
     SET,
-    FILE,
+    // FILE,
     STRUCT,
     PACKED,
     POINTER, // ???
@@ -386,23 +398,23 @@ class ValStore{ public:
 
 
 
-
-
 ////////// TYPES ///////////////////////////////////////////////////////////////////////////////////
 void define_types( ValStore& types, string defText ){
-
+    vvstr typStatements = text_block_to_tokenized_statements( defText );
 }
+
 
 
 ////////// CONSTANTS ///////////////////////////////////////////////////////////////////////////////
 void define_constants( ValStore& constants, string defText ){
-
+    vvstr conStatements = text_block_to_tokenized_statements( defText );
 }
+
 
 
 ////////// VARIABLES ///////////////////////////////////////////////////////////////////////////////
 void define_variables( ValStore& variables, string defText ){
-
+    vvstr varStatements = text_block_to_tokenized_statements( defText );
 }
 
 
@@ -416,11 +428,14 @@ class Interpreter{ public:
 };
 
 
-// ////////// VARIABLE LEXING /////////////////////////////////////////////////////////////////////////
-// class BlockFrame;
-// typedef shared_ptr<BlockFrame> BlkPtr;
+////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
 
-// class BlockFrame{ public: // WARNING: ASSUMPTION
-//     BlkPtr /*------*/ parent; // The frame that contains this one
-//     map<string,P_Val> pVars; // Variables, Primitive Types
-// };
+string _SRC_PATH = "PAS_Test/00_sections.pas";
+
+int main(){
+
+    vstr /*---*/ fLines = read_file_to_lines( _SRC_PATH );
+    TextPortions fSeg = segment_source_file( fLines );
+
+    return 0;
+}
