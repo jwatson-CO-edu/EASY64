@@ -19,7 +19,7 @@ using std::shared_ptr;
 #include <fstream>
 using std::ifstream;
 #include <iostream>
-using std::cout, std::endl, std::flush, std::cerr;
+using std::cout, std::endl, std::flush, std::cerr, std::ostream;
 #include <stdexcept>
 using std::runtime_error;
 #include <sstream>
@@ -29,6 +29,39 @@ using std::stringstream, std::getline;
 typedef unsigned long  ulong;
 typedef vector<string> vstr;
 typedef vector<vstr>   vvstr;
+
+
+
+////////// HELPER FUNCTIONS ////////////////////////////////////////////////////////////////////////
+
+template<typename T>
+ostream& operator<<( ostream& os , const vector<T>& vec ) { 
+    // ostream '<<' operator for vectors
+    // NOTE: This function assumes that the ostream '<<' operator for T has already been defined
+    os << "[ ";
+    for (size_t i = 0; i < vec.size(); i++) {
+        os << (T) vec[i];
+        if (i + 1 < vec.size()) { os << ", "; }
+    }
+    os << " ]";
+    return os; // You must return a reference to the stream!
+}
+
+
+template<typename T>
+ostream& operator<<( ostream& os , const vector<vector<T>>& vec ) { 
+    // ostream '<<' operator for vectors
+    // NOTE: This function assumes that the ostream '<<' operator for T has already been defined
+    os << "[ " << endl;
+    for (size_t i = 0; i < vec.size(); i++) {
+        os << '\t' << vec[i];
+        if (i + 1 < vec.size()) { os << ", "; }
+        os << endl;
+    }
+    os << " ]";
+    return os; // You must return a reference to the stream!
+}
+
 
 
 ////////// LANGUAGE CONSTANTS //////////////////////////////////////////////////////////////////////
@@ -152,6 +185,7 @@ size_t q_line_ends_comment( const string& q ){
 
 vstr tokenize( const string& totStr, char sepChr = ' ' ){
     // Return a vector of tokenized strings that a separated by whitespace within `expStr`
+    // WARNING, ASSUMPTION: ONE SYMBOL IS NOT A SUBSTRING OF ANOTHER SYMBOL, (There is!)
     vstr   tokens;
     char   c;
     string cStr;
@@ -276,7 +310,7 @@ TextPortions segment_source_file( const vstr& totLines ){
         qLines.pop_front();
         trimLine = strip( line );
 
-        cout << trimLine << endl;
+        // cout << trimLine << endl;
         
         // 3. Handle comments
         cmmntBgn = q_line_begins_comment( trimLine );
@@ -348,7 +382,21 @@ enum C_Type{
 typedef vector<string> Enum;
 
 class ValRange{
-    vector<P_Val> values;
+    P_Val valMin;
+    P_Val valMax;
+    P_Val incr;
+    P_Val valCur;
+
+    ValRange( P_Val valMin_, P_Val valMax_ ){
+        valMin = valMin_;
+        valMax = valMax_;
+        incr   = 1;
+        valCur = valMin_;
+    }
+
+    P_Val yield(){
+        valCur += incr; // FIXME, START HERE: DEFINE ADDITION AND PLUS-EQUALS FOR THE NUMERIC VARIANT
+    }
 };
 
 class StrRange{
@@ -401,6 +449,7 @@ class ValStore{ public:
 ////////// TYPES ///////////////////////////////////////////////////////////////////////////////////
 void define_types( ValStore& types, string defText ){
     vvstr typStatements = text_block_to_tokenized_statements( defText );
+    cout << "Types:" << endl << typStatements << endl;
 }
 
 
@@ -408,6 +457,7 @@ void define_types( ValStore& types, string defText ){
 ////////// CONSTANTS ///////////////////////////////////////////////////////////////////////////////
 void define_constants( ValStore& constants, string defText ){
     vvstr conStatements = text_block_to_tokenized_statements( defText );
+    cout << "Constants:" << endl << conStatements << endl;
 }
 
 
@@ -415,6 +465,7 @@ void define_constants( ValStore& constants, string defText ){
 ////////// VARIABLES ///////////////////////////////////////////////////////////////////////////////
 void define_variables( ValStore& variables, string defText ){
     vvstr varStatements = text_block_to_tokenized_statements( defText );
+    cout << "Variables:" << endl << varStatements << endl;
 }
 
 
@@ -436,6 +487,12 @@ int main(){
 
     vstr /*---*/ fLines = read_file_to_lines( _SRC_PATH );
     TextPortions fSeg = segment_source_file( fLines );
+    ValStore     store;
+
+    define_types(     store, fSeg.type );
+    define_constants( store, fSeg.cnst );
+    define_variables( store, fSeg.var  );
+
 
     return 0;
 }
