@@ -14,6 +14,8 @@ using std::string;
 using std::map;
 #include <variant>
 using std::variant, std::get;
+#include <type_traits>
+using std::visit;
 #include <memory>
 using std::shared_ptr;
 #include <fstream>
@@ -24,6 +26,7 @@ using std::cout, std::endl, std::flush, std::cerr, std::ostream;
 using std::runtime_error;
 #include <sstream>
 using std::stringstream, std::getline;
+#include <climits>
 
 /// Aliases ///
 typedef unsigned long  ulong;
@@ -49,7 +52,7 @@ ostream& operator<<( ostream& os , const vector<T>& vec ) {
 
 
 template<typename T>
-ostream& operator<<( ostream& os , const vector<vector<T>>& vec ) { 
+ostream& operator<<( ostream& os , const vector<vector<T>>& vec ){ 
     // ostream '<<' operator for vectors
     // NOTE: This function assumes that the ostream '<<' operator for T has already been defined
     os << "[ " << endl;
@@ -85,6 +88,9 @@ const array<string,35> RESERVED = { /// Word Symbols ///
     "function", "goto", "if", "in", "label", "mod", "nil", "not", "of", "or", "packed", "procedure",
     "program", "record", "repeat", "set", "then", "to", "type", "until", "var", "while", "with"
 };
+
+const unsigned char MIN_RES_SYMBOL_LEN = 1;
+const unsigned char MAX_RES_SYMBOL_LEN = 9;
 
 const array<string,2> COMMENT_OPEN = { "{", "(*" };
 const array<string,2> COMMENT_CLOS = { "}", "*)" };
@@ -246,6 +252,44 @@ vvstr text_block_to_tokenized_statements( const string& textBlock ){
 }
 
 
+vstr attempt_reserved_symbol_merge( const vstr& tokens ){
+    // Handle the case when reserved symbols are substrings of each other
+    vstr   rtnTokens;
+    vstr   accumVec;
+    string accumStr = "";
+    string validStr = "";
+    
+
+    // Helpers //
+    auto dump_accum = [&]{  
+        size_t foundLen = validStr.size();
+        size_t totLen    = 0;
+        accumStr = "";  
+        if( foundLen ){  
+            rtnTokens.push_back( validStr );  
+            validStr = "";
+        }
+        for( const string& acStr : accumVec ){
+            totLen += acStr.size();
+            if( totLen > foundLen ){  rtnTokens.push_back( acStr );  }
+        }
+        accumVec.clear();
+    };
+
+    for( const string& token : tokens ){
+        if( token.size() >= MAX_RES_SYMBOL_LEN ){  dump_accum();  }else{  
+            accumStr += token;  
+            accumVec.push_back( token );
+
+            if( accumStr.size() > MAX_RES_SYMBOL_LEN ){  dump_accum();  } 
+            else if( p_symbol( accumStr ) ){  validStr = accumStr;  }
+        }
+    }
+    dump_accum();
+    return rtnTokens;
+}
+
+
 ////////// FILE LEXING /////////////////////////////////////////////////////////////////////////////
 struct TextPortions{ public:
     // Separates text of a file into portions so that we can treat each differently
@@ -355,14 +399,87 @@ TextPortions segment_source_file( const vstr& totLines ){
 
 
 ////////// PRIMITIVE TYPES /////////////////////////////////////////////////////////////////////////
-enum P_Type{
-    // Primitive Data Types
-    INT, // `long`
-    REAL, // `double`
-    BOOL, 
-    CHAR, 
+// enum P_Type{
+//     // Primitive Data Types
+//     INT, // `long`
+//     REAL, // `double`
+//     BOOL, 
+//     CHAR, 
+// };
+
+
+typedef variant<double,long,char,bool> P_Val; // Primitive Values // WARNING: ASSUMPTION
+
+
+P_Val operator+( const P_Val& lhs, const P_Val& rhs ){
+    // Add two numeric variants
+    // Using std::visit to handle all possible type combinations
+    return visit([](auto&& left, auto&& right) -> P_Val {
+        // If both are the same type, return that type
+        if constexpr ( std::is_same_v< decltype(left), decltype(right) >) {
+            return left + right;
+        }
+        // If different types, convert to double for maximum precision
+        else {
+            return static_cast<double>(left) + static_cast<double>(right);
+        }
+    }, lhs, rhs);
+}
+
+
+void operator+=( P_Val& lhs, const P_Val& rhs ){
+    // Increment a numeric variant
+    P_Val nuVal = lhs + rhs;
+    lhs = nuVal;
+}
+
+
+void print_variant( const P_Val& v ){
+    // Helper function to print variant contents
+    visit( [](auto&& arg){  cout << arg;  }, v );
+}
+
+
+ostream& operator<<( ostream& os , const P_Val& v ){
+    // Helper function to stream variant contents
+    visit( [&](auto&& arg){  os << arg;  }, v );
+    return os;
+}
+
+
+///// Lex Primitives //////////////////////////////////////////////////////
+namespace LexPrim{
+
+bool p_primitive_string( string q ){
+    // Return true if the string can represent a primitive
+    /// Handle `bool` ///
+    if( q == "true"  ){  return true;  }
+    if( q == "false" ){  return true;  }
+    /// Handle `char` ///
+    if( q.size() == 1 ){  return true;  }
+    /// Handle `long` ///
+    try {
+        stol(q);
+        return true;
+    }catch( const std::invalid_argument& e ){
+        cerr << "Invalid argument: " << e.what() << endl;
+    } catch( const std::out_of_range& e ){
+        cerr << "Out of range: " << e.what() << endl;
+    }
+    /// Handle `double` ///
+    try {
+        stod(q);
+        return true;
+    }catch( const std::invalid_argument& e ){
+        cerr << "Invalid argument: " << e.what() << endl;
+    } catch( const std::out_of_range& e ){
+        cerr << "Out of range: " << e.what() << endl;
+    }
+    return false;
+}
+
 };
-typedef variant<long,double,bool,char> P_Val; // Primitive Values // WARNING: ASSUMPTION
+
 
 
 ////////// COMPOUND TYPES //////////////////////////////////////////////////////////////////////////
@@ -381,22 +498,34 @@ enum C_Type{
 
 typedef vector<string> Enum;
 
-class ValRange{
+class ValRange{ public:
+    // Represents a range of numbers that can be iterated
+
     P_Val valMin;
     P_Val valMax;
     P_Val incr;
     P_Val valCur;
+    bool  done;
 
     ValRange( P_Val valMin_, P_Val valMax_ ){
+        // Set up the range for iteration
         valMin = valMin_;
         valMax = valMax_;
         incr   = 1;
         valCur = valMin_;
+        done   = false;
     }
 
     P_Val yield(){
-        valCur += incr; // FIXME, START HERE: DEFINE ADDITION AND PLUS-EQUALS FOR THE NUMERIC VARIANT
+        // Yield the next value and notify if done
+        valCur += incr; 
+        if( valCur > valMax ){  
+            done = true;
+            return valMax;  
+        }
     }
+
+    ValRange copy(){  return ValRange{ valMin, valMax };  }
 };
 
 class StrRange{
@@ -442,6 +571,15 @@ class ValStore{ public:
     map<string,Array>    namedArray; 
     map<string,File>     file; 
     map<string,Record>   record; 
+
+    void set_builtins(){
+        // Set values that Pascal knows about
+        var["maxint"] = P_Val{ LONG_MAX };
+    }
+
+    ValStore(){
+        set_builtins();
+    }
 };
 
 
