@@ -29,6 +29,7 @@ Please try not to implement any additional features whatsoever!
 
 # CPluscal++
 ## `Stepping Stones`
+* `[ ]` Code as data?
 * `[ ]` ????? COMPILER ?????
 
 
