@@ -27,6 +27,8 @@ using std::runtime_error;
 #include <sstream>
 using std::stringstream, std::getline;
 #include <climits>
+#include <cmath>
+using std::nan;
 
 /// Aliases ///
 typedef unsigned long  ulong;
@@ -66,6 +68,22 @@ ostream& operator<<( ostream& os , const vector<vector<T>>& vec ){
     return os; // You must return a reference to the stream!
 }
 
+
+template<typename T>
+bool p_vec_has( const vector<T>& vec, T q ){
+    // Return True if the value `q` can be found in the vector
+    for( const T& item : vec ){  if( item == q ){  return true;  }  }
+    return false;
+}
+
+
+template<typename T>
+vector<T> vec_ltrim( const vector<T>& vec, size_t bgnDex ){
+    // Get the portion of `vec` from `bgnDex` on
+    vector<T> rtnVec;
+    if( bgnDex < vec.size() ){  for( size_t i = bgnDex; i < vec.size(); ++i ){  rtnVec.push_back( vec[i] );  }  }
+    return rtnVec;
+}
 
 
 ////////// LANGUAGE CONSTANTS //////////////////////////////////////////////////////////////////////
@@ -203,44 +221,30 @@ array<size_t,2> q_str_has_symbol( const string& q ){
 
 
 vstr attempt_reserved_symbol_merge( const vstr& tokens ){
-    // Handle the case when reserved symbols are substrings of each other
-    vstr   rtnTokens;
-    vstr   accumVec;
-    string accumStr = "";
-    string validStr = "";
-    array<size_t,2> res;
-    
-
-    // Helpers //
-    auto dump_accum = [&]{  
-        size_t foundLen = validStr.size();
-        size_t totLen    = 0;
-        accumStr = "";  
-        if( foundLen ){  
-            rtnTokens.push_back( validStr );  
-            validStr = "";
-        }
-        for( const string& acStr : accumVec ){
-            totLen += acStr.size();
-            if( totLen > foundLen ){  rtnTokens.push_back( acStr );  }
-        }
-        accumVec.clear();
-    };
+    // Handle the case when reserved symbols are substrings of each other (2 tokens only!)
+    vstr /*----*/ rtnTokens;
+    deque<string> accumQue;
+    string /*--*/ accumStr = "";
+    string /*--*/ validStr = "";
 
     for( const string& token : tokens ){
-        accumStr += token;  
-        accumVec.push_back( token );
-        if( token.size() > MAX_RES_SYMBOL_LEN ){  dump_accum();  }
-        else if( accumStr.size() > MAX_RES_SYMBOL_LEN ){  dump_accum();  } 
-        else{
-             res = q_str_has_symbol( accumStr );
-             if( res[0] != string::npos ){
-                if( res[0] > 0 ){    } // FIXME, START HERE: THIS LOGIC ISN'T GOING TO WORK
-             }
+        while( accumQue.size() > 1 ){  accumQue.pop_front();  }
+        accumQue.push_back( token );
+        if( accumQue.size() >= 2 ){  
+            accumStr = accumQue[0] + accumQue[1];  
+            if( p_special( accumStr ) ){
+                rtnTokens.push_back( accumStr );
+                accumQue.clear();
+            }else{
+                rtnTokens.push_back( accumQue[0] );
+                accumQue.pop_front();
+            }
         }
-        
     }
-    dump_accum();
+    while( accumQue.size() ){  
+        rtnTokens.push_back( accumQue[0] );
+        accumQue.pop_front();  
+    }
     return rtnTokens;
 }
 
@@ -471,13 +475,11 @@ ostream& operator<<( ostream& os , const P_Val& v ){
 ///// Lex Primitives //////////////////////////////////////////////////////
 namespace LexPrim{
 
-bool p_primitive_string( string q ){
+bool p_primitive_string( const string& q ){
     // Return true if the string can represent a primitive
     /// Handle `bool` ///
     if( q == "true"  ){  return true;  }
     if( q == "false" ){  return true;  }
-    /// Handle `char` ///
-    if( q.size() == 1 ){  return true;  }
     /// Handle `long` ///
     try {
         stol(q);
@@ -487,18 +489,46 @@ bool p_primitive_string( string q ){
     } catch( const std::out_of_range& e ){
         cerr << "Out of range: " << e.what() << endl;
     }
+    /// Handle `char` ///
+    if( q.size() == 1 ){  return true;  }
     /// Handle `double` ///
     try {
         stod(q);
         return true;
     }catch( const std::invalid_argument& e ){
         cerr << "Invalid argument: " << e.what() << endl;
-    } catch( const std::out_of_range& e ){
+    }catch( const std::out_of_range& e ){
         cerr << "Out of range: " << e.what() << endl;
     }
     return false;
 }
 
+
+P_Val str_2_primitive( const string& q ){
+    // Return interpret `q` as a primitive literal and return it
+    /// Handle `bool` ///
+    if( q == "true"  ){  return P_Val{ true  };  }
+    if( q == "false" ){  return P_Val{ false };  }
+    /// Handle `long` ///
+    try {
+        return P_Val{ stol(q) };
+    }catch( const std::invalid_argument& e ){
+        cerr << "Invalid argument: " << e.what() << endl;
+    } catch( const std::out_of_range& e ){
+        cerr << "Out of range: " << e.what() << endl;
+    }
+    /// Handle `char` ///
+    if( q.size() == 1 ){  return P_Val{ q[0] };  }
+    /// Handle `double` ///
+    try {
+        return P_Val{ stod(q) };
+    }catch( const std::invalid_argument& e ){
+        cerr << "Invalid argument: " << e.what() << endl;
+    }catch( const std::out_of_range& e ){
+        cerr << "Out of range: " << e.what() << endl;
+    }
+    /// Handle NaN ///
+    return P_Val{ nan("") };
 };
 
 
@@ -517,7 +547,9 @@ enum C_Type{
     POINTER, // ???
 };
 
+
 typedef vector<string> Enum;
+
 
 class ValRange{ public:
     // Represents a range of numbers that can be iterated
@@ -608,7 +640,22 @@ class ValStore{ public:
 ////////// TYPES ///////////////////////////////////////////////////////////////////////////////////
 void define_types( ValStore& types, string defText ){
     vvstr typStatements = text_block_to_tokenized_statements( defText );
+    string name, bgnRange, endRange;
+    vstr   expr;
     cout << "Types:" << endl << typStatements << endl;
+    for( const vstr& statement : typStatements ){
+        if( p_vec_has( statement, string{"="} ) ){
+            name = statement[0];
+            expr = vec_ltrim( statement, 2 );
+
+            /// Handle Range ///
+            if( p_vec_has( expr, string{".."} ) ){
+                bgnRange = expr[0];
+                endRange = expr[2];
+            }
+
+        }
+    }
 }
 
 
