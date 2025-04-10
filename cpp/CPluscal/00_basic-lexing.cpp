@@ -13,7 +13,7 @@ using std::string;
 #include <map>
 using std::map;
 #include <variant>
-using std::variant, std::get;
+using std::variant, std::get, std::holds_alternative;
 #include <type_traits>
 using std::visit;
 #include <memory>
@@ -28,7 +28,7 @@ using std::runtime_error;
 using std::stringstream, std::getline;
 #include <climits>
 #include <cmath>
-using std::nan;
+using std::nan, std::isnan;
 
 /// Aliases ///
 typedef unsigned long  ulong;
@@ -108,6 +108,10 @@ const array<string,35> RESERVED = { /// Word Symbols ///
     "program", "record", "repeat", "set", "then", "to", "type", "until", "var", "while", "with"
 };
 
+const array<string,1> PRIM_TYPE_NAMES = { /// Primitive Type Names ///
+    "integer"
+};
+
 const ubyte MIN_RES_SYMBOL_LEN = 1;
 const ubyte MAX_RES_SYMBOL_LEN = 9;
 
@@ -130,6 +134,13 @@ bool p_special( const string& q ){
 bool p_reserved( const string& q ){
     // Return True if `q` matches a symbol, otherwise return False
     for( const string& sym : RESERVED ){  if( q == sym ){  return true;  }  }
+    return false;
+}
+
+
+bool p_prim_type( const string& q ){
+    // Return True if `q` matches a primtive type name, otherwise return False
+    for( const string& typ : PRIM_TYPE_NAMES ){  if( q == typ ){  return true;  }  }
     return false;
 }
 
@@ -424,17 +435,22 @@ TextPortions segment_source_file( const vstr& totLines ){
 
 
 ////////// PRIMITIVE TYPES /////////////////////////////////////////////////////////////////////////
-// enum P_Type{
-//     // Primitive Data Types
-//     INT, // `long`
-//     REAL, // `double`
-//     BOOL, 
-//     CHAR, 
-// };
+enum P_Type{
+    // Primitive Data Types
+    INT, // `long`
+    REAL, // `double`
+    BOOL, 
+    CHAR, 
+};
 
 
 typedef variant<double,long,char,bool> P_Val; // Primitive Values // WARNING: ASSUMPTION
 
+P_Val make_nan(){  return P_Val{ nan("") };  }
+
+bool p_nan( const P_Val& q ){
+    return (holds_alternative<double>( q ) && isnan( get<double>(q) ));
+}
 
 P_Val operator+( const P_Val& lhs, const P_Val& rhs ){
     // Add two numeric variants
@@ -444,6 +460,7 @@ P_Val operator+( const P_Val& lhs, const P_Val& rhs ){
         if constexpr ( std::is_same_v< decltype(left), decltype(right) >) {
             return left + right;
         }
+        // FIXME: WANT A MORE GRANULAR TYPE ESCALATION HERE
         // If different types, convert to double for maximum precision
         else {
             return static_cast<double>(left) + static_cast<double>(right);
@@ -531,7 +548,7 @@ P_Val str_2_primitive( const string& q ){
     return P_Val{ nan("") };
 };
 
-
+};
 
 ////////// COMPOUND TYPES //////////////////////////////////////////////////////////////////////////
 enum C_Type{
@@ -548,7 +565,11 @@ enum C_Type{
 };
 
 
-typedef vector<string> Enum;
+class Enum{ public:
+    vstr items;
+
+    Enum( const vstr& values ){  items = values;  }
+};
 
 
 class ValRange{ public:
@@ -585,12 +606,37 @@ class StrRange{
     vstr values;
 };
 
-typedef vector<P_Val> Array;
+class Array{ 
+    // AM I ABLE BOTH TO ASSIGN AND TO RETRIEVE?
+    private:
+    struct elem{
+        P_Val val;
+        P_Val operator=( const P_Val& val_ ){
+            val = val_;
+            return val;
+        }
+    };
+    vector<elem> values;
 
-class Struct{ public: // WARNING: ASSUMPTION
+    public:
+
+    Array( size_t N ){
+        values.reserve(N);
+    }
+
+    P_Val& operator[]( const size_t& index ){
+        return values[ index ].val;
+    }
+};
+
+
+
+class Struct{ public: // WARNING, ASSUMPTION: WILL THIS COVER A STRUCT?
     bool /*--------*/ packed;
     map<string,P_Val> pVars; // Variables, Primitive Types
 };
+
+
 
 class Record{ public: 
     map<string,P_Val> pVars; // Variables, Primitive Types
@@ -614,6 +660,20 @@ class Pointer{ public:
 
 
 ////////// COMPONENTS //////////////////////////////////////////////////////////////////////////////
+
+vstr get_parenthetical_tokens( const vstr& tokens ){
+    // Get parentheses contents
+    // WARNING, ASSUMPTION: ONLY ONE DEPTH
+    vstr contents;
+    bool inside = false;
+    for( const string& token : tokens ){
+        if( token == "(" ){  inside = true;  }
+        else if( token == ")" ){  inside = false;  }
+        else if( inside ){    }
+    }
+}
+
+
 class ValStore{ public:
     // Lookup for values by name
     map<string,string>   pAlias; // Aliases for primitive types
@@ -631,7 +691,25 @@ class ValStore{ public:
     }
 
     ValStore(){
+        // Setup this context
         set_builtins();
+    }
+
+    bool p_var_name( const string& name ){
+        // Is there a variable stored under this `name`?
+        if( var.find( name ) != var.end() ){  return true;  }else{  return false;  }
+    }
+
+    P_Val get_var( const string& name ){
+        // Get var by `name` if it exists, otherwise return NaN
+        if( p_var_name( name ) ){  return var[ name ];  }else{  return make_nan();  }
+    }
+
+    P_Val get_var_or_literal( const string& token ){
+        // If the `token` is a variable or a literal, then return its value, Otherwise return NaN
+        if( p_var_name( token ) ){  return var[ token ];  }
+        if( LexPrim::p_primitive_string( token ) ){  return LexPrim::str_2_primitive( token );  }
+        return make_nan();
     }
 };
 
@@ -640,18 +718,35 @@ class ValStore{ public:
 ////////// TYPES ///////////////////////////////////////////////////////////////////////////////////
 void define_types( ValStore& types, string defText ){
     vvstr typStatements = text_block_to_tokenized_statements( defText );
-    string name, bgnRange, endRange;
+    string name;
+    P_Val  bgnRange, endRange;
     vstr   expr;
     cout << "Types:" << endl << typStatements << endl;
     for( const vstr& statement : typStatements ){
+        // WARNING, ASSUMPTION: ALL TYPEDEFS CONTAIN AN '='
         if( p_vec_has( statement, string{"="} ) ){
             name = statement[0];
             expr = vec_ltrim( statement, 2 );
 
             /// Handle Range ///
             if( p_vec_has( expr, string{".."} ) ){
-                bgnRange = expr[0];
-                endRange = expr[2];
+                bgnRange = types.get_var_or_literal( expr[0] );
+                endRange = types.get_var_or_literal( expr[2] );
+                if( (!p_nan( bgnRange ))&&(!p_nan( endRange )) ){
+                    types.valrange[ name ] = ValRange( bgnRange, endRange );
+                }
+
+            /// Handle Alias ///
+            }else if( (expr.size() == 1) && p_prim_type( expr[0] ) ){
+                types.pAlias[ name ] = expr[0];
+
+            /// Handle Enum ///
+            }else if( p_vec_has( expr, string{"("} ) && p_vec_has( expr, string{")"} ) ){
+                types.namedEnum[ name ] = Enum{ get_parenthetical_tokens( expr ) };
+            
+            /// Handle Array ///
+            }else if( p_vec_has( expr, string{"array"} ) ){
+                // FIXME, START HERE: CREATE AN ARRAY!
             }
 
         }
