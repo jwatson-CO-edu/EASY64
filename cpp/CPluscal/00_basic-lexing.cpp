@@ -649,8 +649,16 @@ class Set{
     set<T> values;
 };
 
-class File{ public:
+enum FileMode{
+    INSPECTION,
+    GENERATION,
+};
 
+class C_File{ public:
+    // WARNING: NEED TO READ ABOUT PASCAL FILE MODEL
+    FileMode mode;
+    string   path;
+    string   contents;
 };
 
 class Pointer{ public:
@@ -669,7 +677,20 @@ vstr get_parenthetical_tokens( const vstr& tokens ){
     for( const string& token : tokens ){
         if( token == "(" ){  inside = true;  }
         else if( token == ")" ){  inside = false;  }
-        else if( inside ){    }
+        else if( inside ){  contents.push_back( token );  }
+    }
+}
+
+
+vstr get_bracketed_tokens( const vstr& tokens ){
+    // Get square brackets contents
+    // WARNING, ASSUMPTION: ONLY ONE DEPTH
+    vstr contents;
+    bool inside = false;
+    for( const string& token : tokens ){
+        if( token == "[" ){  inside = true;  }
+        else if( token == "]" ){  inside = false;  }
+        else if( inside ){  contents.push_back( token );  }
     }
 }
 
@@ -682,7 +703,7 @@ class ValStore{ public:
     map<string,StrRange> strrange; 
     map<string,Enum>     namedEnum; 
     map<string,Array>    namedArray; 
-    map<string,File>     file; 
+    map<string,C_File>   file; 
     map<string,Record>   record; 
 
     void set_builtins(){
@@ -721,6 +742,7 @@ void define_types( ValStore& types, string defText ){
     string name;
     P_Val  bgnRange, endRange;
     vstr   expr;
+    size_t span;
     cout << "Types:" << endl << typStatements << endl;
     for( const vstr& statement : typStatements ){
         // WARNING, ASSUMPTION: ALL TYPEDEFS CONTAIN AN '='
@@ -746,7 +768,23 @@ void define_types( ValStore& types, string defText ){
             
             /// Handle Array ///
             }else if( p_vec_has( expr, string{"array"} ) ){
-                // FIXME, START HERE: CREATE AN ARRAY!
+                expr     = get_bracketed_tokens( expr );
+                bgnRange = types.get_var_or_literal( expr[0] );
+                endRange = types.get_var_or_literal( expr[2] );
+                span     = get<long>( endRange ) - get<long>( bgnRange );
+                types.namedArray[ name ] = Array( span );
+
+            /// Handle File ///
+            }else if( p_vec_has( expr, string{"file"} ) ){
+                types.file[ name ] = C_File{};
+            
+            /// Handle Record ///
+            }else if( p_vec_has( expr, string{"record"} ) ){
+                // FIXME, START HERE: ADD MECHANISM FOR MULTI-LINE DEFINITIONS!
+
+            /// Handle OTHER? ///
+            }else{
+                cout << "WARNING: COULD NOT PARSE THE FOLLOWING LINE:\n" << statement << endl;
             }
 
         }
