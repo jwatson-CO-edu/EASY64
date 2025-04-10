@@ -30,6 +30,7 @@ using std::stringstream, std::getline;
 
 /// Aliases ///
 typedef unsigned long  ulong;
+typedef unsigned char  ubyte;
 typedef vector<string> vstr;
 typedef vector<vstr>   vvstr;
 
@@ -89,8 +90,8 @@ const array<string,35> RESERVED = { /// Word Symbols ///
     "program", "record", "repeat", "set", "then", "to", "type", "until", "var", "while", "with"
 };
 
-const unsigned char MIN_RES_SYMBOL_LEN = 1;
-const unsigned char MAX_RES_SYMBOL_LEN = 9;
+const ubyte MIN_RES_SYMBOL_LEN = 1;
+const ubyte MAX_RES_SYMBOL_LEN = 9;
 
 const array<string,2> COMMENT_OPEN = { "{", "(*" };
 const array<string,2> COMMENT_CLOS = { "}", "*)" };
@@ -189,6 +190,61 @@ size_t q_line_ends_comment( const string& q ){
 }
 
 
+array<size_t,2> q_str_has_symbol( const string& q ){
+    // Find a symbol in the string, if it exists
+    array<size_t,2> rtnIndex = {string::npos, 0};
+    for( const string& sym : SYMBOLS ){
+        rtnIndex[0] = q.find( sym );
+        rtnIndex[1] = sym.size();
+        if( rtnIndex[0] != string::npos ){  return rtnIndex;  }
+    }
+    return {string::npos, 0};
+}
+
+
+vstr attempt_reserved_symbol_merge( const vstr& tokens ){
+    // Handle the case when reserved symbols are substrings of each other
+    vstr   rtnTokens;
+    vstr   accumVec;
+    string accumStr = "";
+    string validStr = "";
+    array<size_t,2> res;
+    
+
+    // Helpers //
+    auto dump_accum = [&]{  
+        size_t foundLen = validStr.size();
+        size_t totLen    = 0;
+        accumStr = "";  
+        if( foundLen ){  
+            rtnTokens.push_back( validStr );  
+            validStr = "";
+        }
+        for( const string& acStr : accumVec ){
+            totLen += acStr.size();
+            if( totLen > foundLen ){  rtnTokens.push_back( acStr );  }
+        }
+        accumVec.clear();
+    };
+
+    for( const string& token : tokens ){
+        accumStr += token;  
+        accumVec.push_back( token );
+        if( token.size() > MAX_RES_SYMBOL_LEN ){  dump_accum();  }
+        else if( accumStr.size() > MAX_RES_SYMBOL_LEN ){  dump_accum();  } 
+        else{
+             res = q_str_has_symbol( accumStr );
+             if( res[0] != string::npos ){
+                if( res[0] > 0 ){    } // FIXME, START HERE: THIS LOGIC ISN'T GOING TO WORK
+             }
+        }
+        
+    }
+    dump_accum();
+    return rtnTokens;
+}
+
+
 vstr tokenize( const string& totStr, char sepChr = ' ' ){
     // Return a vector of tokenized strings that a separated by whitespace within `expStr`
     // WARNING, ASSUMPTION: ONE SYMBOL IS NOT A SUBSTRING OF ANOTHER SYMBOL, (There is!)
@@ -222,7 +278,7 @@ vstr tokenize( const string& totStr, char sepChr = ' ' ){
         }else{  cache_char();  } 
     }
     // N. Return the vector of tokens
-    return tokens;
+    return attempt_reserved_symbol_merge( tokens );
 }
 
 
@@ -252,42 +308,7 @@ vvstr text_block_to_tokenized_statements( const string& textBlock ){
 }
 
 
-vstr attempt_reserved_symbol_merge( const vstr& tokens ){
-    // Handle the case when reserved symbols are substrings of each other
-    vstr   rtnTokens;
-    vstr   accumVec;
-    string accumStr = "";
-    string validStr = "";
-    
 
-    // Helpers //
-    auto dump_accum = [&]{  
-        size_t foundLen = validStr.size();
-        size_t totLen    = 0;
-        accumStr = "";  
-        if( foundLen ){  
-            rtnTokens.push_back( validStr );  
-            validStr = "";
-        }
-        for( const string& acStr : accumVec ){
-            totLen += acStr.size();
-            if( totLen > foundLen ){  rtnTokens.push_back( acStr );  }
-        }
-        accumVec.clear();
-    };
-
-    for( const string& token : tokens ){
-        if( token.size() >= MAX_RES_SYMBOL_LEN ){  dump_accum();  }else{  
-            accumStr += token;  
-            accumVec.push_back( token );
-
-            if( accumStr.size() > MAX_RES_SYMBOL_LEN ){  dump_accum();  } 
-            else if( p_symbol( accumStr ) ){  validStr = accumStr;  }
-        }
-    }
-    dump_accum();
-    return rtnTokens;
-}
 
 
 ////////// FILE LEXING /////////////////////////////////////////////////////////////////////////////
