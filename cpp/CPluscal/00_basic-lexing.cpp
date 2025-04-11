@@ -36,6 +36,9 @@ typedef unsigned char  ubyte;
 typedef vector<string> vstr;
 typedef vector<vstr>   vvstr;
 
+/// Defines ///
+#define INVALID   SIZE_MAX;
+#define NOT_FOUND SIZE_MAX;
 
 
 ////////// HELPER FUNCTIONS ////////////////////////////////////////////////////////////////////////
@@ -50,6 +53,20 @@ ostream& operator<<( ostream& os , const vector<T>& vec ) {
         if (i + 1 < vec.size()) { os << ", "; }
     }
     os << " ]";
+    return os; // You must return a reference to the stream!
+}
+
+
+template<typename T>
+ostream& operator<<( ostream& os , const deque<T>& deq ) { 
+    // ostream '<<' operator for vectors
+    // NOTE: This function assumes that the ostream '<<' operator for T has already been defined
+    os << "(front)[ ";
+    for (size_t i = 0; i < deq.size(); i++) {
+        os << (T) deq[i];
+        if (i + 1 < deq.size()) { os << ", "; }
+    }
+    os << " ](back)";
     return os; // You must return a reference to the stream!
 }
 
@@ -78,12 +95,41 @@ bool p_vec_has( const vector<T>& vec, T q ){
 
 
 template<typename T>
-vector<T> vec_ltrim( const vector<T>& vec, size_t bgnDex ){
-    // Get the portion of `vec` from `bgnDex` on
+vector<T> vec_ltrim( const vector<T>& vec, const size_t& Nrem ){
+    // Get the portion of `vec` with the first `Nrem` elements removed
     vector<T> rtnVec;
-    if( bgnDex < vec.size() ){  for( size_t i = bgnDex; i < vec.size(); ++i ){  rtnVec.push_back( vec[i] );  }  }
+    if( Nrem < vec.size() ){  for( size_t i = Nrem; i < vec.size(); ++i ){  rtnVec.push_back( vec[i] );  }  }
     return rtnVec;
 }
+
+
+template<typename T>
+vector<T> vec_rtrim( const vector<T>& vec, const size_t& Nrem ){
+    // Get the portion of `vec` with the last `Nrem` elements removed
+    size_t    Nrtn;
+    vector<T> rtnVec;
+    if( vec.size() > Nrem ){
+        Nrtn = vec.size() - Nrem;
+        for( size_t i = 0; i < Nrtn; ++i ){  rtnVec.push_back( vec[i] );  }
+    }
+    return rtnVec;
+}
+
+
+template<typename T>
+void vec_extend( vector<T>& vec, const vector<T>& toAdd ){
+    // Extend `vec` with elements of `toAdd`
+    for( const string& elem : toAdd ){  vec.push_back( elem );  }
+}
+
+template<typename T>
+size_t vec_find( const vector<T>& vec, T q ){
+    // Return index if the value `q` can be found in the vector
+    size_t rtnDex = 0;
+    for( const T& item : vec ){  ++rtnDex;  if( item == q ){  return rtnDex;  }  }
+    return NOT_FOUND;
+}
+
 
 
 ////////// LANGUAGE CONSTANTS //////////////////////////////////////////////////////////////////////
@@ -239,8 +285,9 @@ vstr attempt_reserved_symbol_merge( const vstr& tokens ){
     string /*--*/ validStr = "";
 
     for( const string& token : tokens ){
-        while( accumQue.size() > 1 ){  accumQue.pop_front();  }
+        // while( accumQue.size() > 1 ){  accumQue.pop_front();  }
         accumQue.push_back( token );
+        // cout << '\t' << accumQue;
         if( accumQue.size() >= 2 ){  
             accumStr = accumQue[0] + accumQue[1];  
             if( p_special( accumStr ) ){
@@ -251,6 +298,7 @@ vstr attempt_reserved_symbol_merge( const vstr& tokens ){
                 accumQue.pop_front();
             }
         }
+        // cout << " : " << rtnTokens << endl;
     }
     while( accumQue.size() ){  
         rtnTokens.push_back( accumQue[0] );
@@ -298,19 +346,18 @@ vstr tokenize( const string& totStr, char sepChr = ' ' ){
 
 
 vvstr segment_statements( const vstr& tokens_ ){
-    // Separate a token vector into a vector of token vectors, each representing a statement
+    // Separate a token vector into a vector of token vectors, each representing a statement (';' included!)
     vector<vstr> statements;
     vstr /*---*/ statement;
     vstr /*---*/ tokens = tokens_;
     tokens.push_back( ";" ); // Terminator Hack
     for( const string& token : tokens ){
+        statement.push_back( token );
         if( token == ";" ){
             if( statement.size() ){
                 statements.push_back( statement );
                 statement.clear();
             }
-        }else{
-            statement.push_back( token );
         }
     }
     return statements;
@@ -420,10 +467,10 @@ TextPortions segment_source_file( const vstr& totLines ){
 
         // 4. Accrue text to sections
         switch( mode ){
-            case TYPE:   rtnSctns.type += trimLine;  break;
-            case CONST:  rtnSctns.cnst += trimLine;  break;
-            case VAR:    rtnSctns.var  += trimLine;  break;
-            case OTHER:  rtnSctns.prog += trimLine;  break;            
+            case TYPE:   rtnSctns.type += line;  break;
+            case CONST:  rtnSctns.cnst += line;  break;
+            case VAR:    rtnSctns.var  += line;  break;
+            case OTHER:  rtnSctns.prog += line;  break;            
             default:
                 break;
         }
@@ -568,6 +615,7 @@ enum C_Type{
 class Enum{ public:
     vstr items;
 
+    Enum(){}
     Enum( const vstr& values ){  items = values;  }
 };
 
@@ -580,6 +628,15 @@ class ValRange{ public:
     P_Val incr;
     P_Val valCur;
     bool  done;
+
+    ValRange(){
+        // Set up the range for iteration
+        valMin = make_nan();
+        valMax = make_nan();
+        incr   = 1;
+        valCur = make_nan();
+        done   = true;
+    }
 
     ValRange( P_Val valMin_, P_Val valMax_ ){
         // Set up the range for iteration
@@ -608,7 +665,7 @@ class StrRange{
 
 class Array{ 
     // AM I ABLE BOTH TO ASSIGN AND TO RETRIEVE?
-    private:
+    protected:
     struct elem{
         P_Val val;
         P_Val operator=( const P_Val& val_ ){
@@ -620,6 +677,7 @@ class Array{
 
     public:
 
+    Array(){}
     Array( size_t N ){
         values.reserve(N);
     }
@@ -679,6 +737,7 @@ vstr get_parenthetical_tokens( const vstr& tokens ){
         else if( token == ")" ){  inside = false;  }
         else if( inside ){  contents.push_back( token );  }
     }
+    return contents;
 }
 
 
@@ -692,6 +751,7 @@ vstr get_bracketed_tokens( const vstr& tokens ){
         else if( token == "]" ){  inside = false;  }
         else if( inside ){  contents.push_back( token );  }
     }
+    return contents;
 }
 
 
@@ -732,21 +792,50 @@ class ValStore{ public:
         if( LexPrim::p_primitive_string( token ) ){  return LexPrim::str_2_primitive( token );  }
         return make_nan();
     }
+
+    string resolve_prim_alias( const string& name ){
+        // Return the primitive name associated with the alias, otherwise return an empty string
+        if( p_prim_type( name ) ){  return name;  }
+        if( pAlias.find( name ) != pAlias.end() ){  return pAlias[ name ];  }
+        return "";
+    }
 };
 
 
 
 ////////// TYPES ///////////////////////////////////////////////////////////////////////////////////
 void define_types( ValStore& types, string defText ){
-    vvstr typStatements = text_block_to_tokenized_statements( defText );
-    string name;
+    vvstr  typStatements = text_block_to_tokenized_statements( defText );
+    string name, pName;
     P_Val  bgnRange, endRange;
     vstr   expr;
     size_t span;
+    bool   accum = false;
+    vvstr  mltExp;
+    Record rec;
     cout << "Types:" << endl << typStatements << endl;
     for( const vstr& statement : typStatements ){
-        // WARNING, ASSUMPTION: ALL TYPEDEFS CONTAIN AN '='
-        if( p_vec_has( statement, string{"="} ) ){
+        if( accum ){
+            vec_extend( expr, statement );
+            if( p_vec_has( statement, string{"end"} ) ){  accum = false;  }
+
+            if( !accum ){
+                /// Handle Record End ///
+                if( p_vec_has( expr, string{"record"} ) ){
+                    expr   = vec_ltrim( expr, 1 ); // Remove "record"
+                    expr   = vec_rtrim( expr, 2 ); // Remove ["end", ";",]
+                    mltExp = segment_statements( expr );
+                    for( const vstr& sttmnt_j : mltExp ){
+                        if( types.resolve_prim_alias( sttmnt_j[2] ).size() ){
+                            rec = Record{};
+                            rec.pVars[ sttmnt_j[0] ] = make_nan();
+                            types.record[ name ] = rec;
+                        }
+                    }
+                }
+            }
+
+        }else if( p_vec_has( statement, string{"="} ) ){ // WARNING, ASSUMPTION: ALL TYPEDEFS CONTAIN AN '='
             name = statement[0];
             expr = vec_ltrim( statement, 2 );
 
@@ -759,7 +848,7 @@ void define_types( ValStore& types, string defText ){
                 }
 
             /// Handle Alias ///
-            }else if( (expr.size() == 1) && p_prim_type( expr[0] ) ){
+            }else if( (expr.size() == 2) && p_prim_type( expr[0] ) ){
                 types.pAlias[ name ] = expr[0];
 
             /// Handle Enum ///
@@ -772,15 +861,15 @@ void define_types( ValStore& types, string defText ){
                 bgnRange = types.get_var_or_literal( expr[0] );
                 endRange = types.get_var_or_literal( expr[2] );
                 span     = get<long>( endRange ) - get<long>( bgnRange );
-                types.namedArray[ name ] = Array( span );
+                types.namedArray[ name ] = Array{ span };
 
             /// Handle File ///
             }else if( p_vec_has( expr, string{"file"} ) ){
                 types.file[ name ] = C_File{};
             
-            /// Handle Record ///
+            /// Handle Record Begin ///
             }else if( p_vec_has( expr, string{"record"} ) ){
-                // FIXME, START HERE: ADD MECHANISM FOR MULTI-LINE DEFINITIONS!
+                accum = true;
 
             /// Handle OTHER? ///
             }else{
