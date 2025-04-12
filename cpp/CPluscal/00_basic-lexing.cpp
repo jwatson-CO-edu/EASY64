@@ -131,6 +131,30 @@ size_t vec_find( const vector<T>& vec, T q ){
 }
 
 
+template<typename T>
+vector<vector<T>> vec_split( const vector<T>& vec, T sepElem ){
+    // Split the `vec` on the `sepElem`, exclusive
+    vector<vector<T>> rtnVecVec;
+    vector<T> /*---*/ part;
+    for( const T& item : vec ){
+        if( (item == sepElem) && part.size() ){
+            rtnVecVec.push_back( part );
+            part.clear();
+        }else{  part.push_back( item );  }
+    }
+    if( part.size() ){  rtnVecVec.push_back( part );  }
+    return rtnVecVec;
+}
+
+
+template<typename T>
+vector<T> vec_remove( const vector<T>& vec, T remElem ){
+    // Split the `vec` on the `sepElem`, exclusive
+    vector<T> rtnVec;
+    for( const T& item : vec ){  if( item != remElem ){  rtnVec.push_back( item );  }  }
+    return rtnVec;
+}
+
 
 ////////// LANGUAGE CONSTANTS //////////////////////////////////////////////////////////////////////
 
@@ -154,8 +178,8 @@ const array<string,35> RESERVED = { /// Word Symbols ///
     "program", "record", "repeat", "set", "then", "to", "type", "until", "var", "while", "with"
 };
 
-const array<string,1> PRIM_TYPE_NAMES = { /// Primitive Type Names ///
-    "integer"
+const array<string,3> PRIM_TYPE_NAMES = { /// Primitive Type Names ///
+    "integer", "real", "Boolean",
 };
 
 const ubyte MIN_RES_SYMBOL_LEN = 1;
@@ -354,7 +378,7 @@ vvstr segment_statements( const vstr& tokens_ ){
     for( const string& token : tokens ){
         statement.push_back( token );
         if( token == ";" ){
-            if( statement.size() ){
+            if( statement.size() > 1 ){
                 statements.push_back( statement );
                 statement.clear();
             }
@@ -758,7 +782,7 @@ vstr get_bracketed_tokens( const vstr& tokens ){
 class ValStore{ public:
     // Lookup for values by name
     map<string,string>   pAlias; // Aliases for primitive types
-    map<string,P_Val>    var; // -- Variables of primitive types
+    map<string,P_Val>    prim; // -- Variables of primitive types
     map<string,ValRange> valrange; 
     map<string,StrRange> strrange; 
     map<string,Enum>     namedEnum; 
@@ -768,7 +792,7 @@ class ValStore{ public:
 
     void set_builtins(){
         // Set values that Pascal knows about
-        var["maxint"] = P_Val{ LONG_MAX };
+        prim["maxint"] = P_Val{ LONG_MAX };
     }
 
     ValStore(){
@@ -778,17 +802,27 @@ class ValStore{ public:
 
     bool p_var_name( const string& name ){
         // Is there a variable stored under this `name`?
-        if( var.find( name ) != var.end() ){  return true;  }else{  return false;  }
+        if( prim.find( name ) != prim.end() ){  return true;  }else{  return false;  }
+    }
+
+    bool p_arr_name( const string& name ){
+        // Is there a variable stored under this `name`?
+        if( namedArray.find( name ) != namedArray.end() ){  return true;  }else{  return false;  }
+    }
+
+    bool p_num_range_name( const string& name ){
+        // Is there a variable stored under this `name`?
+        if( valrange.find( name ) != valrange.end() ){  return true;  }else{  return false;  }
     }
 
     P_Val get_var( const string& name ){
         // Get var by `name` if it exists, otherwise return NaN
-        if( p_var_name( name ) ){  return var[ name ];  }else{  return make_nan();  }
+        if( p_var_name( name ) ){  return prim[ name ];  }else{  return make_nan();  }
     }
 
     P_Val get_var_or_literal( const string& token ){
         // If the `token` is a variable or a literal, then return its value, Otherwise return NaN
-        if( p_var_name( token ) ){  return var[ token ];  }
+        if( p_var_name( token ) ){  return prim[ token ];  }
         if( LexPrim::p_primitive_string( token ) ){  return LexPrim::str_2_primitive( token );  }
         return make_nan();
     }
@@ -803,8 +837,18 @@ class ValStore{ public:
 
 
 
+class Context{ public:
+    // Resolves names
+    ValStore types;
+    ValStore constants;
+    ValStore vars;
+};
+
+
+
 ////////// TYPES ///////////////////////////////////////////////////////////////////////////////////
-void define_types( ValStore& types, string defText ){
+void define_types( Context& context, const string& defText ){
+    // Specify aliases and user-defined types
     vvstr  typStatements = text_block_to_tokenized_statements( defText );
     string name, pName;
     P_Val  bgnRange, endRange;
@@ -815,6 +859,9 @@ void define_types( ValStore& types, string defText ){
     Record rec;
     cout << "Types:" << endl << typStatements << endl;
     for( const vstr& statement : typStatements ){
+
+        cout << "Processing: " << statement << endl;
+
         if( accum ){
             vec_extend( expr, statement );
             if( p_vec_has( statement, string{"end"} ) ){  accum = false;  }
@@ -825,11 +872,12 @@ void define_types( ValStore& types, string defText ){
                     expr   = vec_ltrim( expr, 1 ); // Remove "record"
                     expr   = vec_rtrim( expr, 2 ); // Remove ["end", ";",]
                     mltExp = segment_statements( expr );
+                    cout << mltExp << endl;
                     for( const vstr& sttmnt_j : mltExp ){
-                        if( types.resolve_prim_alias( sttmnt_j[2] ).size() ){
+                        if( context.types.resolve_prim_alias( sttmnt_j[2] ).size() ){
                             rec = Record{};
                             rec.pVars[ sttmnt_j[0] ] = make_nan();
-                            types.record[ name ] = rec;
+                            context.types.record[ name ] = rec;
                         }
                     }
                 }
@@ -841,31 +889,40 @@ void define_types( ValStore& types, string defText ){
 
             /// Handle Range ///
             if( p_vec_has( expr, string{".."} ) ){
-                bgnRange = types.get_var_or_literal( expr[0] );
-                endRange = types.get_var_or_literal( expr[2] );
+                bgnRange = context.types.get_var_or_literal( expr[0] );
+                endRange = context.types.get_var_or_literal( expr[2] );
                 if( (!p_nan( bgnRange ))&&(!p_nan( endRange )) ){
-                    types.valrange[ name ] = ValRange( bgnRange, endRange );
+                    context.types.valrange[ name ] = ValRange( bgnRange, endRange );
                 }
 
             /// Handle Alias ///
             }else if( (expr.size() == 2) && p_prim_type( expr[0] ) ){
-                types.pAlias[ name ] = expr[0];
+                context.types.pAlias[ name ] = expr[0];
 
             /// Handle Enum ///
             }else if( p_vec_has( expr, string{"("} ) && p_vec_has( expr, string{")"} ) ){
-                types.namedEnum[ name ] = Enum{ get_parenthetical_tokens( expr ) };
+                context.types.namedEnum[ name ] = Enum{ get_parenthetical_tokens( expr ) };
             
             /// Handle Array ///
             }else if( p_vec_has( expr, string{"array"} ) ){
-                expr     = get_bracketed_tokens( expr );
-                bgnRange = types.get_var_or_literal( expr[0] );
-                endRange = types.get_var_or_literal( expr[2] );
-                span     = get<long>( endRange ) - get<long>( bgnRange );
-                types.namedArray[ name ] = Array{ span };
+                expr = get_bracketed_tokens( expr );
+                if( (expr.size() == 1)&&(context.types.p_num_range_name( expr[0] )) ){
+                    span = get<long>( context.types.valrange[ expr[0] ].valMax )
+                           -
+                           get<long>( context.types.valrange[ expr[0] ].valMin );
+                    context.types.namedArray[ name ] = Array{ span };
+                }else if( expr.size() == 3 ){
+                    bgnRange = context.types.get_var_or_literal( expr[0] );
+                    endRange = context.types.get_var_or_literal( expr[2] );
+                    span     = get<long>( endRange ) - get<long>( bgnRange );
+                    context.types.namedArray[ name ] = Array{ span };    
+                }else{
+                    cout << "Malformed array!: " << statement << endl;
+                }
 
             /// Handle File ///
             }else if( p_vec_has( expr, string{"file"} ) ){
-                types.file[ name ] = C_File{};
+                context.types.file[ name ] = C_File{};
             
             /// Handle Record Begin ///
             }else if( p_vec_has( expr, string{"record"} ) ){
@@ -873,7 +930,7 @@ void define_types( ValStore& types, string defText ){
 
             /// Handle OTHER? ///
             }else{
-                cout << "WARNING: COULD NOT PARSE THE FOLLOWING LINE:\n" << statement << endl;
+                cout << "`define_types`, WARNING: COULD NOT PARSE THE FOLLOWING LINE:\n" << statement << endl;
             }
 
         }
@@ -883,28 +940,77 @@ void define_types( ValStore& types, string defText ){
 
 
 ////////// CONSTANTS ///////////////////////////////////////////////////////////////////////////////
-void define_constants( ValStore& constants, string defText ){
-    vvstr conStatements = text_block_to_tokenized_statements( defText );
+void define_constants( Context& context, string defText ){
+    // Specify values that should not change
+    vvstr  conStatements = text_block_to_tokenized_statements( defText );
+    string name, pName;
+    P_Val  bgnRange, endRange;
+    vstr   expr;
     cout << "Constants:" << endl << conStatements << endl;
+    for( const vstr& statement : conStatements ){
+
+        cout << "Processing: " << statement << endl;
+
+        if( p_vec_has( statement, string{"="} ) ){ // WARNING, ASSUMPTION: ALL CONSTANT DEFS CONTAIN AN '='
+            name = statement[0];
+            expr = vec_ltrim( statement, 2 );
+
+            /// Handle Primtive ///
+            if( (expr.size() == 2) && p_prim_type( expr[0] ) ){
+                context.types.pAlias[ name ] = expr[0];
+            }else{
+                cout << "`define_constants`, WARNING: COULD NOT PARSE THE FOLLOWING LINE:\n" << statement << endl;
+            }
+        }
+    }
 }
 
 
 
 ////////// VARIABLES ///////////////////////////////////////////////////////////////////////////////
-void define_variables( ValStore& variables, string defText ){
-    vvstr varStatements = text_block_to_tokenized_statements( defText );
+void define_variables( Context& context, string defText ){
+    vvstr  varStatements = text_block_to_tokenized_statements( defText );
+    vvstr  parts;
+    vstr   names, tExpr;
+    string type;
+    P_Val  bgnRange, endRange;
     cout << "Variables:" << endl << varStatements << endl;
+    for( const vstr& statement : varStatements ){
+
+        cout << "Processing: " << statement << endl;
+
+        if( p_vec_has( statement, string{":"} ) ){ // WARNING, ASSUMPTION: ALL VARIABLE DEFS CONTAIN AN ':'
+            parts = vec_split( statement, string{":"} );
+            names = vec_remove( parts[0], string{","} );
+            tExpr  = vec_remove( parts[1], string{";"} );
+            cout << names << " : " << tExpr << endl;
+
+            /// Handle Primitive Variables ///
+            if( tExpr.size() == 1 ){
+                type = context.types.resolve_prim_alias( tExpr[0] );
+                if( type.size() ){  for( const string& name : names ){  context.vars.prim[ name ] = make_nan();  }  }
+            
+            /// Handle Numeric Range Variables ///
+            }else if( p_vec_has( tExpr, string{".."} ) ){
+                bgnRange = context.types.get_var_or_literal( tExpr[0] );
+                endRange = context.types.get_var_or_literal( tExpr[2] );
+                if( (!p_nan( bgnRange ))&&(!p_nan( endRange )) ){
+                    for( const string& name : names ){
+                        context.vars.valrange[ name ] = ValRange( bgnRange, endRange );
+                    }
+                }
+
+            /// Handle Enum ///
+            } // FIXME, START HERE: HANDLE ENUM
+        }
+
+    }
 }
 
 
 ////////// INTERPRETER /////////////////////////////////////////////////////////////////////////////
 
-class Interpreter{ public:
-    // Runs programs
-    ValStore types;
-    ValStore constants;
-    ValStore vars;
-};
+
 
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
@@ -915,11 +1021,11 @@ int main(){
 
     vstr /*---*/ fLines = read_file_to_lines( _SRC_PATH );
     TextPortions fSeg = segment_source_file( fLines );
-    ValStore     store;
+    Context /**/ cntxt;
 
-    define_types(     store, fSeg.type );
-    define_constants( store, fSeg.cnst );
-    define_variables( store, fSeg.var  );
+    define_types(     cntxt, fSeg.type );  cout << endl;
+    define_constants( cntxt, fSeg.cnst );  cout << endl;
+    define_variables( cntxt, fSeg.var  );  cout << endl;
 
 
     return 0;

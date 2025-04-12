@@ -2,6 +2,7 @@ type
     natural = 0..maxint;  
     count = integer;  
     range = integer;  
+    angle = real;  
     color = (red, yellow, green, blue);  
     sex = (male, female);  
     year = 1900..1999;  
