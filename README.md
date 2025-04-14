@@ -12,15 +12,20 @@ Yes, Pascal had a compiler, but that comes later. This is just an interpreter fo
 ## Added Features
 Please try not to implement any additional features whatsoever!
 
+## Nonconformities
+* Primitive types are based on 64 bit C++ equivalents.
+* Case **matters** for identifiers.
+* Probably others!
+
 &nbsp;  
 &nbsp;  
 
 # CPluscal+
 ## `Stepping Stones`
-* `[ ]` Add REPL
 * `[ ]` Add Abstract Source Trees (AST)
 * `[ ]` C-style comments
 * `[ ]` Convert code blocks to `{}`
+* `[ ]` Add REPL
 * `[ ]` [Multithread](https://www.dcs.ed.ac.uk/home/SUNWspro/3.0/pascal/user_guide/mlthrd11.doc.html)
     - `[ ]` `parfor`?
 

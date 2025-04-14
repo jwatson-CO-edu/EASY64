@@ -28,5 +28,5 @@ var
     a : array [0..63] of real;  
     c : color;  
     f : file of char;  
-    hue1, hue2 : set of colour;  
+    hue1, hue2 : set of color;  
     p1, p2 : person;

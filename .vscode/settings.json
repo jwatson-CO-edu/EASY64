@@ -84,7 +84,10 @@
         "typeindex": "cpp",
         "format": "cpp",
         "ios": "cpp",
-        "locale": "cpp"
+        "locale": "cpp",
+        "span": "cpp",
+        "__bit_reference": "cpp",
+        "__string": "cpp"
     },
     "makefile.configureOnOpen": false
 }

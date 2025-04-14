@@ -11,7 +11,7 @@ using std::set;
 #include <string>
 using std::string;
 #include <map>
-using std::map;
+using std::map, std::pair;
 #include <variant>
 using std::variant, std::get, std::holds_alternative;
 #include <type_traits>
@@ -393,7 +393,17 @@ vvstr text_block_to_tokenized_statements( const string& textBlock ){
     return segment_statements( tokenize( textBlock ) );
 }
 
-
+string concat( const vstr& parts, char sepChar = 0 ){
+    // Concat the elements of a string vector
+    string rtnStr = "";
+    size_t N = parts.size();
+    size_t i = 0;
+    for( const string& part : parts ){
+        rtnStr += part;
+        if( (sepChar > 0)&&(i<(N-1)) ){  rtnStr += sepChar;  }
+    }
+    return rtnStr;
+}
 
 
 
@@ -622,25 +632,14 @@ P_Val str_2_primitive( const string& q ){
 };
 
 ////////// COMPOUND TYPES //////////////////////////////////////////////////////////////////////////
-enum C_Type{
-    // Compound Data Types
-    ENUM,
-    RANGE,
-    ARRAY,
-    RECORD,
-    SET,
-    // FILE,
-    STRUCT,
-    PACKED,
-    POINTER, // ???
-};
-
 
 class Enum{ public:
     vstr items;
 
     Enum(){}
     Enum( const vstr& values ){  items = values;  }
+
+    Enum copy(){  return Enum{ items };  } // Make a copy of the enum
 };
 
 
@@ -683,9 +682,18 @@ class ValRange{ public:
     ValRange copy(){  return ValRange{ valMin, valMax };  }
 };
 
-class StrRange{
+
+
+class StrRange{ public:
+    // This is basically an Enum and I don't really get it!
+    StrRange(){}
+    StrRange( const vstr& values_ ){  values = values_;  }
+    StrRange copy(){  return StrRange{ values };  }
+
     vstr values;
 };
+
+
 
 class Array{ 
     // AM I ABLE BOTH TO ASSIGN AND TO RETRIEVE?
@@ -706,6 +714,8 @@ class Array{
         values.reserve(N);
     }
 
+    Array copy_empty(){  return Array{ values.size() };  }
+
     P_Val& operator[]( const size_t& index ){
         return values[ index ].val;
     }
@@ -723,12 +733,36 @@ class Struct{ public: // WARNING, ASSUMPTION: WILL THIS COVER A STRUCT?
 class Record{ public: 
     map<string,P_Val> pVars; // Variables, Primitive Types
     map<string,vstr>  condFields; // Conditional Fields
+
+    Record(){}
+
+    Record copy(){
+        Record rtnRec;
+        for( const pair<string,P_Val>& item : pVars ){  rtnRec.pVars[ item.first ] = item.second;  }
+        for( const pair<string,vstr>& item  : condFields ){  rtnRec.condFields[ item.first ] = item.second;  }
+        return rtnRec;
+    }
 };
 
 
-template<typename T>
-class Set{
-    set<T> values;
+class SetString{
+    vstr /*--*/ allowed;
+    set<string> values;
+    pair<set<string>::iterator,bool> res;
+
+    void restrict( const vstr& allowedStrings ){  allowed = allowedStrings;  }
+
+    bool add( const string& val ){
+        if( allowed.size() ){
+            if( p_vec_has( allowed, val ) ){
+                res = values.insert( val );
+                return res.second;
+            }else{  return false;  }
+        }else{  
+            res = values.insert( val );  
+            return res.second;
+        }
+    }
 };
 
 enum FileMode{
@@ -736,7 +770,7 @@ enum FileMode{
     GENERATION,
 };
 
-class C_File{ public:
+class P_File{ public:
     // WARNING: NEED TO READ ABOUT PASCAL FILE MODEL
     FileMode mode;
     string   path;
@@ -779,6 +813,20 @@ vstr get_bracketed_tokens( const vstr& tokens ){
 }
 
 
+enum TypeName{
+    // Data Types
+    PRIMITIVE,
+    ALIAS,
+    RANGE_VALUE,
+    RANGE_STRING,
+    ENUM,
+    ARRAY,
+    P_FILE,
+    RECORD,
+    ERROR,
+};
+
+
 class ValStore{ public:
     // Lookup for values by name
     map<string,string>   pAlias; // Aliases for primitive types
@@ -787,7 +835,7 @@ class ValStore{ public:
     map<string,StrRange> strrange; 
     map<string,Enum>     namedEnum; 
     map<string,Array>    namedArray; 
-    map<string,C_File>   file; 
+    map<string,P_File>   file; 
     map<string,Record>   record; 
 
     void set_builtins(){
@@ -805,6 +853,11 @@ class ValStore{ public:
         if( prim.find( name ) != prim.end() ){  return true;  }else{  return false;  }
     }
 
+    bool p_alias_name( const string& name ){
+        // Is there a variable stored under this `name`?
+        if( pAlias.find( name ) != pAlias.end() ){  return true;  }else{  return false;  }
+    }
+
     bool p_arr_name( const string& name ){
         // Is there a variable stored under this `name`?
         if( namedArray.find( name ) != namedArray.end() ){  return true;  }else{  return false;  }
@@ -813,6 +866,21 @@ class ValStore{ public:
     bool p_num_range_name( const string& name ){
         // Is there a variable stored under this `name`?
         if( valrange.find( name ) != valrange.end() ){  return true;  }else{  return false;  }
+    }
+
+    bool p_str_range_name( const string& name ){
+        // Is there a variable stored under this `name`?
+        if( strrange.find( name ) != strrange.end() ){  return true;  }else{  return false;  }
+    }
+
+    bool p_file_name( const string& name ){
+        // Is there a variable stored under this `name`?
+        if( file.find( name ) != file.end() ){  return true;  }else{  return false;  }
+    }
+
+    bool p_record_name( const string& name ){
+        // Is there a variable stored under this `name`?
+        if( record.find( name ) != record.end() ){  return true;  }else{  return false;  }
     }
 
     P_Val get_var( const string& name ){
@@ -832,6 +900,18 @@ class ValStore{ public:
         if( p_prim_type( name ) ){  return name;  }
         if( pAlias.find( name ) != pAlias.end() ){  return pAlias[ name ];  }
         return "";
+    }
+
+    TypeName where_name( const string& name ){
+        // Identify what kind of thing the identifier identifies
+        if( p_var_name( name )       ){  return PRIMITIVE;     }
+        if( p_alias_name( name )     ){  return ALIAS;         }
+        if( p_num_range_name( name ) ){  return RANGE_VALUE;   }
+        if( p_str_range_name( name ) ){  return RANGE_STRING;  }
+        if( p_arr_name( name )       ){  return ARRAY;         }
+        if( p_file_name( name )      ){  return P_FILE;        }
+        if( p_record_name( name )    ){  return RECORD;        }
+        return ERROR;
     }
 };
 
@@ -922,7 +1002,7 @@ void define_types( Context& context, const string& defText ){
 
             /// Handle File ///
             }else if( p_vec_has( expr, string{"file"} ) ){
-                context.types.file[ name ] = C_File{};
+                context.types.file[ name ] = P_File{};
             
             /// Handle Record Begin ///
             }else if( p_vec_has( expr, string{"record"} ) ){
@@ -972,8 +1052,10 @@ void define_variables( Context& context, string defText ){
     vvstr  varStatements = text_block_to_tokenized_statements( defText );
     vvstr  parts;
     vstr   names, tExpr;
-    string type;
+    string type, errStr;
     P_Val  bgnRange, endRange;
+    size_t span;
+
     cout << "Variables:" << endl << varStatements << endl;
     for( const vstr& statement : varStatements ){
 
@@ -985,11 +1067,60 @@ void define_variables( Context& context, string defText ){
             tExpr  = vec_remove( parts[1], string{";"} );
             cout << names << " : " << tExpr << endl;
 
-            /// Handle Primitive Variables ///
+            /// Handle Named Types ///
             if( tExpr.size() == 1 ){
+
+                switch( context.types.where_name( tExpr[0] ) ){
+                    case PRIMITIVE:
+                    case ALIAS:
+                        for( const string& name : names ){
+                            context.vars.prim[ name ] = make_nan();
+                        }
+                        break;
+                    case RANGE_VALUE:
+                        for( const string& name : names ){
+                            context.vars.valrange[ name ] = context.types.valrange[ tExpr[0] ].copy();
+                        }
+                        break;
+                    case RANGE_STRING:
+                        for( const string& name : names ){
+                            context.vars.strrange[ name ] = context.types.strrange[ tExpr[0] ].copy();
+                        }
+                        break;
+                    case ENUM:
+                        for( const string& name : names ){
+                            context.vars.namedEnum[ name ] = context.types.namedEnum[ tExpr[0] ].copy();
+                        }
+                        break;
+                    case ARRAY:
+                        for( const string& name : names ){
+                            context.vars.namedArray[ name ] = context.types.namedArray[ tExpr[0] ].copy_empty();
+                        }
+                        break;
+                    case P_FILE:
+                        for( const string& name : names ){
+                            context.vars.file[ name ] = P_File{};
+                        }
+                        break;
+                    case RECORD:
+                        for( const string& name : names ){
+                            context.vars.record[ name ] = context.types.record[ tExpr[0] ].copy();
+                        }
+                        break;
+                    case ERROR:
+                        cerr << tExpr[0] << " does not name a type!" << endl;
+                        break;
+                    default:
+                        cerr << "THIS SHOULD NOT HAPPEN!\nThere was an ERROR in interpreting " << statement << "!" << endl;
+                        errStr = "`define_variables`: Could not process the following!:\t" + concat( statement, ',' ) + "\n\n";
+                        throw runtime_error( errStr );
+
+                }
+
                 type = context.types.resolve_prim_alias( tExpr[0] );
-                if( type.size() ){  for( const string& name : names ){  context.vars.prim[ name ] = make_nan();  }  }
+                if( type.size() ){  for( const string& name : names ){    }  }
             
+
             /// Handle Numeric Range Variables ///
             }else if( p_vec_has( tExpr, string{".."} ) ){
                 bgnRange = context.types.get_var_or_literal( tExpr[0] );
@@ -1001,16 +1132,49 @@ void define_variables( Context& context, string defText ){
                 }
 
             /// Handle Enum ///
-            } // FIXME, START HERE: HANDLE ENUM
-        }
+            }if( p_vec_has( tExpr, string{"("} ) && p_vec_has( tExpr, string{")"} ) ){
+                tExpr = get_parenthetical_tokens( tExpr );
+                for( const string& name : names ){
+                    context.vars.namedEnum[ name ] =  Enum{ tExpr };
+                }
+            
+            /// Handle Array ///
+            }else if( p_vec_has( tExpr, string{"array"} ) ){
+                tExpr = get_bracketed_tokens( tExpr );
+                if( (tExpr.size() == 1)&&(context.types.p_num_range_name( tExpr[0] )) ){
+                    span = get<long>( context.types.valrange[ tExpr[0] ].valMax )
+                           -
+                           get<long>( context.types.valrange[ tExpr[0] ].valMin );
+                    for( const string& name : names ){
+                        context.types.namedArray[ name ] = Array{ span };
+                    }
+                }else if( tExpr.size() == 3 ){
+                    bgnRange = context.types.get_var_or_literal( tExpr[0] );
+                    endRange = context.types.get_var_or_literal( tExpr[2] );
+                    span     = get<long>( endRange ) - get<long>( bgnRange );
+                    for( const string& name : names ){
+                        context.types.namedArray[ name ] = Array{ span };    
+                    }
+                }else{
+                    cout << "Malformed array!: " << statement << endl;
+                }
 
+            /// Handle File ///
+            }else if( p_vec_has( tExpr, string{"file"} ) ){
+                for( const string& name : names ){
+                    context.types.file[ name ] = P_File{};
+                }
+            
+            /// Handle Set ///
+            } // FIXME, START HERE: HANDLE A SET OF TYPE ENUM!
+        }
     }
 }
 
 
 ////////// INTERPRETER /////////////////////////////////////////////////////////////////////////////
 
-
+// FIXME: RUN INTERPRETER MACHINERY IN ORDER!
 
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
