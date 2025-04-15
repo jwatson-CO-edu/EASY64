@@ -204,7 +204,7 @@ vvstr text_block_to_tokenized_statements( const string& textBlock ){
     return segment_statements( tokenize( textBlock ) );
 }
 
-string concat( const vstr& parts, char sepChar = 0 ){
+string concat( const vstr& parts, char sepChar ){
     // Concat the elements of a string vector
     string rtnStr = "";
     size_t N = parts.size();
@@ -326,8 +326,6 @@ TextPortions segment_source_file( const vstr& totLines ){
 
 
 ///// Lex Primitives //////////////////////////////////////////////////////
-namespace LexPrim{
-
 bool p_primitive_string( const string& q ){
     // Return true if the string can represent a primitive
     /// Handle `bool` ///
@@ -384,4 +382,34 @@ P_Val str_2_primitive( const string& q ){
     return P_Val{ nan("") };
 };
     
-};
+
+
+////////// TOKEN LEXING ////////////////////////////////////////////////////////////////////////////
+
+vstr get_parenthetical_tokens( const vstr& tokens ){
+    // Get parentheses contents
+    // WARNING, ASSUMPTION: ONLY ONE DEPTH
+    vstr contents;
+    bool inside = false;
+    for( const string& token : tokens ){
+        if( token == "(" ){  inside = true;  }
+        else if( token == ")" ){  inside = false;  }
+        else if( inside ){  contents.push_back( token );  }
+    }
+    return contents;
+}
+
+
+vstr get_bracketed_tokens( const vstr& tokens ){
+    // Get square brackets contents
+    // WARNING, ASSUMPTION: ONLY ONE DEPTH
+    vstr contents;
+    bool inside = false;
+    for( const string& token : tokens ){
+        if( token == "[" ){  inside = true;  }
+        else if( token == "]" ){  inside = false;  }
+        else if( inside ){  contents.push_back( token );  }
+    }
+    return contents;
+}
+

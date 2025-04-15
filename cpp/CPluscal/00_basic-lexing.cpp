@@ -633,6 +633,8 @@ P_Val str_2_primitive( const string& q ){
 
 };
 
+
+
 ////////// COMPOUND TYPES //////////////////////////////////////////////////////////////////////////
 
 class Enum{ public:
@@ -644,7 +646,8 @@ class Enum{ public:
     Enum copy(){  return Enum{ items };  } // Make a copy of the enum
 };
 
-// FIXME, START HERE: KEEP COPYING TYPES TO "types_builtin.cpp"
+
+
 class ValRange{ public:
     // Represents a range of numbers that can be iterated
 
@@ -688,11 +691,12 @@ class ValRange{ public:
 
 class StrRange{ public:
     // This is basically an Enum and I don't really get it!
+    vstr values;
+
     StrRange(){}
     StrRange( const vstr& values_ ){  values = values_;  }
     StrRange copy(){  return StrRange{ values };  }
 
-    vstr values;
 };
 
 
@@ -950,7 +954,7 @@ class Context{ public:
 
 
 
-////////// TYPES ///////////////////////////////////////////////////////////////////////////////////
+////////// TYPE DEFINITION PART ////////////////////////////////////////////////////////////////////
 void define_types( Context& context, const string& defText ){
     // Specify aliases and user-defined types
     vvstr  typStatements = text_block_to_tokenized_statements( defText );
@@ -1043,7 +1047,7 @@ void define_types( Context& context, const string& defText ){
 
 
 
-////////// CONSTANTS ///////////////////////////////////////////////////////////////////////////////
+////////// CONSTANT DEFINITION PART ////////////////////////////////////////////////////////////////
 void define_constants( Context& context, string defText ){
     // Specify values that should not change
     vvstr  conStatements = text_block_to_tokenized_statements( defText );
@@ -1071,7 +1075,7 @@ void define_constants( Context& context, string defText ){
 
 
 
-////////// VARIABLES ///////////////////////////////////////////////////////////////////////////////
+////////// VARIABLE DEFINITION PART ////////////////////////////////////////////////////////////////
 void define_variables( Context& context, string defText ){
     vvstr    varStatements = text_block_to_tokenized_statements( defText );
     vvstr    parts;
@@ -1216,10 +1220,6 @@ void define_variables( Context& context, string defText ){
     }
 }
 
-
-////////// INTERPRETER /////////////////////////////////////////////////////////////////////////////
-
-// FIXME: RUN INTERPRETER MACHINERY IN ORDER!
 
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////

@@ -197,25 +197,33 @@ const array<string,2> COMMENT_CLOS = { "}", "*)" };
 const array<string,3> SECTION_NAMES = { "type", "var", "const" };
 
 
+////////// LANGUAGE ENUMS //////////////////////////////////////////////////////////////////////////
+
+enum TypeName{
+    // Data Types
+    PRIMITIVE,
+    ALIAS,
+    RANGE_VALUE,
+    RANGE_STRING,
+    ENUM,
+    ARRAY,
+    P_FILE,
+    RECORD,
+    ERROR,
+};
+
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-////////// primitives.cpp //////////////////////////////////////////////////////////////////////////
+////////// types_builtin.cpp ///////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 ////////// PRIMITIVE TYPES /////////////////////////////////////////////////////////////////////////
-enum P_Type{
-    // Primitive Data Types
-    INT, // `long`
-    REAL, // `double`
-    BOOL, 
-    CHAR, 
-};
-
-
 typedef variant<double,long,char,bool> P_Val; // Primitive Values // WARNING: ASSUMPTION
 
-
+P_Val make_nan();
+bool p_nan( const P_Val& q );
 
 ////////// COMPOUND TYPES //////////////////////////////////////////////////////////////////////////
 
@@ -226,6 +234,167 @@ class Enum{ public:
     Enum( const vstr& );
 
     Enum copy(); // Make a copy of the enum
+};
+
+
+class ValRange{ public:
+    // Represents a range of numbers that can be iterated
+
+    P_Val valMin;
+    P_Val valMax;
+    P_Val incr;
+    P_Val valCur;
+    bool  done;
+
+    ValRange(); // Set up the range for iteration
+    ValRange( const P_Val& valMin_, const P_Val& valMax_ ); // Set up the range for iteration
+
+    P_Val yield(); // Yield the next value and notify if done
+    ValRange copy();
+};
+
+
+class StrRange{ public:
+    // This is basically an Enum and I don't really get it!
+    vstr values;
+
+    StrRange();
+    StrRange( const vstr& values_ );
+
+    StrRange copy();
+};
+
+
+class Array{ protected:
+    // AM I ABLE BOTH TO ASSIGN AND TO RETRIEVE?
+    struct elem{
+        P_Val val;
+        P_Val operator=( const P_Val& val_ ){
+            val = val_;
+            return val;
+        }
+    };
+    vector<elem> values;
+
+    public:
+
+    Array();
+    Array( size_t N );
+
+    Array copy_empty();
+    P_Val& operator[]( const size_t& index );
+};
+
+
+class Record{ public: 
+    map<string,P_Val> pVars; // Variables, Primitive Types
+    map<string,vstr>  condFields; // Conditional Fields
+
+    Record();
+
+    Record copy();
+};
+
+
+class SetString{ public:
+    // Set of string -or- enum
+    vstr /*-----------------------*/ allowed;
+    set<string> /*----------------*/ values;
+    pair<set<string>::iterator,bool> res;
+
+    void restrict( const vstr& allowedStrings );
+
+    bool add( const string& val );
+};
+
+
+class SetValue{ public:
+    set<P_Val> /*----------------*/ values; // WARNING, ASSUMPTION: C++ IS ABLE TO DIFFERIENTIATE VALUES
+    pair<set<P_Val>::iterator,bool> res;
+
+    bool add( const P_Val& val );
+};
+
+
+enum FileMode{
+    INSPECTION,
+    GENERATION,
+};
+
+
+class P_File{ public:
+    // WARNING: NEED TO READ ABOUT PASCAL FILE MODEL
+    FileMode mode;
+    string   path;
+    string   contents;
+};
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////// lexing_basic.cpp ////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+bool p_special( const string& q ); // Return True if `q` matches a symbol, otherwise return False
+bool p_reserved( const string& q ); // Return True if `q` matches a symbol, otherwise return False
+bool p_prim_type( const string& q ); // Return True if `q` matches a primtive type name, otherwise return False
+    
+bool p_primitive_string( const string& q );
+P_Val str_2_primitive( const string& q );
+
+vvstr segment_statements( const vstr& tokens_ );
+vvstr text_block_to_tokenized_statements( const string& textBlock );
+string concat( const vstr& parts, char sepChar = 0 );
+
+vstr get_parenthetical_tokens( const vstr& tokens );
+vstr get_bracketed_tokens( const vstr& tokens );
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////// interpreter.cpp /////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+////////// TYPES && SCOPE //////////////////////////////////////////////////////////////////////////
+class ValStore{ public:
+    // Lookup for values by name
+    map<string,string>    pAlias; // Aliases for primitive types
+    map<string,P_Val>     prim; // -- Variables of primitive types
+    map<string,ValRange>  valrange; 
+    map<string,StrRange>  strrange; 
+    map<string,Enum> /**/ namedEnum; 
+    map<string,Array>     namedArray; 
+    map<string,P_File>    file; 
+    map<string,Record>    record; 
+    map<string,SetString> setstring; 
+    map<string,SetValue>  setvalue; 
+
+    void set_builtins(); // Set values that Pascal knows about
+
+    ValStore(); // Setup this context
+
+    bool p_var_name( const string& name ); // Is there a variable stored under this `name`?
+    bool p_alias_name( const string& name ); // Is there a variable stored under this `name`?
+    bool p_arr_name( const string& name ); // Is there a variable stored under this `name`?
+    bool p_num_range_name( const string& name ); // Is there a variable stored under this `name`?
+    bool p_str_range_name( const string& name ); // Is there a variable stored under this `name`?
+    bool p_file_name( const string& name ); // Is there a variable stored under this `name`?
+    bool p_record_name( const string& name ); // Is there a variable stored under this `name`?
+    bool p_enum_name( const string& name ); // Is there a variable stored under this `name`?
+
+    P_Val get_var( const string& name ); // Get var by `name` if it exists, otherwise return NaN
+    // If the `token` is a variable or a literal, then return its value, Otherwise return NaN
+    P_Val get_var_or_literal( const string& token ); 
+    // Return the primitive name associated with the alias, otherwise return an empty string
+    string resolve_prim_alias( const string& name );
+    TypeName where_name( const string& name ); // Identify what kind of thing the identifier identifies
+};
+
+
+
+class Context{ public:
+    // Resolves names
+    ValStore types;
+    ValStore constants;
+    ValStore vars;
 };
 
 
