@@ -1,3 +1,5 @@
+// cls && g++ --std=c++17 00_basic-lexing.cpp
+
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 
 #include <array>
@@ -636,13 +638,13 @@ P_Val str_2_primitive( const string& q ){
 class Enum{ public:
     vstr items;
 
-    Enum(){}
-    Enum( const vstr& values ){  items = values;  }
+    // Enum();
+    Enum( const vstr& values );
 
     Enum copy(){  return Enum{ items };  } // Make a copy of the enum
 };
 
-
+// FIXME, START HERE: KEEP COPYING TYPES TO "types_builtin.cpp"
 class ValRange{ public:
     // Represents a range of numbers that can be iterated
 
@@ -745,7 +747,8 @@ class Record{ public:
 };
 
 
-class SetString{
+class SetString{ public:
+    // Set of string -or- enum
     vstr /*--*/ allowed;
     set<string> values;
     pair<set<string>::iterator,bool> res;
@@ -764,6 +767,20 @@ class SetString{
         }
     }
 };
+
+
+
+class SetValue{ public:
+    set<P_Val> /*----------------*/ values; // WARNING, ASSUMPTION: C++ IS ABLE TO DIFFERIENTIATE VALUES
+    pair<set<P_Val>::iterator,bool> res;
+
+    bool add( const P_Val& val ){
+        res = values.insert( val );  
+        return res.second;
+    }
+};
+
+
 
 enum FileMode{
     INSPECTION,
@@ -829,14 +846,16 @@ enum TypeName{
 
 class ValStore{ public:
     // Lookup for values by name
-    map<string,string>   pAlias; // Aliases for primitive types
-    map<string,P_Val>    prim; // -- Variables of primitive types
-    map<string,ValRange> valrange; 
-    map<string,StrRange> strrange; 
-    map<string,Enum>     namedEnum; 
-    map<string,Array>    namedArray; 
-    map<string,P_File>   file; 
-    map<string,Record>   record; 
+    map<string,string>    pAlias; // Aliases for primitive types
+    map<string,P_Val>     prim; // -- Variables of primitive types
+    map<string,ValRange>  valrange; 
+    map<string,StrRange>  strrange; 
+    map<string,Enum> /**/ namedEnum; 
+    map<string,Array>     namedArray; 
+    map<string,P_File>    file; 
+    map<string,Record>    record; 
+    map<string,SetString> setstring; 
+    map<string,SetValue>  setvalue; 
 
     void set_builtins(){
         // Set values that Pascal knows about
@@ -881,6 +900,11 @@ class ValStore{ public:
     bool p_record_name( const string& name ){
         // Is there a variable stored under this `name`?
         if( record.find( name ) != record.end() ){  return true;  }else{  return false;  }
+    }
+
+    bool p_enum_name( const string& name ){
+        // Is there a variable stored under this `name`?
+        if( namedEnum.find( name ) != namedEnum.end() ){  return true;  }else{  return false;  }
     }
 
     P_Val get_var( const string& name ){
@@ -1049,12 +1073,13 @@ void define_constants( Context& context, string defText ){
 
 ////////// VARIABLES ///////////////////////////////////////////////////////////////////////////////
 void define_variables( Context& context, string defText ){
-    vvstr  varStatements = text_block_to_tokenized_statements( defText );
-    vvstr  parts;
-    vstr   names, tExpr;
-    string type, errStr;
-    P_Val  bgnRange, endRange;
-    size_t span;
+    vvstr    varStatements = text_block_to_tokenized_statements( defText );
+    vvstr    parts;
+    vstr     names, tExpr;
+    string   type, errStr;
+    P_Val    bgnRange, endRange;
+    size_t   span, idx;
+    SetString nuSetStr;
 
     cout << "Variables:" << endl << varStatements << endl;
     for( const vstr& statement : varStatements ){
@@ -1070,56 +1095,58 @@ void define_variables( Context& context, string defText ){
             /// Handle Named Types ///
             if( tExpr.size() == 1 ){
 
-                switch( context.types.where_name( tExpr[0] ) ){
-                    case PRIMITIVE:
-                    case ALIAS:
-                        for( const string& name : names ){
-                            context.vars.prim[ name ] = make_nan();
-                        }
-                        break;
-                    case RANGE_VALUE:
-                        for( const string& name : names ){
-                            context.vars.valrange[ name ] = context.types.valrange[ tExpr[0] ].copy();
-                        }
-                        break;
-                    case RANGE_STRING:
-                        for( const string& name : names ){
-                            context.vars.strrange[ name ] = context.types.strrange[ tExpr[0] ].copy();
-                        }
-                        break;
-                    case ENUM:
-                        for( const string& name : names ){
-                            context.vars.namedEnum[ name ] = context.types.namedEnum[ tExpr[0] ].copy();
-                        }
-                        break;
-                    case ARRAY:
-                        for( const string& name : names ){
-                            context.vars.namedArray[ name ] = context.types.namedArray[ tExpr[0] ].copy_empty();
-                        }
-                        break;
-                    case P_FILE:
-                        for( const string& name : names ){
-                            context.vars.file[ name ] = P_File{};
-                        }
-                        break;
-                    case RECORD:
-                        for( const string& name : names ){
-                            context.vars.record[ name ] = context.types.record[ tExpr[0] ].copy();
-                        }
-                        break;
-                    case ERROR:
-                        cerr << tExpr[0] << " does not name a type!" << endl;
-                        break;
-                    default:
-                        cerr << "THIS SHOULD NOT HAPPEN!\nThere was an ERROR in interpreting " << statement << "!" << endl;
-                        errStr = "`define_variables`: Could not process the following!:\t" + concat( statement, ',' ) + "\n\n";
-                        throw runtime_error( errStr );
-
-                }
+                cout << "Type expression has one element: " << tExpr << endl;
 
                 type = context.types.resolve_prim_alias( tExpr[0] );
-                if( type.size() ){  for( const string& name : names ){    }  }
-            
+                if( type.size() ){  
+                    for( const string& name : names ){  context.vars.prim[ name ] = make_nan();  }  
+                }else{
+                    switch( context.types.where_name( tExpr[0] ) ){
+                        case PRIMITIVE:
+                        case ALIAS:
+                            for( const string& name : names ){
+                                context.vars.prim[ name ] = make_nan();
+                            }
+                            break;
+                        case RANGE_VALUE:
+                            for( const string& name : names ){
+                                context.vars.valrange[ name ] = context.types.valrange[ tExpr[0] ].copy();
+                            }
+                            break;
+                        case RANGE_STRING:
+                            for( const string& name : names ){
+                                context.vars.strrange[ name ] = context.types.strrange[ tExpr[0] ].copy();
+                            }
+                            break;
+                        case ENUM:
+                            for( const string& name : names ){
+                                context.vars.namedEnum[ name ] = context.types.namedEnum[ tExpr[0] ].copy();
+                            }
+                            break;
+                        case ARRAY:
+                            for( const string& name : names ){
+                                context.vars.namedArray[ name ] = context.types.namedArray[ tExpr[0] ].copy_empty();
+                            }
+                            break;
+                        case P_FILE:
+                            for( const string& name : names ){
+                                context.vars.file[ name ] = P_File{};
+                            }
+                            break;
+                        case RECORD:
+                            for( const string& name : names ){
+                                context.vars.record[ name ] = context.types.record[ tExpr[0] ].copy();
+                            }
+                            break;
+                        case ERROR:
+                            cerr << tExpr[0] << " is not a defined name!" << endl;
+                            break;
+                        default:
+                            cerr << "THIS SHOULD NOT HAPPEN!\nThere was an ERROR in interpreting " << statement << "!" << endl;
+                            errStr = "`define_variables`: Could not process the following!:\t" + concat( statement, ',' ) + "\n\n";
+                            throw runtime_error( errStr );
+                    }
+                }
 
             /// Handle Numeric Range Variables ///
             }else if( p_vec_has( tExpr, string{".."} ) ){
@@ -1132,7 +1159,7 @@ void define_variables( Context& context, string defText ){
                 }
 
             /// Handle Enum ///
-            }if( p_vec_has( tExpr, string{"("} ) && p_vec_has( tExpr, string{")"} ) ){
+            }else if( p_vec_has( tExpr, string{"("} ) && p_vec_has( tExpr, string{")"} ) ){
                 tExpr = get_parenthetical_tokens( tExpr );
                 for( const string& name : names ){
                     context.vars.namedEnum[ name ] =  Enum{ tExpr };
@@ -1166,7 +1193,25 @@ void define_variables( Context& context, string defText ){
                 }
             
             /// Handle Set ///
-            } // FIXME, START HERE: HANDLE A SET OF TYPE ENUM!
+            }else if( p_vec_has( tExpr, string{"set"} ) && p_vec_has( tExpr, string{"of"} ) ){
+                idx  = vec_find( tExpr, string{"of"} ) + 1;
+                type = context.types.resolve_prim_alias( tExpr[ idx ] );
+                if( type.size() ){
+                    for( const string& name : names ){
+                        context.types.setvalue[ name ] = SetValue{};
+                    }
+                }else if( context.types.p_enum_name( tExpr[ idx ] ) ){
+                    for( const string& name : names ){
+                        nuSetStr = SetString{};
+                        nuSetStr.restrict( context.types.namedEnum[ tExpr[ idx ] ].items );
+                        context.types.setstring[ name ] = nuSetStr;
+                    }
+                }
+            }else{
+                cerr << "`define_variables`, WARNING: CANNOT LEX STATEMENT: " << tExpr << "!" << endl;
+                errStr = "`define_variables`: Could not process the following!:\t" + concat( tExpr, ',' ) + "\n\n";
+                throw runtime_error( errStr );
+            }
         }
     }
 }

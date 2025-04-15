@@ -15,6 +15,11 @@ type
     end;  
     indextype = 1..limit;  
     vector = array [indextype] of real;
+    person = record  
+        s : sex;  
+        a : integer;
+        i : real  
+    end;  
 
 const  
     eps = 1e-10;

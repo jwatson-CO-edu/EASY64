@@ -23,6 +23,10 @@ Please try not to implement any additional features whatsoever!
 # CPluscal+
 ## `Stepping Stones`
 * `[ ]` Add Abstract Source Trees (AST)
+* `[ ]` New Data Types
+    - `[ ]` `string` as a datatype
+    - `[ ]` `code` as a datatype
+    - `[ ]` `string` --to-> `code` conversion
 * `[ ]` C-style comments
 * `[ ]` Convert code blocks to `{}`
 * `[ ]` Add REPL
@@ -34,9 +38,7 @@ Please try not to implement any additional features whatsoever!
 
 # CPluscal++
 ## `Stepping Stones`
-* `[ ]` Code as data?
 * `[ ]` ????? COMPILER ?????
-
 
 &nbsp;  
 &nbsp;  
