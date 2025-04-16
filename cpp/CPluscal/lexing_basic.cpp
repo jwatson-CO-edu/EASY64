@@ -220,20 +220,6 @@ string concat( const vstr& parts, char sepChar ){
 
 ////////// FILE LEXING /////////////////////////////////////////////////////////////////////////////
 
-struct TextPortions{ public:
-    // Separates text of a file into portions so that we can treat each differently
-    /// Sections ///
-    string type;
-    string cnst;
-    string var;
-    /// Modules ///
-    string func;
-    string proc;
-    /// Main ///
-    string prog;
-};
-
-
 vstr read_file_to_lines( string path ){
     // Read plain text to a vector of strings, separated by newlines
     ifstream     inputFile;

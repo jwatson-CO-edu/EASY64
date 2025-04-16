@@ -348,6 +348,26 @@ string concat( const vstr& parts, char sepChar = 0 );
 vstr get_parenthetical_tokens( const vstr& tokens );
 vstr get_bracketed_tokens( const vstr& tokens );
 
+////////// FILE LEXING /////////////////////////////////////////////////////////////////////////////
+
+struct TextPortions{ public:
+    // Separates text of a file into portions so that we can treat each differently
+    /// Sections ///
+    string type;
+    string cnst;
+    string var;
+    /// Modules ///
+    string func;
+    string proc;
+    /// Main ///
+    string prog;
+};
+
+
+vstr read_file_to_lines( string path );
+TextPortions segment_source_file( const vstr& totLines );
+
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////// interpreter.cpp /////////////////////////////////////////////////////////////////////////
@@ -396,6 +416,15 @@ class Context{ public:
     ValStore constants;
     ValStore vars;
 };
+
+////////// TYPE DEFINITION PART ////////////////////////////////////////////////////////////////////
+void define_types( Context& context, const string& defText );
+
+////////// CONSTANT DEFINITION PART ////////////////////////////////////////////////////////////////
+void define_constants( Context& context, string defText );
+
+////////// VARIABLE DEFINITION PART ////////////////////////////////////////////////////////////////
+void define_variables( Context& context, string defText );
 
 
 
