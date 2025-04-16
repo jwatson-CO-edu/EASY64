@@ -81,6 +81,7 @@ P_Val ValRange::yield(){
         done = true;
         return valMax;  
     }
+    return valCur;
 }
 
 
