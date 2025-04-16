@@ -194,7 +194,7 @@ const ubyte MAX_RES_SYMBOL_LEN = 9;
 const array<string,2> COMMENT_OPEN = { "{", "(*" };
 const array<string,2> COMMENT_CLOS = { "}", "*)" };
 
-const array<string,3> SECTION_NAMES = { "type", "var", "const" };
+const array<string,4> SECTION_NAMES = { "type", "var", "const", "begin" };
 
 
 ////////// LANGUAGE ENUMS //////////////////////////////////////////////////////////////////////////
