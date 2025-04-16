@@ -87,6 +87,17 @@ TypeName ValStore::where_name( const string& name ){
 
 
 
+P_Val Context::resolve_primitive_name( const string& name ){
+    // Try to convert the name into a primitive literal
+    bool srchConst = constants.p_var_name( name );
+    bool srchVars  = vars.p_var_name( name );
+    if( srchConst ){  return constants.prim[ name ];  }
+    if( srchVars ){   return vars.prim[ name ];       }
+    return make_nan();
+}
+
+
+
 ////////// TYPE DEFINITION PART ////////////////////////////////////////////////////////////////////
 void define_types( Context& context, const string& defText ){
     // Specify aliases and user-defined types

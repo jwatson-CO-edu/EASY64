@@ -16,13 +16,158 @@ P_Val operator+( const P_Val& lhs, const P_Val& rhs ){
     // Using std::visit to handle all possible type combinations
     return visit([](auto&& left, auto&& right) -> P_Val {
         // If both are the same type, return that type
-        if constexpr ( std::is_same_v< decltype(left), decltype(right) >) {
+        if constexpr ( is_same_v< decltype(left), decltype(right) >) {
             return left + right;
-        }
-        // FIXME: WANT A MORE GRANULAR TYPE ESCALATION HERE
-        // If different types, convert to double for maximum precision
-        else {
+        }else if( (is_same_v<decltype(left),double>)||(is_same_v<decltype(right),double>) ){
             return static_cast<double>(left) + static_cast<double>(right);
+
+        }else if( (is_same_v<decltype(left),long>)||(is_same_v<decltype(right),long>) ){
+            return static_cast<long>(left) + static_cast<long>(right);
+
+        }else if( (is_same_v<decltype(left),char>)||(is_same_v<decltype(right),char>) ){
+            return static_cast<char>(left) + static_cast<char>(right);
+
+        }else if( (is_same_v<decltype(left),bool>)||(is_same_v<decltype(right),bool>) ){
+            return static_cast<long>(left) + static_cast<long>(right);
+
+        // If different types, convert to double for maximum precision
+        }else{
+            return static_cast<double>(left) + static_cast<double>(right);
+        }
+    }, lhs, rhs);
+}
+
+
+P_Val operator-( const P_Val& lhs, const P_Val& rhs ){
+    // Add two numeric variants
+    // Using std::visit to handle all possible type combinations
+    return visit([](auto&& left, auto&& right) -> P_Val {
+        // If both are the same type, return that type
+        if constexpr ( is_same_v< decltype(left), decltype(right) >) {
+            return left - right;
+        }else if( (is_same_v<decltype(left),double>)||(is_same_v<decltype(right),double>) ){
+            return static_cast<double>(left) - static_cast<double>(right);
+
+        }else if( (is_same_v<decltype(left),long>)||(is_same_v<decltype(right),long>) ){
+            return static_cast<long>(left) - static_cast<long>(right);
+
+        }else if( (is_same_v<decltype(left),char>)||(is_same_v<decltype(right),char>) ){
+            return static_cast<char>(left) - static_cast<char>(right);
+
+        }else if( (is_same_v<decltype(left),bool>)||(is_same_v<decltype(right),bool>) ){
+            return static_cast<long>(left) - static_cast<long>(right);
+
+        // If different types, convert to double for maximum precision
+        }else{
+            return static_cast<double>(left) - static_cast<double>(right);
+        }
+    }, lhs, rhs);
+}
+
+
+P_Val operator*( const P_Val& lhs, const P_Val& rhs ){
+    // Add two numeric variants
+    // Using std::visit to handle all possible type combinations
+    return visit([](auto&& left, auto&& right) -> P_Val {
+        // If both are the same type, return that type
+        if constexpr ( is_same_v< decltype(left), decltype(right) >) {
+            return left * right;
+        }else if( (is_same_v<decltype(left),double>)||(is_same_v<decltype(right),double>) ){
+            return static_cast<double>(left) * static_cast<double>(right);
+
+        }else if( (is_same_v<decltype(left),long>)||(is_same_v<decltype(right),long>) ){
+            return static_cast<long>(left) * static_cast<long>(right);
+
+        }else if( (is_same_v<decltype(left),char>)||(is_same_v<decltype(right),char>) ){
+            return static_cast<char>(left) * static_cast<char>(right);
+
+        }else if( (is_same_v<decltype(left),bool>)||(is_same_v<decltype(right),bool>) ){
+            return static_cast<long>(left) * static_cast<long>(right);
+
+        // If different types, convert to double for maximum precision
+        }else{
+            return static_cast<double>(left) * static_cast<double>(right);
+        }
+    }, lhs, rhs);
+}
+
+
+P_Val operator/( const P_Val& lhs, const P_Val& rhs ){
+    // Add two numeric variants
+    // Using std::visit to handle all possible type combinations
+    return visit([](auto&& left, auto&& right) -> P_Val {
+        // If both are the same type, return that type
+        if constexpr ( is_same_v< decltype(left), decltype(right) >) {
+            return left / right;
+        }else if( (is_same_v<decltype(left),double>)||(is_same_v<decltype(right),double>) ){
+            return static_cast<double>(left) / static_cast<double>(right);
+
+        }else if( (is_same_v<decltype(left),long>)||(is_same_v<decltype(right),long>) ){
+            return static_cast<long>(left) / static_cast<long>(right);
+
+        }else if( (is_same_v<decltype(left),char>)||(is_same_v<decltype(right),char>) ){
+            return static_cast<char>(left) / static_cast<char>(right);
+
+        }else if( (is_same_v<decltype(left),bool>)||(is_same_v<decltype(right),bool>) ){
+            return static_cast<long>(left) / static_cast<long>(right);
+
+        // If different types, convert to double for maximum precision
+        }else{
+            return static_cast<double>(left) / static_cast<double>(right);
+        }
+    }, lhs, rhs);
+}
+
+
+P_Val operator==( const P_Val& lhs, const P_Val& rhs ){
+    // Add two numeric variants
+    // Using std::visit to handle all possible type combinations
+    return visit([](auto&& left, auto&& right) -> P_Val {
+        // If both are the same type, return that type
+        if constexpr ( is_same_v< decltype(left), decltype(right) >) {
+            return left == right;
+        }else if( (is_same_v<decltype(left),double>)||(is_same_v<decltype(right),double>) ){
+            return static_cast<double>(left) == static_cast<double>(right);
+
+        }else if( (is_same_v<decltype(left),long>)||(is_same_v<decltype(right),long>) ){
+            return static_cast<long>(left) == static_cast<long>(right);
+
+        }else if( (is_same_v<decltype(left),char>)||(is_same_v<decltype(right),char>) ){
+            return static_cast<char>(left) == static_cast<char>(right);
+
+        }else if( (is_same_v<decltype(left),bool>)||(is_same_v<decltype(right),bool>) ){
+            return static_cast<long>(left) == static_cast<long>(right);
+
+        // If different types, convert to double for maximum precision
+        }else{
+            return static_cast<double>(left) == static_cast<double>(right);
+        }
+    }, lhs, rhs);
+}
+
+
+P_Val pow( const P_Val& lhs, const P_Val& rhs ){
+    // Add two numeric variants
+    // Using std::visit to handle all possible type combinations
+    return visit([](auto&& left, auto&& right) -> P_Val {
+        // If both are the same type, return that type
+        if constexpr ( is_same_v< decltype(left), decltype(right) >) {
+            return pow( left, right );
+        }else if( (is_same_v<decltype(left),double>)||(is_same_v<decltype(right),double>) ){
+            return pow( static_cast<double>(left), static_cast<double>(right) );
+
+        }else if( (is_same_v<decltype(left),long>)||(is_same_v<decltype(right),long>) ){
+            return static_cast<double>( pow( static_cast<long>(left), static_cast<long>(right) ) );
+
+        }else if( (is_same_v<decltype(left),char>)||(is_same_v<decltype(right),char>) ){
+            return static_cast<char>( pow( static_cast<char>(left), static_cast<char>(right) ) );
+
+        }else if( (is_same_v<decltype(left),bool>)||(is_same_v<decltype(right),bool>) ){
+            return static_cast<long>( pow( static_cast<long>(left), static_cast<long>(right) ) );
+
+        // If different types, convert to double for maximum precision
+        }else{
+            return pow( static_cast<double>(left), static_cast<double>(right) );
         }
     }, lhs, rhs);
 }

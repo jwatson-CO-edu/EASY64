@@ -16,7 +16,7 @@ using std::string;
 #include <map>
 using std::map, std::pair;
 #include <variant>
-using std::variant, std::get, std::holds_alternative;
+using std::variant, std::get, std::holds_alternative, std::is_same_v;
 #include <type_traits>
 using std::visit;
 #include <memory>
@@ -31,7 +31,7 @@ using std::runtime_error;
 using std::stringstream, std::getline;
 #include <climits>
 #include <cmath>
-using std::nan, std::isnan;
+using std::nan, std::isnan, std::pow;
 
 /// Aliases ///
 typedef unsigned long  ulong;
@@ -86,7 +86,7 @@ ostream& operator<<( ostream& os , const vector<vector<T>>& vec ){
         os << endl;
     }
     os << " ]";
-    return os; // You must return a reference to the stream!
+    return os; // You must return a reference to the stream!operator/
 }
 
 
@@ -173,8 +173,8 @@ const array<char,52> LETTERS = {
 
 const array<char,10> DIGITS = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
 
-const array<string,22> SYMBOLS = { /// Special Symbols ///
-    "+", "-", "*", "/", "=", "<", ">", "<>", "<=", ">=", ":=", "..", "<=", 
+const array<string,23> SYMBOLS = { /// Special Symbols ///
+    "+", "-", "**", "*", "/", "=", "<", ">", "<>", "<=", ">=", ":=", "..", "<=", 
     "[", "]", ".", ",", ":", ";", "^", "(", ")"
 };
 
@@ -224,6 +224,12 @@ typedef variant<double,long,char,bool> P_Val; // Primitive Values // WARNING: AS
 
 P_Val make_nan();
 bool p_nan( const P_Val& q );
+
+P_Val operator+( const P_Val& lhs, const P_Val& rhs );
+P_Val operator-( const P_Val& lhs, const P_Val& rhs );
+P_Val operator*( const P_Val& lhs, const P_Val& rhs );
+P_Val operator/( const P_Val& lhs, const P_Val& rhs );
+P_Val pow( const P_Val& lhs, const P_Val& rhs );
 
 ////////// COMPOUND TYPES //////////////////////////////////////////////////////////////////////////
 
@@ -415,6 +421,8 @@ class Context{ public:
     ValStore types;
     ValStore constants;
     ValStore vars;
+
+    P_Val resolve_primitive_name( const string& name );
 };
 
 ////////// TYPE DEFINITION PART ////////////////////////////////////////////////////////////////////
