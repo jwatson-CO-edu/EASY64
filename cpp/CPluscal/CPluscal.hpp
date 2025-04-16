@@ -11,6 +11,8 @@ using std::vector;
 using std::deque;
 #include <set>
 using std::set;
+#include <stack>
+using std::stack;
 #include <string>
 using std::string;
 #include <map>
