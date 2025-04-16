@@ -361,6 +361,7 @@ vstr get_bracketed_tokens( const vstr& tokens );
 struct TextPortions{ public:
     // Separates text of a file into portions so that we can treat each differently
     /// Sections ///
+    string header;
     string type;
     string cnst;
     string var;

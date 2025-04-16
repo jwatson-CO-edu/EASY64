@@ -245,10 +245,29 @@ vstr read_file_to_lines( string path ){
 }
 
 
+vstr p_program_header( const vstr& line ){
+    // Attempt to parse program name and input / output requirements
+    vstr rtnHeader, ioTerms;
+    if( p_vec_has( line, string{"program"} ) ){
+        try{
+            rtnHeader.push_back( line[1] );
+            ioTerms = get_parenthetical_tokens( line );
+            if( p_vec_has( ioTerms, string{"input"}  ) ){  rtnHeader.push_back("true");  }else{  rtnHeader.push_back("false");  }
+            if( p_vec_has( ioTerms, string{"output"} ) ){  rtnHeader.push_back("true");  }else{  rtnHeader.push_back("false");  }
+            return rtnHeader;
+        }catch(...){
+            return vstr{};
+        }
+    }
+    return vstr{};
+}
+
+
 TextPortions segment_source_file( const vstr& totLines ){
     // Load sections of the program into the struct so that we can lex/interpret them
     enum Section{ TYPE, CONST, VAR, COMMENT, OTHER };
     /**/ string /*--*/ trimLine;
+    /**/ vstr /*----*/ tokenLine;
     /**/ string /*--*/ line;
     /**/ Section /*-*/ mode     = OTHER;
     /**/ size_t /*--*/ cmmntBgn = string::npos;
@@ -267,9 +286,16 @@ TextPortions segment_source_file( const vstr& totLines ){
         // 2. Fetch line
         line = qLines.at(0);
         qLines.pop_front();
-        trimLine = strip( line );
+        trimLine  = strip( line );
+        tokenLine = tokenize( trimLine );
 
         // cout << trimLine << endl;
+
+        // 3. Handle header
+        if( p_program_header( tokenLine ).size() == 3 ){  
+            rtnSctns.header = trimLine;  
+            continue;
+        }
         
         // 3. Handle comments
         cmmntBgn = q_line_begins_comment( trimLine );
@@ -398,4 +424,6 @@ vstr get_bracketed_tokens( const vstr& tokens ){
     }
     return contents;
 }
+
+
 

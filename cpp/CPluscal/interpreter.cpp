@@ -363,3 +363,29 @@ void define_variables( Context& context, string defText ){
         }
     }
 }
+
+
+
+////////// INTERPRETER //////////////////////////////////////////////////////////////////////////////////
+
+
+class PascalInterpreter{ public:
+    // The actual interpreter
+
+    string /*-*/ progName;
+    bool /*---*/ enableInput;
+    bool /*---*/ enableOutput;
+    TextPortions code;
+
+    PascalInterpreter(){};
+
+    PascalInterpreter( const TextPortions& code_ ){
+        code = code_;
+    };
+
+
+    void set_IO( bool in, bool out ){
+        enableInput  = in;
+        enableOutput = out;
+    }
+};
