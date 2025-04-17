@@ -392,12 +392,12 @@ struct ST_Node{
 ST_Node tokens_2_nodes( const vvstr& tokenLines, NodeType type_ = MAIN ){
     // Recursively distribute tokenized text to nodes
     ST_Node rtnNode;
-    size_t idx;
-    size_t i = 0;
-    size_t N = tokenLines.size();
-    vstr   statement, tokens;
-    vvstr  blockTokens;
-    bool   accum = false;
+    size_t  idx;
+    size_t  i = 0;
+    size_t  N = tokenLines.size();
+    vstr    statement, tokens;
+    vvstr   blockTokens;
+    bool    accum = false;
     rtnNode.type = type_;
     while( i < N ){
         tokens = tokenLines[i];
