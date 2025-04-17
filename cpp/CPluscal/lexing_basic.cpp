@@ -62,6 +62,9 @@ bool p_section_header( const string& q ){ // WARNING, ASSUMPTION: SECTION HEADIN
 }
 
 
+bool p_str_has( const string& str, const string& q ){  return (str.find(q) != string::npos);  }
+
+
 string strip( const string& inputStr ){
     // Remove whitespace from the beginning and end of a string
     // Author: Kemin Zhou, https://stackoverflow.com/a/36169979
@@ -307,29 +310,50 @@ TextPortions segment_source_file( const vstr& totLines ){
         }
         cmmntEnd = q_line_ends_comment( trimLine );
         if( cmmntEnd != string::npos ){  qLines.push_front( trimLine.substr(cmmntEnd) );  }
-        
-        // 3. Handle section headers
-        if( p_section_header( trimLine ) ){ // WARNING, ASSUMPTION: SECTION HEADINGS OCCUPY THEIR OWN LINE
-            if( trimLine == "type" ){
-                cout << endl << "segment_source_file: Defining `type`s!" << endl << endl;
-                mode = TYPE;
-            }else if( trimLine == "const" ){
-                cout << endl << "segment_source_file: Defining `const`ants!" << endl << endl;
-                mode = CONST;
-            }else if( trimLine == "var" ){
-                cout << endl << "segment_source_file: Defining `var`iables!" << endl << endl;
-                mode = VAR;
-            }
-            continue;
+
+        // 4. Handle end of program
+        if( p_str_has( trimLine, string{"end."} ) ){  
+            cout << "Program ENDED: " << trimLine << endl << endl;
+            break;  
         }
 
-        // 4. Accrue text to sections
+        // 4. Hande State Transitions
         switch( mode ){
-            case TYPE:   rtnSctns.type += line;  break;
-            case CONST:  rtnSctns.cnst += line;  break;
-            case VAR:    rtnSctns.var  += line;  break;
-            case OTHER:  rtnSctns.prog += line;  break;            
+            case OTHER:  
+                // 3. Handle section headers
+                if( p_section_header( trimLine ) ){ // WARNING, ASSUMPTION: SECTION HEADINGS OCCUPY THEIR OWN LINE
+                    if( trimLine == "type" ){
+                        cout << endl << "segment_source_file: Defining `type`s!" << endl << endl;
+                        mode = TYPE;
+                    }else if( trimLine == "const" ){
+                        cout << endl << "segment_source_file: Defining `const`ants!" << endl << endl;
+                        mode = CONST;
+                    }else if( trimLine == "var" ){
+                        cout << endl << "segment_source_file: Defining `var`iables!" << endl << endl;
+                        mode = VAR;
+                    }
+                    continue;
+                }else{
+                    rtnSctns.prog += line;  
+                }
+                break;  
+            case TYPE:   
+                if( p_vec_has( tokenLine, string{"begin"} ) ){  mode = OTHER;  }else{
+                    rtnSctns.type += line;  
+                }
+                break;
+            case CONST:  
+                if( p_vec_has( tokenLine, string{"begin"} ) ){  mode = OTHER;  }else{
+                    rtnSctns.cnst += line;          
+                }
+                break;
+            case VAR:    
+                if( p_vec_has( tokenLine, string{"begin"} ) ){  mode = OTHER;  }else{
+                    rtnSctns.var  += line;          
+                }
+                break;
             default:
+                cout << "`segment_source_file`: This should NOT happen!, UNHANDLED LINE!!:" << endl << trimLine << endl;
                 break;
         }
     }

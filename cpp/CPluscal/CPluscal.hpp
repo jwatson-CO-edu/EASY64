@@ -123,6 +123,16 @@ vector<T> vec_rtrim( const vector<T>& vec, const size_t& Nrem ){
 
 
 template<typename T>
+vector<T> vec_sub( const vector<T>& vec, const size_t& bgn, const size_t& endPlus1 ){
+    // Get the portion of `vec` with the last `Nrem` elements removed
+    vector<T> rtnVec;
+    size_t end = min( endPlus1, vec.size() );
+    if( (bgn < vec.size()) ){  for( size_t i = bgn; i < end; ++i ){  rtnVec.push_back( vec[i] );  }  }
+    return rtnVec;
+}
+
+
+template<typename T>
 void vec_extend( vector<T>& vec, const vector<T>& toAdd ){
     // Extend `vec` with elements of `toAdd`
     for( const string& elem : toAdd ){  vec.push_back( elem );  }
@@ -196,7 +206,7 @@ const ubyte MAX_RES_SYMBOL_LEN = 9;
 const array<string,2> COMMENT_OPEN = { "{", "(*" };
 const array<string,2> COMMENT_CLOS = { "}", "*)" };
 
-const array<string,4> SECTION_NAMES = { "type", "var", "const", "begin" };
+const array<string,3> SECTION_NAMES = { "type", "var", "const" };
 
 
 ////////// LANGUAGE ENUMS //////////////////////////////////////////////////////////////////////////
