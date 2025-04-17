@@ -21,7 +21,6 @@ Please try not to implement any additional features whatsoever!
 &nbsp;  
 
 # CPluscal+
-## `Stepping Stones`
 * `[ ]` Add Abstract Source Trees (AST)
 * `[ ]` New Data Types
     - `[ ]` `string` as a datatype
@@ -29,6 +28,7 @@ Please try not to implement any additional features whatsoever!
     - `[ ]` `string` --to-> `code` conversion
 * `[ ]` C-style comments
 * `[ ]` Convert code blocks to `{}`
+* `[ ]` **Optional** semicolons: If a line ends a valid statement, assume it is one
 * `[ ]` Add REPL
 * `[ ]` [Multithread](https://www.dcs.ed.ac.uk/home/SUNWspro/3.0/pascal/user_guide/mlthrd11.doc.html)
     - `[ ]` `parfor`?
@@ -37,7 +37,6 @@ Please try not to implement any additional features whatsoever!
 &nbsp;  
 
 # CPluscal++
-## `Stepping Stones`
 * `[ ]` ????? COMPILER ?????
 
 &nbsp;  
@@ -128,8 +127,14 @@ Spelled EASY64, Easy64, EASY, Easy
 # Future Possibilities
 * How does the interpreter keep from defining a variable multiple times? - Just check if it exists whenever the statement is run!
 * Primitive Type: Bit Block - 64 addressable booleans
+
+
+
+
+
+# Just ... Positively Insane Ideas (DANGER: ACTIVE THREAT)
 * Domains
-    - 3D Turtle Mode
+    - 3D Turtle Mode, creative coding / visualization console
     - Native Behavior Trees
     - Native Geometric Algebra
     - Deep Learning / QDN
@@ -140,7 +145,7 @@ Spelled EASY64, Easy64, EASY, Easy
 * Transpilation to C/++ --> Compilation pipeline
 * Piles and piles of absolute, frothing nonsense (See below sections).
 
-# Bryozoa: Networked Flow Programming Language (DANGER: This is insane!)
+## Bryozoa: Networked Flow Programming Language 
 * A process as a first-class object
 * Do I need a `synchronized` keyword like Java?
 * Imagine using the Bash pipe operator, but as a language
@@ -162,7 +167,9 @@ Spelled EASY64, Easy64, EASY, Easy
         * [`shm_open` Example](https://gist.github.com/garcia556/8231e844a90457c99cc72e5add8388e4)
 * [Communication Between Hosts on a Local Network](https://claude.site/artifacts/f7b0532a-e795-4a3d-976c-06ae89ea4c83)
 
-# Just, Positively Insane Ideas
-* EASY64 as a creative coding / visualization console
-* Make Bryozoa with the components needed to rapidly define cognitive architectures
-    - Call Python programs (including Tensorflow/PyTorch) as sub-processes
+## TensorLoop: Interpreted Machine Learning Language for Cognitive Architectures
+* Neural Networks as first class data with the purpose of parallel inference and architecture search
+    - Architecture search as a background task
+* Native GPU acceleration via ONYX or other
+    - Does ONYX use OpenCL or other?
+* Run Python programs in processes as inputs to native data structures
