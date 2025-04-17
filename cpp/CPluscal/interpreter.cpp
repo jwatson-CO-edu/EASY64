@@ -381,17 +381,17 @@ map<NodeType,string> NTypeStr = {
     {STATEMENT, "STATEMENT"},
 };
 
-struct P_Node{ 
-    // Holds code as a nested structure
-    NodeType /*-*/ type;
-    vstr /*-----*/ statement;
-    vector<P_Node> block;
+struct ST_Node{ 
+    // Holds code as a tree
+    NodeType /*--*/ type;
+    vstr /*------*/ statement;
+    vector<ST_Node> block;
 };
 
 
-P_Node tokens_2_nodes( const vvstr& tokenLines, NodeType type_ = MAIN ){
+ST_Node tokens_2_nodes( const vvstr& tokenLines, NodeType type_ = MAIN ){
     // Recursively distribute tokenized text to nodes
-    P_Node rtnNode;
+    ST_Node rtnNode;
     size_t idx;
     size_t i = 0;
     size_t N = tokenLines.size();
@@ -417,7 +417,7 @@ P_Node tokens_2_nodes( const vvstr& tokenLines, NodeType type_ = MAIN ){
             accum     = true;
         /// Base Case: Normal Statement ///
         }else{
-            rtnNode.block.push_back( P_Node{ STATEMENT, tokens, vector<P_Node>{} } );
+            rtnNode.block.push_back( ST_Node{ STATEMENT, tokens, vector<ST_Node>{} } );
         }
         /// Increment ///
         ++i;
@@ -426,11 +426,11 @@ P_Node tokens_2_nodes( const vvstr& tokenLines, NodeType type_ = MAIN ){
 }
 
 
-void pprint_node( const P_Node& node, size_t lvl = 0 ){
+void pprint_node( const ST_Node& node, size_t lvl = 0 ){
     // Recursively print node contents
     for( size_t i = 0; i < lvl; ++i ){  cout << '\t';  }
     cout << NTypeStr[ node.type ] << " : " << node.statement << endl;
-    for( const P_Node& n_i : node.block ){
+    for( const ST_Node& n_i : node.block ){
         pprint_node( n_i, lvl+1 );
     }
 }
