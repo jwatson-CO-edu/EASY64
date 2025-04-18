@@ -47,7 +47,7 @@ typedef vector<vstr>   vvstr;
 /// Defines ///
 #define INVALID    SIZE_MAX
 #define NOT_FOUND  SIZE_MAX
-#define MIN_CHAR_S 4
+#define MIN_CHAR_S 3
 
 
 
@@ -190,9 +190,11 @@ const array<char,52> LETTERS = {
 const array<char,10> DIGITS = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
 
 const array<string,23> SYMBOLS = { /// Special Symbols ///
-    "+", "-", "**", "*", "/", "=", "<", ">", "<>", "<=", ">=", ":=", "..", "<=", 
+    "**", "+", "-", "*", "/", // Infix Operators
+    "=", "<", ">", "<>", "<=", ">=", ":=", "..", "<=", 
     "[", "]", ".", ",", ":", ";", "^", "(", ")"
 };
+const size_t NUM_INFIX = 5;
 
 const array<string,35> RESERVED = { /// Word Symbols ///
     "and", "array", "begin", "case", "const", "div", "do", "downto", "else", "end", "file", "for",

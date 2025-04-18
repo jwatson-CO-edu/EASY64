@@ -12,6 +12,17 @@ bool p_special( const string& q ){
 }
 
 
+bool p_infix_op( const string& q ){
+    // Return True if `q` matches an infix arithmetic operator, otherwise return False
+    string sym;
+    for( size_t i = 0; i < NUM_INFIX; ++i ){
+        sym = SYMBOLS[i];
+        if( q == sym ){  return true;  }
+    }
+    return false;
+}
+
+
 bool p_reserved( const string& q ){
     // Return True if `q` matches a symbol, otherwise return False
     for( const string& sym : RESERVED ){  if( q == sym ){  return true;  }  }
@@ -102,9 +113,9 @@ size_t q_line_ends_comment( const string& q ){
     // Does the stripped line end a comment?
     string stripped = strip(q);
     size_t rtnIndex = string::npos;
-    rtnIndex = stripped.rfind( COMMENT_CLOS[0], 0 );
+    rtnIndex = stripped.find( COMMENT_CLOS[0], 0 );
     if( rtnIndex != string::npos ){  return rtnIndex + COMMENT_CLOS[0].size();  }
-    rtnIndex = stripped.rfind( COMMENT_CLOS[1], 0 );
+    rtnIndex = stripped.find( COMMENT_CLOS[1], 0 );
     if( rtnIndex != string::npos ){  return rtnIndex + COMMENT_CLOS[1].size();  }
     return string::npos;
 }
@@ -280,12 +291,29 @@ TextPortions segment_source_file( const vstr& totLines ){
     /**/ vstr /*----*/ tokenLine;
     /**/ string /*--*/ line;
     /**/ Section /*-*/ mode     = BEGIN;
+    /**/ Section /*-*/ lastMode = BEGIN;
     /**/ size_t /*--*/ cmmntBgn = string::npos;
     /**/ size_t /*--*/ cmmntEnd = string::npos;
     /**/ size_t /*--*/ N /*--*/ = totLines.size();
     /**/ size_t /*--*/ i /*--*/ = 0;
     /**/ deque<string> qLines;
     /**/ TextPortions  rtnSctns;
+
+    auto check_section_switch = [&]{  
+        if( p_section_header( trimLine ) ){ // WARNING, ASSUMPTION: SECTION HEADINGS OCCUPY THEIR OWN LINE
+            if( trimLine == "type" ){
+                cout << endl << "segment_source_file: Defining `type`s!" << endl << endl;
+                mode = TYPE;
+            }else if( trimLine == "const" ){
+                cout << endl << "segment_source_file: Defining `const`ants!" << endl << endl;
+                mode = CONST;
+            }else if( trimLine == "var" ){
+                cout << endl << "segment_source_file: Defining `var`iables!" << endl << endl;
+                mode = VAR;
+            }
+            return true;
+        }else{  return false;  }
+    };
 
     // 0. Load queue with lines
     for( const string& vLine : totLines ){  qLines.push_back( vLine );  }
@@ -302,21 +330,33 @@ TextPortions segment_source_file( const vstr& totLines ){
         // 3. Handle empty line
         if( trimLine.size() < MIN_CHAR_S ){  continue;  }
         
-        // 5. Handle comments
-        cmmntBgn = q_line_begins_comment( trimLine );
-        if( cmmntBgn == 0 ){  mode = COMMENT;  }
-        else if( cmmntBgn != string::npos ){
-            cout << "BEGIN comment!: " << trimLine << endl;
-            qLines.push_front( trimLine.substr( cmmntBgn ) );
-            qLines.push_front( trimLine.substr( 0, cmmntBgn ) );
-            continue;
+        
+
+        if( mode != COMMENT ){  
+
+            // 5. Handle comments
+            cmmntBgn = q_line_begins_comment( trimLine );
+            if( cmmntBgn == 0 ){  
+                lastMode = mode;
+                mode     = COMMENT;  
+                continue;
+            }else if( cmmntBgn != string::npos ){
+                cout << "BEGIN comment!: " << trimLine << endl;
+                qLines.push_front( trimLine.substr( cmmntBgn ) );
+                qLines.push_front( trimLine.substr( 0, cmmntBgn ) );
+                continue;
+            }
+
+            if( check_section_switch() ){  continue;  }  
+
+            // 6. Handle end of program
+            if( p_str_has( trimLine, string{"end."} ) ){  
+                cout << "Program ENDED: " << trimLine << endl << endl;
+                break;  
+            }
         }
 
-        // 6. Handle end of program
-        if( p_str_has( trimLine, string{"end."} ) ){  
-            cout << "Program ENDED: " << trimLine << endl << endl;
-            break;  
-        }
+        
 
         // 7. Hande State Transitions
         switch( mode ){
@@ -329,20 +369,7 @@ TextPortions segment_source_file( const vstr& totLines ){
                 }
             case OTHER:  
                 // 3. Handle section headers
-                if( p_section_header( trimLine ) ){ // WARNING, ASSUMPTION: SECTION HEADINGS OCCUPY THEIR OWN LINE
-                    if( trimLine == "type" ){
-                        cout << endl << "segment_source_file: Defining `type`s!" << endl << endl;
-                        mode = TYPE;
-                    }else if( trimLine == "const" ){
-                        cout << endl << "segment_source_file: Defining `const`ants!" << endl << endl;
-                        mode = CONST;
-                    }else if( trimLine == "var" ){
-                        cout << endl << "segment_source_file: Defining `var`iables!" << endl << endl;
-                        mode = VAR;
-                    }
-                }else{
-                    rtnSctns.prog += line;  
-                }
+                rtnSctns.prog += line;  
                 break;  
             case TYPE:   
                 if( p_vec_has( tokenLine, string{"begin"} ) ){  mode = OTHER;  }else{
@@ -361,10 +388,12 @@ TextPortions segment_source_file( const vstr& totLines ){
                 break;
             case COMMENT: 
                 cmmntEnd = q_line_ends_comment( trimLine );
+                cout << "COMMENT Mode, Comment end?: " << cmmntEnd << endl;
                 if( cmmntEnd != string::npos ){  
                     cout << "END comment!: " << trimLine << endl;
                     qLines.push_front( trimLine.substr(cmmntEnd) );  
-                    mode = OTHER;
+                    mode     = lastMode;
+                    lastMode = OTHER;
                     cout << "... ending comment ..." << endl;
                 }else{  cout << "... skipping comment ..." << endl;  }
                 break;

@@ -89,10 +89,9 @@ TypeName ValStore::where_name( const string& name ){
 
 P_Val Context::resolve_primitive_name( const string& name ){
     // Try to convert the name into a primitive literal
-    bool srchConst = constants.p_var_name( name );
-    bool srchVars  = vars.p_var_name( name );
-    if( srchConst ){  return constants.prim[ name ];  }
-    if( srchVars ){   return vars.prim[ name ];       }
+    if( constants.p_var_name( name ) ){  return constants.prim[ name ];   }
+    if( vars.p_var_name( name ) /**/ ){  return vars.prim[ name ]; /*--*/ }
+    if( p_primitive_string( name )   ){  return str_2_primitive( name );  }
     return make_nan();
 }
 
@@ -196,7 +195,7 @@ void define_constants( Context& context, string defText ){
     // Specify values that should not change
     vvstr  conStatements = text_block_to_tokenized_statements( defText );
     string name, pName;
-    P_Val  bgnRange, endRange;
+    P_Val  bgnRange, endRange, primVal;
     vstr   expr;
     cout << "Constants:" << endl << conStatements << endl;
     for( const vstr& statement : conStatements ){
@@ -207,9 +206,14 @@ void define_constants( Context& context, string defText ){
             name = statement[0];
             expr = vec_ltrim( statement, 2 );
 
+            primVal = context.resolve_primitive_name( expr[0] );
+
+            cout << "Constant Expression: " << expr << endl;
+            cout << "Handle Primitive?: " << (expr.size() == 2) << " && " << (!p_nan( primVal )) << endl;
+
             /// Handle Primtive ///
-            if( (expr.size() == 2) && p_prim_type( expr[0] ) ){
-                context.types.pAlias[ name ] = expr[0];
+            if( (expr.size() == 2) && (!p_nan( primVal )) ){
+                context.constants.prim[ name ] = primVal;
             }else{
                 cout << "`define_constants`, WARNING: COULD NOT PARSE THE FOLLOWING LINE:\n" << statement << endl;
             }
