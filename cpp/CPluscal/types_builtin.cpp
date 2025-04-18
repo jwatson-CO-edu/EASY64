@@ -248,6 +248,8 @@ P_Val& Array::operator[]( const size_t& index ){
     return values[ index ].val;
 }
 
+size_t Array::size() const {  return values.size();  } 
+
 
 
 Record::Record(){}

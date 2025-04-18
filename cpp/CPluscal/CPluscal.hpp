@@ -3,6 +3,7 @@
 
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 
+/// Imports ///
 #include <array>
 using std::array;
 #include <vector>
@@ -34,6 +35,8 @@ using std::stringstream, std::getline;
 #include <climits>
 #include <cmath>
 using std::nan, std::isnan, std::pow;
+#include <algorithm>
+using std::min;
 
 /// Aliases ///
 typedef unsigned long  ulong;
@@ -42,8 +45,9 @@ typedef vector<string> vstr;
 typedef vector<vstr>   vvstr;
 
 /// Defines ///
-#define INVALID   SIZE_MAX;
-#define NOT_FOUND SIZE_MAX;
+#define INVALID    SIZE_MAX
+#define NOT_FOUND  SIZE_MAX
+#define MIN_CHAR_S 4
 
 
 
@@ -294,13 +298,14 @@ class Array{ protected:
     };
     vector<elem> values;
 
-    public:
+    public: 
 
     Array();
     Array( size_t N );
 
     Array copy_empty();
     P_Val& operator[]( const size_t& index );
+    size_t size() const;
 };
 
 
@@ -428,6 +433,7 @@ class ValStore{ public:
 };
 
 
+///// Execution Context ///////////////////////////////////////////////////
 
 class Context{ public:
     // Resolves names
@@ -438,14 +444,32 @@ class Context{ public:
     P_Val resolve_primitive_name( const string& name );
 };
 
-////////// TYPE DEFINITION PART ////////////////////////////////////////////////////////////////////
+///// Type Definition Part /////
 void define_types( Context& context, const string& defText );
 
-////////// CONSTANT DEFINITION PART ////////////////////////////////////////////////////////////////
+///// Constant Definition Part /////
 void define_constants( Context& context, string defText );
 
-////////// VARIABLE DEFINITION PART ////////////////////////////////////////////////////////////////
+///// Variable Definition Part /////
 void define_variables( Context& context, string defText );
+
+
+
+////////// THE MACHINE /////////////////////////////////////////////////////////////////////////////
+
+class PascalInterpreter{ public:
+    // The actual interpreter
+    string  progName;
+    bool    enableInput;
+    bool    enableOutput;
+    Context context;
+
+    PascalInterpreter();
+    PascalInterpreter( const Context& context_ );
+
+    void set_IO( bool in, bool out );
+    void init_file( const string& sourcePath );
+};
 
 
 

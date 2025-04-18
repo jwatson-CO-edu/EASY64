@@ -82,11 +82,18 @@ string strip( const string& inputStr ){
 size_t q_line_begins_comment( const string& q ){
     // Does the stripped line begin a comment?
     string stripped = strip(q);
+    cout << "Stripped Line: \"" << stripped << "\", " << stripped.size() << endl;
     size_t rtnIndex = string::npos;
     rtnIndex = stripped.find( COMMENT_OPEN[0], 0 );
-    if( rtnIndex != string::npos ){  return rtnIndex;  }
+    if( rtnIndex != string::npos ){  
+        cout << "Comment BEGIN!: " << rtnIndex << endl;
+        return rtnIndex;  
+    }
     rtnIndex = stripped.find( COMMENT_OPEN[1], 0 );
-    if( rtnIndex != string::npos ){  return rtnIndex;  }
+    if( rtnIndex != string::npos ){  
+        cout << "Comment BEGIN!: " << rtnIndex << endl;
+        return rtnIndex;  
+    }
     return string::npos;
 }
 
@@ -268,11 +275,11 @@ vstr p_program_header( const vstr& line ){
 
 TextPortions segment_source_file( const vstr& totLines ){
     // Load sections of the program into the struct so that we can lex/interpret them
-    enum Section{ TYPE, CONST, VAR, COMMENT, OTHER };
+    enum Section{ BEGIN, TYPE, CONST, VAR, COMMENT, OTHER };
     /**/ string /*--*/ trimLine;
     /**/ vstr /*----*/ tokenLine;
     /**/ string /*--*/ line;
-    /**/ Section /*-*/ mode     = OTHER;
+    /**/ Section /*-*/ mode     = BEGIN;
     /**/ size_t /*--*/ cmmntBgn = string::npos;
     /**/ size_t /*--*/ cmmntEnd = string::npos;
     /**/ size_t /*--*/ N /*--*/ = totLines.size();
@@ -292,33 +299,34 @@ TextPortions segment_source_file( const vstr& totLines ){
         trimLine  = strip( line );
         tokenLine = tokenize( trimLine );
 
-        // cout << trimLine << endl;
-
-        // 3. Handle header
-        if( p_program_header( tokenLine ).size() == 3 ){  
-            rtnSctns.header = trimLine;  
-            continue;
-        }
+        // 3. Handle empty line
+        if( trimLine.size() < MIN_CHAR_S ){  continue;  }
         
-        // 3. Handle comments
+        // 5. Handle comments
         cmmntBgn = q_line_begins_comment( trimLine );
         if( cmmntBgn == 0 ){  mode = COMMENT;  }
         else if( cmmntBgn != string::npos ){
+            cout << "BEGIN comment!: " << trimLine << endl;
             qLines.push_front( trimLine.substr( cmmntBgn ) );
             qLines.push_front( trimLine.substr( 0, cmmntBgn ) );
             continue;
         }
-        cmmntEnd = q_line_ends_comment( trimLine );
-        if( cmmntEnd != string::npos ){  qLines.push_front( trimLine.substr(cmmntEnd) );  }
 
-        // 4. Handle end of program
+        // 6. Handle end of program
         if( p_str_has( trimLine, string{"end."} ) ){  
             cout << "Program ENDED: " << trimLine << endl << endl;
             break;  
         }
 
-        // 4. Hande State Transitions
+        // 7. Hande State Transitions
         switch( mode ){
+            case BEGIN:  
+                // 4. Handle header
+                if( p_program_header( tokenLine ).size() == 3 ){  
+                    rtnSctns.header = trimLine;  
+                    mode /*------*/ = OTHER;
+                    continue;
+                }
             case OTHER:  
                 // 3. Handle section headers
                 if( p_section_header( trimLine ) ){ // WARNING, ASSUMPTION: SECTION HEADINGS OCCUPY THEIR OWN LINE
@@ -332,7 +340,6 @@ TextPortions segment_source_file( const vstr& totLines ){
                         cout << endl << "segment_source_file: Defining `var`iables!" << endl << endl;
                         mode = VAR;
                     }
-                    continue;
                 }else{
                     rtnSctns.prog += line;  
                 }
@@ -351,6 +358,15 @@ TextPortions segment_source_file( const vstr& totLines ){
                 if( p_vec_has( tokenLine, string{"begin"} ) ){  mode = OTHER;  }else{
                     rtnSctns.var  += line;          
                 }
+                break;
+            case COMMENT: 
+                cmmntEnd = q_line_ends_comment( trimLine );
+                if( cmmntEnd != string::npos ){  
+                    cout << "END comment!: " << trimLine << endl;
+                    qLines.push_front( trimLine.substr(cmmntEnd) );  
+                    mode = OTHER;
+                    cout << "... ending comment ..." << endl;
+                }else{  cout << "... skipping comment ..." << endl;  }
                 break;
             default:
                 cout << "`segment_source_file`: This should NOT happen!, UNHANDLED LINE!!:" << endl << trimLine << endl;

@@ -39,3 +39,8 @@ target_link_libraries( CPC_LIB )
 set( EXECUTABLE_NAME 01_interpreter_test.out )
 add_executable( ${EXECUTABLE_NAME} 01_interpreter_test-01.cpp )
 target_link_libraries( ${EXECUTABLE_NAME} CPC_LIB )
+
+##### 02: Code Blocks #####
+set( EXECUTABLE_NAME 02_interpreter_blocks-02.out )
+add_executable( ${EXECUTABLE_NAME} 02_interpreter_blocks-02.cpp )
+target_link_libraries( ${EXECUTABLE_NAME} CPC_LIB )

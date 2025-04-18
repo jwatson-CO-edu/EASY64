@@ -437,26 +437,54 @@ void pprint_node( const ST_Node& node, size_t lvl = 0 ){
 
 
 
+////////// BUILT-IN FUNCTIONS //////////////////////////////////////////////////////////////////////
+
+Array string_2_char_array( const string& str ){
+    // Convert a string to a char array
+    Array  rtnArr = Array{ str.size() };
+    size_t i /**/ = 0;
+    for( const char& ch : str ){
+        rtnArr[i] = P_Val{ ch };
+        ++i;
+    }
+    return rtnArr;
+}
+
+
+string char_array_2_string( Array& charArr ){
+    // Convert a char array to a string
+    string rtnStr = "";
+    for( size_t i = 0; i < charArr.size(); ++i ){  rtnStr += get<char>( charArr[i] );  }
+    return rtnStr;
+}
+
+
+void writeln( Array& charArr ){
+    // Print a char array to stdout
+    cout << char_array_2_string( charArr ) << endl;
+}
+
+
+
 ////////// INTERPRETER /////////////////////////////////////////////////////////////////////////////
 
-
-class PascalInterpreter{ public:
-    // The actual interpreter
-
-    string /*-*/ progName;
-    bool /*---*/ enableInput;
-    bool /*---*/ enableOutput;
-    TextPortions code;
-
-    PascalInterpreter(){};
-
-    PascalInterpreter( const TextPortions& code_ ){
-        code = code_;
-    };
-
-
-    void set_IO( bool in, bool out ){
-        enableInput  = in;
-        enableOutput = out;
-    }
+PascalInterpreter::PascalInterpreter(){};
+PascalInterpreter::PascalInterpreter( const Context& context_ ){
+    context = context_;
 };
+
+void PascalInterpreter::set_IO( bool in, bool out ){
+    enableInput  = in;
+    enableOutput = out;
+}
+
+void PascalInterpreter::init_file( const string& sourcePath ){
+    vstr /*---*/ fLines = read_file_to_lines( sourcePath );
+    TextPortions fSeg = segment_source_file( fLines );
+
+    define_types(     context, fSeg.type );  cout << endl;
+    define_constants( context, fSeg.cnst );  cout << endl;
+    define_variables( context, fSeg.var  );  cout << endl;
+    
+}
+

@@ -7,7 +7,7 @@
 
 // FIXME, START HERE: MOVE DECLARATIONS TO THE HPP
 
-class ShuntingYardInterpreter { public:
+class ShuntingYardInterpreter{ public:
     // Handle infix operations
     // Inspired by: https://claude.ai/share/1f2d2598-c133-4851-a946-63f55ab70390
     map<string,ubyte> precedence;
