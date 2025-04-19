@@ -170,7 +170,7 @@ vector<vector<T>> vec_split( const vector<T>& vec, T sepElem ){
 
 template<typename T>
 vector<T> vec_remove( const vector<T>& vec, T remElem ){
-    // Split the `vec` on the `sepElem`, exclusive
+    // Return a version of `vec` with all instances of `remElem` removed
     vector<T> rtnVec;
     for( const T& item : vec ){  if( item != remElem ){  rtnVec.push_back( item );  }  }
     return rtnVec;
@@ -362,6 +362,7 @@ class P_File{ public:
 bool p_special( const string& q ); // Return True if `q` matches a symbol, otherwise return False
 bool p_reserved( const string& q ); // Return True if `q` matches a symbol, otherwise return False
 bool p_prim_type( const string& q ); // Return True if `q` matches a primtive type name, otherwise return False
+bool p_infix_op( const string& q );
     
 bool p_primitive_string( const string& q );
 P_Val str_2_primitive( const string& q );
@@ -393,6 +394,27 @@ struct TextPortions{ public:
 vstr read_file_to_lines( string path );
 TextPortions segment_source_file( const vstr& totLines );
 
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////// math.cpp ////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+class SYA_Interpreter{ public:
+    // Handle infix operations
+    // Inspired by: https://claude.ai/share/1f2d2598-c133-4851-a946-63f55ab70390
+    map<string,ubyte> precedence;
+
+    SYA_Interpreter();
+
+    bool p_operator( const string& token) const;
+    bool p_number( Context& context, const string& token );
+
+    P_Val apply_operator( const std::string& op, const P_Val& a, const P_Val& b );
+    vstr infix_2_RPN( Context& context, const vstr& infix );
+    P_Val eval_RPN( Context& context, const vstr& rpn );
+    P_Val interpret( Context& context, const vstr& expression );
+    void print_RPN( Context& context, const vstr& expression );
+};
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -442,8 +464,11 @@ class Context{ public:
     ValStore types;
     ValStore constants;
     ValStore vars;
+    SYA_Interpreter mathInterpreter;
 
     P_Val resolve_primitive_name( const string& name );
+    bool  p_math_expr( const vstr& expr );
+    P_Val eval_math_expr( const vstr& expr );
 };
 
 ///// Type Definition Part /////
@@ -461,16 +486,19 @@ void define_variables( Context& context, string defText );
 
 class PascalInterpreter{ public:
     // The actual interpreter
-    string  progName;
-    bool    enableInput;
-    bool    enableOutput;
-    Context context;
+    string /*----*/ progName;
+    bool /*------*/ enableInput;
+    bool /*------*/ enableOutput;
+    Context /*---*/ context;
+    
 
     PascalInterpreter();
     PascalInterpreter( const Context& context_ );
 
     void set_IO( bool in, bool out );
     void init_file( const string& sourcePath );
+
+    
 };
 
 

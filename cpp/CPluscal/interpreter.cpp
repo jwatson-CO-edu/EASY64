@@ -95,6 +95,27 @@ P_Val Context::resolve_primitive_name( const string& name ){
     return make_nan();
 }
 
+bool Context::p_math_expr( const vstr& expr ){
+    // Do these tokens have the ingredients of a math expression?
+    bool isPrim = false;
+    bool isOper = false;
+    bool isSemi = false;
+    for( const string& token : expr ){
+        isPrim = !p_nan( resolve_primitive_name( token ) );
+        isOper = p_infix_op( token );
+        isSemi = (token == ";");
+        if( (!isPrim) && (!isOper) && (!isSemi) ){  return false;  }
+    }
+    return true;
+}
+
+
+P_Val Context::eval_math_expr( const vstr& expr ){
+    P_Val rtnVal = make_nan();
+    if( p_math_expr( expr ) ){  rtnVal = mathInterpreter.interpret( *this, expr );  }
+    return rtnVal;
+}
+
 
 
 ////////// TYPE DEFINITION PART ////////////////////////////////////////////////////////////////////
@@ -214,6 +235,13 @@ void define_constants( Context& context, string defText ){
             /// Handle Primtive ///
             if( (expr.size() == 2) && (!p_nan( primVal )) ){
                 context.constants.prim[ name ] = primVal;
+
+            /// Handle Math Expression ///
+            }else if( context.p_math_expr( expr ) ){
+                primVal = context.eval_math_expr( vec_remove( expr, string{";"} ) );
+                context.constants.prim[ name ] = primVal;
+
+            /// Error ///
             }else{
                 cout << "`define_constants`, WARNING: COULD NOT PARSE THE FOLLOWING LINE:\n" << statement << endl;
             }
@@ -473,14 +501,17 @@ void writeln( Array& charArr ){
 ////////// INTERPRETER /////////////////////////////////////////////////////////////////////////////
 
 PascalInterpreter::PascalInterpreter(){};
+
 PascalInterpreter::PascalInterpreter( const Context& context_ ){
     context = context_;
 };
+
 
 void PascalInterpreter::set_IO( bool in, bool out ){
     enableInput  = in;
     enableOutput = out;
 }
+
 
 void PascalInterpreter::init_file( const string& sourcePath ){
     vstr /*---*/ fLines = read_file_to_lines( sourcePath );
