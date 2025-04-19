@@ -15,7 +15,10 @@ SYA_Interpreter::SYA_Interpreter(){
 }
 
 // Check if token is an operator
-bool SYA_Interpreter::p_operator( const string& token) const {  return precedence.find(token) != precedence.end();  }
+bool SYA_Interpreter::p_operator( const string& token ) const {  
+    cout << "Is operator?: " << token << endl;
+    return precedence.find(token) != precedence.end();  
+}
 
 
 bool SYA_Interpreter::p_number( Context& context, const string& token ){
@@ -52,6 +55,9 @@ vstr SYA_Interpreter::infix_2_RPN( Context& context, const vstr& infix ){
 
         // If token is an operator
         }else if( p_operator( token ) ){
+
+            cout << "\tFound Operator: " << token << endl;
+
             // Pop operators with higher precedence from the stack to output
             while( (!operatorStack.empty()) && 
                     p_operator( operatorStack.top() ) && 
@@ -100,6 +106,8 @@ P_Val SYA_Interpreter::eval_RPN( Context& context, const vstr& rpn ){
     // Evaluate RPN expression
     stack<P_Val> values;
     P_Val /*--*/ a, b;
+
+    cout << "RPN: " << rpn << endl;
     
     for( const string& token : rpn){
         if( p_number( context, token ) ){
@@ -123,6 +131,9 @@ P_Val SYA_Interpreter::eval_RPN( Context& context, const vstr& rpn ){
 P_Val SYA_Interpreter::interpret( Context& context, const vstr& expression ){
     // Convert to RPN
     vstr rpn = infix_2_RPN( context, expression );
+
+    cout << "Infix: " << expression << " --to-> RPN: " << rpn << endl;
+
     // Evaluate RPN
     return eval_RPN( context, rpn );
 }
