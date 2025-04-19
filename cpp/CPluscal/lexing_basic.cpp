@@ -422,7 +422,7 @@ bool p_primitive_string( const string& q ){
         cerr << "Out of range: " << e.what() << endl;
     }
     /// Handle `char` ///
-    if( q.size() == 1 ){  return true;  }
+    if( q.size() == 1 ){  return true;  } // FIXME: THIS IS BAD
     /// Handle `double` ///
     try {
         stod(q);

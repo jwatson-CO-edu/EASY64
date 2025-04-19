@@ -89,6 +89,12 @@ TypeName ValStore::where_name( const string& name ){
 
 P_Val Context::resolve_primitive_name( const string& name ){
     // Try to convert the name into a primitive literal
+
+    cout << "`resolve_primitive_name`: " << name << " --> " 
+         << constants.p_var_name( name ) << " || "
+         << vars.p_var_name( name )      << " || "
+         << p_primitive_string( name )   << endl;
+
     if( constants.p_var_name( name ) ){  return constants.prim[ name ];   }
     if( vars.p_var_name( name ) /**/ ){  return vars.prim[ name ]; /*--*/ }
     if( p_primitive_string( name )   ){  return str_2_primitive( name );  }

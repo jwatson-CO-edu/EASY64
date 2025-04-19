@@ -24,6 +24,7 @@ bool SYA_Interpreter::p_operator( const string& token ) const {
 bool SYA_Interpreter::p_number( Context& context, const string& token ){
     // Check if token is a number
     P_Val res = context.resolve_primitive_name( token );
+    cout << "`p_number`, Is this a number?: " << token << " --> " << p_nan( res ) << endl;
     return (!p_nan( res ));
 }
 
@@ -51,7 +52,10 @@ vstr SYA_Interpreter::infix_2_RPN( Context& context, const vstr& infix ){
 
         // If token is a number, add to output
         if( p_number( context, token ) ){
-            output.push_back(token);
+
+            cout << "\tFound Number: " << token << endl;
+
+            output.push_back( token );
 
         // If token is an operator
         }else if( p_operator( token ) ){
