@@ -167,7 +167,8 @@ Spelled EASY64, Easy64, EASY, Easy
         * [`shm_open` Example](https://gist.github.com/garcia556/8231e844a90457c99cc72e5add8388e4)
 * [Communication Between Hosts on a Local Network](https://claude.site/artifacts/f7b0532a-e795-4a3d-976c-06ae89ea4c83)
 
-## TensorLoop: Interpreted Machine Learning Language for Cognitive Architectures
+## CROW: [C]ognitive [R]outing [O]perations [W]orkbench
+* Interpreted Machine Learning Language for Cognitive Architectures
 * Neural Networks as first class data with the purpose of parallel inference and architecture search
     - Architecture search as a background task
 * Native GPU acceleration via ONYX or other
