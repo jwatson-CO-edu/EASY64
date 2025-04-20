@@ -364,8 +364,8 @@ bool p_reserved( const string& q ); // Return True if `q` matches a symbol, othe
 bool p_prim_type( const string& q ); // Return True if `q` matches a primtive type name, otherwise return False
 bool p_infix_op( const string& q );
     
-bool p_primitive_string( const string& q );
-P_Val str_2_primitive( const string& q );
+bool p_number_string( const string& q );
+P_Val str_2_number( const string& q );
 
 vvstr segment_statements( const vstr& tokens_ );
 vvstr text_block_to_tokenized_statements( const string& textBlock );

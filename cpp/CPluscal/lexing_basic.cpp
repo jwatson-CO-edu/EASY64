@@ -407,11 +407,8 @@ TextPortions segment_source_file( const vstr& totLines ){
 
 
 ///// Lex Primitives //////////////////////////////////////////////////////
-bool p_primitive_string( const string& q ){
+bool p_number_string( const string& q ){
     // Return true if the string can represent a primitive
-    /// Handle `bool` ///
-    if( q == "true"  ){  return true;  }
-    if( q == "false" ){  return true;  }
     /// Handle `long` ///
     try {
         stol(q);
@@ -421,8 +418,6 @@ bool p_primitive_string( const string& q ){
     } catch( const std::out_of_range& e ){
         cerr << "Out of range: " << e.what() << endl;
     }
-    /// Handle `char` ///
-    if( q.size() == 1 ){  return true;  } // FIXME: THIS IS BAD
     /// Handle `double` ///
     try {
         stod(q);
@@ -436,11 +431,8 @@ bool p_primitive_string( const string& q ){
 }
 
 
-P_Val str_2_primitive( const string& q ){
+P_Val str_2_number( const string& q ){
     // Return interpret `q` as a primitive literal and return it
-    /// Handle `bool` ///
-    if( q == "true"  ){  return P_Val{ true  };  }
-    if( q == "false" ){  return P_Val{ false };  }
     /// Handle `long` ///
     try {
         return P_Val{ stol(q) };
@@ -449,8 +441,6 @@ P_Val str_2_primitive( const string& q ){
     } catch( const std::out_of_range& e ){
         cerr << "Out of range: " << e.what() << endl;
     }
-    /// Handle `char` ///
-    if( q.size() == 1 ){  return P_Val{ q[0] };  }
     /// Handle `double` ///
     try {
         return P_Val{ stod(q) };

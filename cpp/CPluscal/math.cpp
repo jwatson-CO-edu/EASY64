@@ -16,7 +16,7 @@ SYA_Interpreter::SYA_Interpreter(){
 
 // Check if token is an operator
 bool SYA_Interpreter::p_operator( const string& token ) const {  
-    cout << "Is operator?: " << token << endl;
+    cout << "Is operator?: " << token << ", " << (precedence.find(token) != precedence.end()) << endl;
     return precedence.find(token) != precedence.end();  
 }
 
@@ -24,18 +24,18 @@ bool SYA_Interpreter::p_operator( const string& token ) const {
 bool SYA_Interpreter::p_number( Context& context, const string& token ){
     // Check if token is a number
     P_Val res = context.resolve_primitive_name( token );
-    cout << "`p_number`, Is this a number?: " << token << " --> " << p_nan( res ) << endl;
+    cout << "`p_number`, Is this a number?: " << token << " --> " << (!p_nan( res )) << endl;
     return (!p_nan( res ));
 }
 
 
-P_Val SYA_Interpreter::apply_operator( const std::string& op, const P_Val& a, const P_Val& b ){
+P_Val SYA_Interpreter::apply_operator( const string& op, const P_Val& a, const P_Val& b ){
     // Apply operator to values
     if( op == "+" ){  return a + b;  }
     if( op == "-" ){  return a - b;  }
     if( op == "*" ){  return a * b;  }
     if( op == "/" ){
-        if( b == P_Val{ 0.0 } ){  throw std::runtime_error("Division by zero");  }
+        if( b == P_Val{ 0.0 } ){  throw runtime_error( "Division by zero" );  }
         return (a/b);
     }
     if( op == "**" ){  return pow( a, b );  }
@@ -48,7 +48,7 @@ vstr SYA_Interpreter::infix_2_RPN( Context& context, const vstr& infix ){
     vstr /*----*/ output;
     stack<string> operatorStack;
     
-    for (const string& token : infix) {
+    for( const string& token : infix ){
 
         // If token is a number, add to output
         if( p_number( context, token ) ){
@@ -65,7 +65,7 @@ vstr SYA_Interpreter::infix_2_RPN( Context& context, const vstr& infix ){
             // Pop operators with higher precedence from the stack to output
             while( (!operatorStack.empty()) && 
                     p_operator( operatorStack.top() ) && 
-                    (precedence[ operatorStack.top() ] >= precedence[token]) ) {
+                    (precedence[ operatorStack.top() ] >= precedence[token]) ){
                 output.push_back( operatorStack.top() );
                 operatorStack.pop();
             }

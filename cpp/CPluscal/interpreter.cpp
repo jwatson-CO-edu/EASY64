@@ -62,7 +62,7 @@ P_Val ValStore::get_var( const string& name ){
 P_Val ValStore::get_var_or_literal( const string& token ){
     // If the `token` is a variable or a literal, then return its value, Otherwise return NaN
     if( p_var_name( token ) ){  return prim[ token ];  }
-    if( p_primitive_string( token ) ){  return str_2_primitive( token );  }
+    if( p_number_string( token ) ){  return str_2_number( token );  }
     return make_nan();
 }
 
@@ -93,11 +93,11 @@ P_Val Context::resolve_primitive_name( const string& name ){
     cout << "`resolve_primitive_name`: " << name << " --> " 
          << constants.p_var_name( name ) << " || "
          << vars.p_var_name( name )      << " || "
-         << p_primitive_string( name )   << endl;
+         << p_number_string( name )      << endl;
 
     if( constants.p_var_name( name ) ){  return constants.prim[ name ];   }
     if( vars.p_var_name( name ) /**/ ){  return vars.prim[ name ]; /*--*/ }
-    if( p_primitive_string( name )   ){  return str_2_primitive( name );  }
+    if( p_number_string( name ) /**/ ){  return str_2_number( name );  }
     return make_nan();
 }
 
