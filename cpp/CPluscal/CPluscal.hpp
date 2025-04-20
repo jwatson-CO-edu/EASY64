@@ -216,6 +216,11 @@ const array<string,2> COMMENT_CLOS = { "}", "*)" };
 const array<string,3> SECTION_NAMES = { "type", "var", "const" };
 
 
+///// Internal Tokens /////////////////////////////////////////////////////
+const string TKN_NEWLINE = "<nl>";
+
+
+
 ////////// LANGUAGE ENUMS //////////////////////////////////////////////////////////////////////////
 
 enum TypeName{
