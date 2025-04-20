@@ -189,10 +189,11 @@ const array<char,52> LETTERS = {
 
 const array<char,10> DIGITS = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
 
-const array<string,23> SYMBOLS = { /// Special Symbols ///
+const array<string,24> SYMBOLS = { /// Special Symbols ///
     "**", "+", "-", "*", "/", // Infix Operators
     "=", "<", ">", "<>", "<=", ">=", ":=", "..", "<=", 
-    "[", "]", ".", ",", ":", ";", "^", "(", ")"
+    "[", "]", ".", ",", ":", ";", "^", "(", ")",
+    "'"
 };
 const size_t NUM_INFIX = 5;
 

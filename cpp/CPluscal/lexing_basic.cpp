@@ -72,6 +72,14 @@ bool p_section_header( const string& q ){ // WARNING, ASSUMPTION: SECTION HEADIN
     return false;
 }
 
+bool p_string_token( const string& q ){
+    // Return True if the string represents a string token, otherwise return False
+    size_t N = q.size();
+    if( N < 2 ){  return false;  }
+    if((q[0] == '\'') && (q[N-1] == '\'')){  return true;  };
+    return false;
+}
+
 
 bool p_str_has( const string& str, const string& q ){  return (str.find(q) != string::npos);  }
 
@@ -166,13 +174,14 @@ vstr attempt_reserved_symbol_merge( const vstr& tokens ){
 
 vstr tokenize( const string& totStr, char sepChr = ' ' ){
     // Return a vector of tokenized strings that a separated by whitespace within `expStr`
-    // WARNING, ASSUMPTION: ONE SYMBOL IS NOT A SUBSTRING OF ANOTHER SYMBOL, (There is!)
     vstr   tokens;
     char   c;
     string cStr;
     string token  = "";
     bool   sepWs  = (sepChr == ' ');
     string expStr = totStr + sepChr; // Apply the postfix hack
+    bool   strAccum = false;
+    string strToken = "";
 
     // Helpers //
     auto stow_token = [&]{  tokens.push_back( token );  token = "";  };
@@ -185,15 +194,24 @@ vstr tokenize( const string& totStr, char sepChr = ' ' ){
         c    = ch_i;
         cStr = string(1,c);
         // 3. Either add char to present token or create a new one
-        // A. Case Reserved
-        if( p_symbol( cStr ) ){  
+        // A. Case String Begin/End
+        if( cStr == "'" ){
+            strToken += '\'';
+            if( strAccum ){
+                tokens.push_back( strToken );
+                strToken = "";
+            }
+            strAccum = !strAccum;
+
+        // B. Case Reserved
+        }else if( p_symbol( cStr ) ){  
             // cout << "Reserved Token: " << find_reserved_token( cStr ) << endl;
             if( token.size() > 0 ){  stow_token();  }
             stow_char();  
-        // B. Case separator
+        // C. Case separator
         }else if( (c == sepChr) || (sepWs && isspace(c)) ){
             if(token.size() > 0){  stow_token();  }
-        // C. Case any other char
+        // D. Case any other char
         }else{  cache_char();  } 
     }
     // N. Return the vector of tokens
@@ -286,7 +304,7 @@ vstr p_program_header( const vstr& line ){
 
 TextPortions segment_source_file( const vstr& totLines ){
     // Load sections of the program into the struct so that we can lex/interpret them
-    enum Section{ BEGIN, TYPE, CONST, VAR, COMMENT, OTHER };
+    enum Section{ BEGIN, TYPE, CONST, VAR, COMMENT, STRING, OTHER };
     /**/ string /*--*/ trimLine;
     /**/ vstr /*----*/ tokenLine;
     /**/ string /*--*/ line;
@@ -329,8 +347,6 @@ TextPortions segment_source_file( const vstr& totLines ){
 
         // 3. Handle empty line
         if( trimLine.size() < MIN_CHAR_S ){  continue;  }
-        
-        
 
         if( mode != COMMENT ){  
 
@@ -347,6 +363,7 @@ TextPortions segment_source_file( const vstr& totLines ){
                 continue;
             }
 
+            // 6. Handle definition part
             if( check_section_switch() ){  continue;  }  
 
             // 6. Handle end of program
@@ -355,8 +372,6 @@ TextPortions segment_source_file( const vstr& totLines ){
                 break;  
             }
         }
-
-        
 
         // 7. Hande State Transitions
         switch( mode ){
