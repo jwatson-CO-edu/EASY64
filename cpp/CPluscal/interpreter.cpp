@@ -179,11 +179,11 @@ void define_types( Context& context, const string& defText ){
 
             /// Handle Enum ///
             }else if( p_vec_has( expr, string{"("} ) && p_vec_has( expr, string{")"} ) ){
-                context.types.namedEnum[ name ] = Enum{ get_parenthetical_tokens( expr ) };
+                context.types.namedEnum[ name ] = Enum{ get_balanced_parenthetical_tokens( expr ) };
             
             /// Handle Array ///
             }else if( p_vec_has( expr, string{"array"} ) ){
-                expr = get_bracketed_tokens( expr );
+                expr = get_balanced_bracketed_tokens( expr );
                 if( (expr.size() == 1)&&(context.types.p_num_range_name( expr[0] )) ){
                     span = get<long>( context.types.valrange[ expr[0] ].valMax )
                            -
@@ -346,14 +346,14 @@ void define_variables( Context& context, string defText ){
 
             /// Handle Enum ///
             }else if( p_vec_has( tExpr, string{"("} ) && p_vec_has( tExpr, string{")"} ) ){
-                tExpr = get_parenthetical_tokens( tExpr );
+                tExpr = get_balanced_parenthetical_tokens( tExpr );
                 for( const string& name : names ){
                     context.vars.namedEnum[ name ] =  Enum{ tExpr };
                 }
             
             /// Handle Array ///
             }else if( p_vec_has( tExpr, string{"array"} ) ){
-                tExpr = get_bracketed_tokens( tExpr );
+                tExpr = get_balanced_bracketed_tokens( tExpr );
                 if( (tExpr.size() == 1)&&(context.types.p_num_range_name( tExpr[0] )) ){
                     span = get<long>( context.types.valrange[ tExpr[0] ].valMax )
                            -

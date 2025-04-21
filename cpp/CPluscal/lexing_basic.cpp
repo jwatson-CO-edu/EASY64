@@ -290,7 +290,7 @@ vstr p_program_header( const vstr& line ){
     if( p_vec_has( line, string{"program"} ) ){
         try{
             rtnHeader.push_back( line[1] );
-            ioTerms = get_parenthetical_tokens( line );
+            ioTerms = get_balanced_parenthetical_tokens( line );
             if( p_vec_has( ioTerms, string{"input"}  ) ){  rtnHeader.push_back("true");  }else{  rtnHeader.push_back("false");  }
             if( p_vec_has( ioTerms, string{"output"} ) ){  rtnHeader.push_back("true");  }else{  rtnHeader.push_back("false");  }
             return rtnHeader;
@@ -472,29 +472,65 @@ P_Val str_2_number( const string& q ){
 
 ////////// TOKEN LEXING ////////////////////////////////////////////////////////////////////////////
 
-vstr get_parenthetical_tokens( const vstr& tokens ){
+bool p_has_balanced_parenthetical( const vstr& tokens ){
     // Get parentheses contents
-    // WARNING, ASSUMPTION: ONLY ONE DEPTH
     vstr contents;
-    bool inside = false;
+    size_t open = 0;
+    size_t clos = 0;
     for( const string& token : tokens ){
-        if( token == "(" ){  inside = true;  }
-        else if( token == ")" ){  inside = false;  }
-        else if( inside ){  contents.push_back( token );  }
+        if( token == "(" ){  ++open;  }
+        else if( token == ")" ){  ++clos;  }
+    }
+    return ((open > 0)&&(open == clos));
+}
+
+
+bool p_has_balanced_bracketed( const vstr& tokens ){
+    // Get parentheses contents
+    vstr contents;
+    size_t open = 0;
+    size_t clos = 0;
+    for( const string& token : tokens ){
+        if( token == "[" ){  ++open;  }
+        else if( token == "]" ){  ++clos;  }
+    }
+    return ((open > 0)&&(open == clos));
+}
+
+
+vstr get_balanced_parenthetical_tokens( const vstr& tokens ){
+    // Get parentheses contents
+    vstr   contents;
+    bool   inside  = false;
+    size_t depth = 0;
+    for( const string& token : tokens ){
+        if( inside ){  contents.push_back( token );  }
+        if( token == "(" ){  
+            ++depth;  
+            if( !inside ){  inside = true;  }
+        }else if( token == ")" ){  
+            --depth;  
+            if( depth == 0 ){  inside = false;  }
+        }
     }
     return contents;
 }
 
 
-vstr get_bracketed_tokens( const vstr& tokens ){
+vstr get_balanced_bracketed_tokens( const vstr& tokens ){
     // Get square brackets contents
-    // WARNING, ASSUMPTION: ONLY ONE DEPTH
-    vstr contents;
-    bool inside = false;
+    vstr   contents;
+    bool   inside  = false;
+    size_t depth = 0;
     for( const string& token : tokens ){
-        if( token == "[" ){  inside = true;  }
-        else if( token == "]" ){  inside = false;  }
-        else if( inside ){  contents.push_back( token );  }
+        if( inside ){  contents.push_back( token );  }
+        if( token == "[" ){  
+            ++depth;  
+            if( !inside ){  inside = true;  }
+        }else if( token == "]" ){  
+            --depth;  
+            if( depth == 0 ){  inside = false;  }
+        }
     }
     return contents;
 }

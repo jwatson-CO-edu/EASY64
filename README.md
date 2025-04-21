@@ -17,11 +17,15 @@ Please try not to implement any additional features whatsoever!
 * Case **matters** for identifiers.
 * Probably others!
 
+## `DEV_PLAN`
+* `[ ]` Add Abstract Source Trees (AST)
+    - `[ ]` Recursive Descent Parser
+
 &nbsp;  
 &nbsp;  
 
 # CPluscal+
-* `[ ]` Add Abstract Source Trees (AST)
+
 * `[ ]` New Data Types
     - `[ ]` `string` as a datatype
     - `[ ]` `code` as a datatype

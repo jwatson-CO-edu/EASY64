@@ -377,8 +377,10 @@ vvstr segment_statements( const vstr& tokens_ );
 vvstr text_block_to_tokenized_statements( const string& textBlock );
 string concat( const vstr& parts, char sepChar = 0 );
 
-vstr get_parenthetical_tokens( const vstr& tokens );
-vstr get_bracketed_tokens( const vstr& tokens );
+bool p_has_balanced_parenthetical( const vstr& tokens );
+bool p_has_balanced_bracketed( const vstr& tokens );
+vstr get_balanced_parenthetical_tokens( const vstr& tokens );
+vstr get_balanced_bracketed_tokens( const vstr& tokens );
 
 ////////// FILE LEXING /////////////////////////////////////////////////////////////////////////////
 
