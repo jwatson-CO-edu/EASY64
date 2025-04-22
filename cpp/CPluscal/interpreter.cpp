@@ -116,13 +116,6 @@ bool Context::p_math_expr( const vstr& expr ){
 }
 
 
-P_Val Context::eval_math_expr( const vstr& expr ){
-    P_Val rtnVal = make_nan();
-    if( p_math_expr( expr ) ){  rtnVal = mathInterpreter.interpret( *this, expr );  }
-    return rtnVal;
-}
-
-
 
 ////////// TYPE DEFINITION PART ////////////////////////////////////////////////////////////////////
 void define_types( Context& context, const string& defText ){

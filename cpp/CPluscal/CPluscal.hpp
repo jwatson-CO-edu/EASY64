@@ -215,6 +215,8 @@ const array<string,2> COMMENT_CLOS = { "}", "*)" };
 
 const array<string,3> SECTION_NAMES = { "type", "var", "const" };
 
+const array<string,2> NL_INDICATORS = { "\r\n", "\n" };
+
 
 ///// Internal Tokens /////////////////////////////////////////////////////
 const string TKN_NEWLINE = "<nl>";
@@ -407,26 +409,60 @@ TextPortions segment_source_file( const vstr& totLines );
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-////////// math.cpp ////////////////////////////////////////////////////////////////////////////////
+////////// AST_Node.cpp ////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-class Context;
 
-class SYA_Interpreter{ public:
-    // Handle infix operations
-    // Inspired by: https://claude.ai/share/1f2d2598-c133-4851-a946-63f55ab70390
-    map<string,ubyte> precedence;
+////////// NODE ////////////////////////////////////////////////////////////////////////////////////
+// NOTE: DELAY INTERPRETATION OF STRINGS UNTIL IT IS TIME TO RUN CODE
 
-    SYA_Interpreter();
-
-    bool p_operator( const string& token) const;
-    bool p_number( Context& context, const string& token );
-
-    P_Val apply_operator( const std::string& op, const P_Val& a, const P_Val& b );
-    vstr infix_2_RPN( Context& context, const vstr& infix );
-    P_Val eval_RPN( Context& context, const vstr& rpn );
-    P_Val interpret( Context& context, const vstr& expression );
-    void print_RPN( Context& context, const vstr& expression );
+enum NodeType{
+    // Types of syntax nodes
+    PROGRAM, 
+    FUNCTION, 
+    FOR,
+    ASSIGNMENT,
+    IDENTIFIER,
+    NUM_LITERAL,
+    BINARY_OP,
 };
+
+
+struct AST_Node{ 
+    // Holds code as a tree
+    NodeType /*---*/ type;
+    vstr /*-------*/ tokens;
+    vector<AST_Node> edges;
+    P_Val /*------*/ value;
+};
+
+
+AST_Node make_ast_program( const string& name ); // Identifier Node, to be evaluated later
+AST_Node make_ast_identifier( const string& name ); // Identifier Node, to be evaluated later
+AST_Node make_ast_number_literal( const string& literalStr ); // Number Literal Node, to be evaluated later
+AST_Node make_ast_assignment( AST_Node left, AST_Node right ); // Number Assignment Node, to be evaluated later
+AST_Node make_ast_binary_op( const string& op, AST_Node left, AST_Node right ); // Number Assignment Node, to be evaluated later
+
+
+////////// PARSER //////////////////////////////////////////////////////////////////////////////////
+
+class AST_Parser{ public:
+    // Machine that turns a string vector into an Abstract Source Tree
+
+    vstr   tokens;
+    size_t currDex;
+    size_t N;
+
+    AST_Parser( const vstr& tokens_ ); // Load tokenized program into the parser
+
+    string current_token() const; // Peek current token string
+    void advance(); // Move to next token string
+    bool match( const string& expected ); // Return True if the current token string matches what is `expected`
+    void expect( const string& expected ); // Throw a `runtime_error` if `match` fails
+    AST_Node parse_term(); // Parse one expression term as an AST node
+    AST_Node parse_expression(); // Read tokens until an expression subtree is obtained
+    AST_Node parse(); // Convert the collection of tokens to an Abstract Source Tree
+};
+
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -436,6 +472,7 @@ class SYA_Interpreter{ public:
 ////////// TYPES && SCOPE //////////////////////////////////////////////////////////////////////////
 class ValStore{ public:
     // Lookup for values by name
+    AST_Node /*--------*/ expr;
     map<string,string>    pAlias; // Aliases for primitive types
     map<string,P_Val>     prim; // -- Variables of primitive types
     map<string,ValRange>  valrange; 
@@ -477,11 +514,9 @@ class Context{ public:
     ValStore types;
     ValStore constants;
     ValStore vars;
-    SYA_Interpreter mathInterpreter;
 
     P_Val resolve_primitive_name( const string& name );
     bool  p_math_expr( const vstr& expr );
-    P_Val eval_math_expr( const vstr& expr );
 };
 
 ///// Type Definition Part /////

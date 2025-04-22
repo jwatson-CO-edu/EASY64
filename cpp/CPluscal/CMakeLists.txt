@@ -26,8 +26,8 @@ cmake_print_variables( PROJECT_SOURCE_DIR )
 add_library( CPC_LIB
              types_builtin.cpp 
              lexing_basic.cpp 
-             interpreter.cpp 
-             math.cpp )
+             AST_Node.cpp 
+             interpreter.cpp )
 
 target_link_libraries( CPC_LIB )
 
