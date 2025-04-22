@@ -369,6 +369,9 @@ bool p_special( const string& q ); // Return True if `q` matches a symbol, other
 bool p_reserved( const string& q ); // Return True if `q` matches a symbol, otherwise return False
 bool p_prim_type( const string& q ); // Return True if `q` matches a primtive type name, otherwise return False
 bool p_infix_op( const string& q );
+// Return True for strings that are: 1. Not symbols, 2. Begin with a letter, 3. Are composed of alphanumeric chars
+bool p_identifier( const string& q );
+    
     
 bool p_number_string( const string& q );
 P_Val str_2_number( const string& q );
