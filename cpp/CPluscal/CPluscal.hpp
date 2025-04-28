@@ -418,6 +418,9 @@ TextPortions segment_source_file( const vstr& totLines );
 enum NodeType{
     // Types of syntax nodes
     PROGRAM, 
+    TYPE_DEF, 
+    CONSTANT_DEF, 
+    VARIABLE_DEF, 
     FUNCTION, 
     FOR,
     ASSIGNMENT,
@@ -437,6 +440,9 @@ struct AST_Node{
 
 
 AST_Node make_ast_program( const string& name ); // Identifier Node, to be evaluated later
+AST_Node make_ast_type_def( const string& name ); // Identifier Node, to be evaluated later
+AST_Node make_ast_const_def( const string& name ); // Identifier Node, to be evaluated later
+AST_Node make_ast_var_def( const string& name ); // Identifier Node, to be evaluated later
 AST_Node make_ast_identifier( const string& name ); // Identifier Node, to be evaluated later
 AST_Node make_ast_number_literal( const string& literalStr ); // Number Literal Node, to be evaluated later
 AST_Node make_ast_assignment( AST_Node left, AST_Node right ); // Number Assignment Node, to be evaluated later

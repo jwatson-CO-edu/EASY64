@@ -15,6 +15,30 @@ AST_Node make_ast_program( const string& name ){
 }
 
 
+AST_Node make_ast_type_def(){
+    // Identifier Node, to be evaluated later
+    AST_Node rtnNode{};
+    rtnNode.type = TYPE_DEF;
+    return rtnNode;
+}
+
+
+AST_Node make_ast_const_def( const string& name ){
+    // Identifier Node, to be evaluated later
+    AST_Node rtnNode{};
+    rtnNode.type = CONSTANT_DEF;
+    return rtnNode;
+}
+
+
+AST_Node make_ast_var_def( const string& name ){
+    // Identifier Node, to be evaluated later
+    AST_Node rtnNode{};
+    rtnNode.type = VARIABLE_DEF;
+    return rtnNode;
+}
+
+
 AST_Node make_ast_identifier( const string& name ){
     // Identifier Node, to be evaluated later
     AST_Node rtnNode{};
