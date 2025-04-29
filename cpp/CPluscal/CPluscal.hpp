@@ -78,7 +78,7 @@ ostream& operator<<( ostream& os , const deque<T>& deq ) {
     }
     os << " ](back)";
     return os; // You must return a reference to the stream!
-}
+} 
 
 
 template<typename T>
@@ -392,15 +392,15 @@ vstr get_balanced_bracketed_tokens( const vstr& tokens );
 struct TextPortions{ public:
     // Separates text of a file into portions so that we can treat each differently
     /// Sections ///
-    string header;
-    string type;
-    string cnst;
-    string var;
+    AST_Node header;
+    AST_Node type;
+    AST_Node cnst;
+    AST_Node var;
     /// Modules ///
-    string func;
-    string proc;
+    AST_Node func;
+    AST_Node proc;
     /// Main ///
-    string prog;
+    AST_Node prog;
 };
 
 
@@ -421,12 +421,13 @@ enum NodeType{
     TYPE_DEF, 
     CONSTANT_DEF, 
     VARIABLE_DEF, 
-    FUNCTION, 
-    FOR,
+    TYPE_NAME,
     ASSIGNMENT,
     IDENTIFIER,
     NUM_LITERAL,
     BINARY_OP,
+    FUNCTION, 
+    FOR,
 };
 
 
@@ -443,6 +444,7 @@ AST_Node make_ast_program( const string& name ); // Identifier Node, to be evalu
 AST_Node make_ast_type_def( const string& name ); // Identifier Node, to be evaluated later
 AST_Node make_ast_const_def( const string& name ); // Identifier Node, to be evaluated later
 AST_Node make_ast_var_def( const string& name ); // Identifier Node, to be evaluated later
+AST_Node make_ast_type_name( const string& name ); // Identifier Node, to be evaluated later
 AST_Node make_ast_identifier( const string& name ); // Identifier Node, to be evaluated later
 AST_Node make_ast_number_literal( const string& literalStr ); // Number Literal Node, to be evaluated later
 AST_Node make_ast_assignment( AST_Node left, AST_Node right ); // Number Assignment Node, to be evaluated later
@@ -454,16 +456,16 @@ AST_Node make_ast_binary_op( const string& op, AST_Node left, AST_Node right ); 
 class AST_Parser{ public:
     // Machine that turns a string vector into an Abstract Source Tree
 
-    vstr   tokens;
-    size_t currDex;
-    size_t N;
+    deque<string> input;
+    string /*--*/ curTkn;
+    size_t /*--*/ N;
 
     AST_Parser( const vstr& tokens_ ); // Load tokenized program into the parser
 
-    string current_token() const; // Peek current token string
-    void advance(); // Move to next token string
+    bool advance(); // Move to next token string
     bool match( const string& expected ); // Return True if the current token string matches what is `expected`
     void expect( const string& expected ); // Throw a `runtime_error` if `match` fails
+
     AST_Node parse_term(); // Parse one expression term as an AST node
     AST_Node parse_expression(); // Read tokens until an expression subtree is obtained
     AST_Node parse(); // Convert the collection of tokens to an Abstract Source Tree

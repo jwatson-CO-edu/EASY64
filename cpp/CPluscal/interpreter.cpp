@@ -235,10 +235,10 @@ void define_constants( Context& context, string defText ){
             if( (expr.size() == 2) && (!p_nan( primVal )) ){
                 context.constants.prim[ name ] = primVal;
 
-            /// Handle Math Expression ///
-            }else if( context.p_math_expr( expr ) ){
-                primVal = context.eval_math_expr( vec_remove( expr, string{";"} ) );
-                context.constants.prim[ name ] = primVal;
+            // /// Handle Math Expression ///
+            // }else if( context.p_math_expr( expr ) ){
+            //     primVal = context.eval_math_expr( vec_remove( expr, string{";"} ) );
+            //     context.constants.prim[ name ] = primVal;
 
             /// Error ///
             }else{
@@ -449,9 +449,9 @@ void PascalInterpreter::init_file( const string& sourcePath ){
     vstr /*---*/ fLines = read_file_to_lines( sourcePath );
     TextPortions fSeg = segment_source_file( fLines );
 
-    define_types(     context, fSeg.type );  cout << endl;
-    define_constants( context, fSeg.cnst );  cout << endl;
-    define_variables( context, fSeg.var  );  cout << endl;
+    // define_types(     context, fSeg.type );  cout << endl;
+    // define_constants( context, fSeg.cnst );  cout << endl;
+    // define_variables( context, fSeg.var  );  cout << endl;
     
 }
 

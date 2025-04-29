@@ -39,6 +39,14 @@ AST_Node make_ast_var_def( const string& name ){
 }
 
 
+AST_Node make_ast_type_name( const string& name ){
+    AST_Node rtnNode{};
+    rtnNode.type   = TYPE_NAME;
+    rtnNode.tokens = {name,};
+    return rtnNode;
+}
+
+
 AST_Node make_ast_identifier( const string& name ){
     // Identifier Node, to be evaluated later
     AST_Node rtnNode{};
@@ -83,33 +91,34 @@ AST_Node make_ast_binary_op( const string& op, AST_Node left, AST_Node right ){
 
 AST_Parser::AST_Parser( const vstr& tokens_ ){
     // Load tokenized program into the parser
-    tokens  = tokens_;
-    currDex = 0;
-    N /*-*/ = tokens_.size();
+    for( const string& token : tokens_ ){  input.push_back( token );  }
+    N = tokens_.size();
 }
 
-// Peek current token string
-string AST_Parser::current_token() const{  if ( currDex < N ){  return tokens[ currDex ];  }else{  return "";  }  }
-
-
 // Move to next token string
-void AST_Parser::advance(){  if( currDex < N ){  ++currDex;  }  }
+bool AST_Parser::advance(){    
+    if( input.size() ){
+        curTkn = input.front();
+        input.pop_front();
+        return true;
+    }else{
+        curTkn = "";
+        return false;
+    }
+    
+}
 
 
 bool AST_Parser::match( const string& expected ){
     // Return True if the current token string matches what is `expected`
-    if( current_token() == expected ){
-        advance();
-        return true;
-    }
-    return false;
+    return (curTkn == expected);
 }
 
 
 void AST_Parser::expect( const string& expected ){
     // Throw a `runtime_error` if `match` fails
     if( !match( expected ) ){
-        throw runtime_error("Expected '" + expected + "', got '" + current_token() + "'");
+        throw runtime_error("Expected '" + expected + "', got '" + curTkn + "'");
     }
 }
 
@@ -117,18 +126,25 @@ void AST_Parser::expect( const string& expected ){
 AST_Node AST_Parser::parse_term(){
     // Parse one expression term as an AST node
     AST_Node value;
-    if( current_token().empty() ){  throw runtime_error( "Unexpected end of input" );  }
+    if( !curTkn.size() ){  throw runtime_error( "Unexpected end of input" );  }
     
     // Handle numbers
-    if( p_number_string( current_token() ) ){
-        value = make_ast_number_literal( current_token() );
+    if( p_number_string( curTkn ) ){
+        value = make_ast_number_literal( curTkn );
         advance();
         return value;
     }
     
     // Handle identifiers
-    if( p_identifier( current_token() ) ){
-        value = make_ast_identifier( current_token() );
+    if( p_identifier( curTkn ) ){
+        value = make_ast_identifier( curTkn );
+        advance();
+        return value;
+    }
+
+    // Handle type names
+    if( p_prim_type( curTkn ) ){
+        value = make_ast_type_name( curTkn );
         advance();
         return value;
     }
@@ -140,41 +156,41 @@ AST_Node AST_Parser::parse_term(){
         return value;
     }
 
-    throw runtime_error( "Unexpected token: " + current_token() );
+    throw runtime_error( "Unexpected token: " + curTkn );
 }
 
 
-AST_Node AST_Parser::parse_expression(){
-    // Read tokens until an expression subtree is obtained
-    AST_Node left = parse_term();
-    AST_Node right;
-    string   op;
+// AST_Node AST_Parser::parse_expression(){
+//     // Read tokens until an expression subtree is obtained
+//     AST_Node left = parse_term();
+//     AST_Node right;
+//     string   op;
     
-    if( match("=") ){
-        right = parse_expression();
-        return make_ast_assignment( left, right );
-    }
+//     if( match("=") ){
+//         right = parse_expression();
+//         return make_ast_assignment( left, right );
+//     }
     
-    while( match("+") || current_token() == "-" || // WARNING: THIS DOES NOT RESPECT OPERATOR PRECEDENCE!
-            current_token() == "*" || current_token() == "/" || 
-            current_token() == "**" ){
-        op    = tokens[ currDex-1 ];
-        right = parse_term();
-        left  = make_ast_binary_op( op, left, right );
-    }
+//     while( match("+") || current_token() == "-" || // WARNING: THIS DOES NOT RESPECT OPERATOR PRECEDENCE!
+//             current_token() == "*" || current_token() == "/" || 
+//             current_token() == "**" ){
+//         op    = tokens[ currDex-1 ];
+//         right = parse_term();
+//         left  = make_ast_binary_op( op, left, right );
+//     }
     
-    if( match(";") ){  cout << endl << "<Statement End>" << endl;  }
+//     if( match(";") ){  cout << endl << "<Statement End>" << endl;  }
     
-    return left;
-}
+//     return left;
+// }
 
 
-AST_Node AST_Parser::parse(){
-    // Convert the collection of tokens to an Abstract Source Tree
-    AST_Node program = make_ast_program( "main" );
-    while( currDex < N ){  program.edges.push_back(  parse_expression()  );  }
-    return program;
-}
+// AST_Node AST_Parser::parse(){
+//     // Convert the collection of tokens to an Abstract Source Tree
+//     AST_Node program = make_ast_program( "main" );
+//     while( currDex < N ){  program.edges.push_back(  parse_expression()  );  }
+//     return program;
+// }
 
 
 
