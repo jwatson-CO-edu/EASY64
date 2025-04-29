@@ -42,7 +42,7 @@ using std::min;
 typedef unsigned long  ulong;
 typedef unsigned char  ubyte;
 typedef vector<string> vstr;
-typedef vector<vstr>   vvstr;
+typedef vector<vstr>   vvstr; 
 
 /// Defines ///
 #define INVALID    SIZE_MAX
@@ -246,7 +246,7 @@ enum TypeName{
 
 
 ////////// PRIMITIVE TYPES /////////////////////////////////////////////////////////////////////////
-typedef variant<double,long,char,bool> P_Val; // Primitive Values // WARNING: ASSUMPTION
+typedef variant<double,long,char,bool> P_Val; // Primitive Values // WARNING: ASSUMPTION 
 
 P_Val make_nan();
 bool p_nan( const P_Val& q );
@@ -389,19 +389,25 @@ vstr get_balanced_bracketed_tokens( const vstr& tokens );
 
 ////////// FILE LEXING /////////////////////////////////////////////////////////////////////////////
 
-struct TextPortions{ public:
-    // Separates text of a file into portions so that we can treat each differently
-    /// Sections ///
-    AST_Node header;
-    AST_Node type;
-    AST_Node cnst;
-    AST_Node var;
-    /// Modules ///
-    AST_Node func;
-    AST_Node proc;
-    /// Main ///
-    AST_Node prog;
-};
+// template <typename T>
+// struct Portions{ 
+//     // Separates text of a file into portions so that we can treat each differently
+//     /// Sections ///
+//     T header;
+//     T type;
+//     T cnst;
+//     T var;
+//     /// Modules ///
+//     T func;
+//     T proc;
+//     /// Main ///
+//     T prog;
+// };
+
+struct TextPortions{
+    Portions<vstr> tokens;
+}
+
 
 
 vstr read_file_to_lines( string path );
@@ -460,6 +466,8 @@ class AST_Parser{ public:
     string /*--*/ curTkn;
     size_t /*--*/ N;
 
+    void load_program_tokens( const vstr& tokens_ ); // Load tokenized program into the parser
+
     AST_Parser( const vstr& tokens_ ); // Load tokenized program into the parser
 
     bool advance(); // Move to next token string
@@ -468,7 +476,7 @@ class AST_Parser{ public:
 
     AST_Node parse_term(); // Parse one expression term as an AST node
     AST_Node parse_expression(); // Read tokens until an expression subtree is obtained
-    AST_Node parse(); // Convert the collection of tokens to an Abstract Source Tree
+    AST_Node parse( const string& name ); // Convert the collection of tokens to an Abstract Source Tree 
 };
 
 

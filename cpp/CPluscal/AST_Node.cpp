@@ -88,11 +88,17 @@ AST_Node make_ast_binary_op( const string& op, AST_Node left, AST_Node right ){
 
 ////////// PARSER //////////////////////////////////////////////////////////////////////////////////
 
+void AST_Parser::load_program_tokens( const vstr& tokens_ ){
+    // Load tokenized program into the parser
+    input.clear();
+    for( const string& token : tokens_ ){  input.push_back( token );  }
+    N = tokens_.size();
+}
+
 
 AST_Parser::AST_Parser( const vstr& tokens_ ){
     // Load tokenized program into the parser
-    for( const string& token : tokens_ ){  input.push_back( token );  }
-    N = tokens_.size();
+    load_program_tokens( tokens_ );
 }
 
 // Move to next token string
@@ -125,6 +131,8 @@ void AST_Parser::expect( const string& expected ){
 
 AST_Node AST_Parser::parse_term(){
     // Parse one expression term as an AST node
+    // NOTE: This function assumes that the token has been advanced to the term to be parsed
+
     AST_Node value;
     if( !curTkn.size() ){  throw runtime_error( "Unexpected end of input" );  }
     
@@ -160,37 +168,38 @@ AST_Node AST_Parser::parse_term(){
 }
 
 
-// AST_Node AST_Parser::parse_expression(){
-//     // Read tokens until an expression subtree is obtained
-//     AST_Node left = parse_term();
-//     AST_Node right;
-//     string   op;
+AST_Node AST_Parser::parse_expression(){
+    // Read tokens until an expression subtree is obtained
+    // NOTE: This function assumes that the token has been advanced to the beginning of the expression to be parsed
+
+    AST_Node left = parse_term();
+    AST_Node right;
+    string   op;
     
-//     if( match("=") ){
-//         right = parse_expression();
-//         return make_ast_assignment( left, right );
-//     }
+    if( match("=") ){
+        right = parse_expression();  advance();
+        return make_ast_assignment( left, right );
+    }
     
-//     while( match("+") || current_token() == "-" || // WARNING: THIS DOES NOT RESPECT OPERATOR PRECEDENCE!
-//             current_token() == "*" || current_token() == "/" || 
-//             current_token() == "**" ){
-//         op    = tokens[ currDex-1 ];
-//         right = parse_term();
-//         left  = make_ast_binary_op( op, left, right );
-//     }
+    while( match("+") || match("-") || // WARNING: THIS DOES NOT RESPECT OPERATOR PRECEDENCE!
+           match("*") || match("/") || match("**") ){
+        op    = curTkn; /*--*/ advance();
+        right = parse_term();  advance();
+        left  = make_ast_binary_op( op, left, right ); // WARNING: THIS MAKES A LISP-STYLE LIST!
+    }
     
-//     if( match(";") ){  cout << endl << "<Statement End>" << endl;  }
+    if( match(";") ){  cout << endl << "<Statement End>" << endl;  }
     
-//     return left;
-// }
+    return left;
+}
 
 
-// AST_Node AST_Parser::parse(){
-//     // Convert the collection of tokens to an Abstract Source Tree
-//     AST_Node program = make_ast_program( "main" );
-//     while( currDex < N ){  program.edges.push_back(  parse_expression()  );  }
-//     return program;
-// }
+AST_Node AST_Parser::parse( const string& name ){
+    // Convert the collection of tokens to an Abstract Source Tree
+    AST_Node program = make_ast_program( name );
+    while( input.size() ){  program.edges.push_back(  parse_expression()  );  }
+    return program;
+}
 
 
 
