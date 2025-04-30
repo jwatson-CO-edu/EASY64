@@ -96,6 +96,9 @@ void AST_Parser::load_program_tokens( const vstr& tokens_ ){
 }
 
 
+AST_Parser::AST_Parser(){}
+
+
 AST_Parser::AST_Parser( const vstr& tokens_ ){
     // Load tokenized program into the parser
     load_program_tokens( tokens_ );
@@ -203,4 +206,24 @@ AST_Node AST_Parser::parse( const string& name ){
 
 
 
+////////// PARSE SECTIONS //////////////////////////////////////////////////////////////////////////
 
+void parse_sections( TextPortions& progText ){
+    // Turn each section into trees
+    AST_Parser treeParser{};
+
+    treeParser.load_program_tokens( progText.tokens.header );
+    progText.trees.header = treeParser.parse( "header" );
+
+    // treeParser.load_program_tokens( progText.tokens.type );
+    // progText.trees.type = treeParser.parse( "types" );
+
+    // treeParser.load_program_tokens( progText.tokens.cnst );
+    // progText.trees.cnst = treeParser.parse( "constants" );
+
+    // treeParser.load_program_tokens( progText.tokens.var );
+    // progText.trees.var = treeParser.parse( "variables" );
+
+    // treeParser.load_program_tokens( progText.tokens.prog );
+    // progText.trees.prog = treeParser.parse( "main" );
+}

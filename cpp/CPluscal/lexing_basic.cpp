@@ -384,21 +384,21 @@ TextPortions segment_source_file( const vstr& totLines ){
                 }
             case OTHER:  
                 // 3. Handle section headers
-                rtnSctns.prog += line;  
+                vec_extend( rtnSctns.tokens.prog, tokenLine );  
                 break;  
             case TYPE:   
                 if( p_vec_has( tokenLine, string{"begin"} ) ){  mode = OTHER;  }else{
-                    rtnSctns.type += line;  
+                    vec_extend( rtnSctns.tokens.type, tokenLine );  
                 }
                 break;
             case CONST:  
                 if( p_vec_has( tokenLine, string{"begin"} ) ){  mode = OTHER;  }else{
-                    rtnSctns.cnst += line;          
+                    vec_extend( rtnSctns.tokens.cnst, tokenLine );
                 }
                 break;
             case VAR:    
                 if( p_vec_has( tokenLine, string{"begin"} ) ){  mode = OTHER;  }else{
-                    rtnSctns.var  += line;          
+                    vec_extend( rtnSctns.tokens.var, tokenLine );
                 }
                 break;
             case COMMENT: 

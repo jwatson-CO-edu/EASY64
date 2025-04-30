@@ -471,6 +471,7 @@ class AST_Parser{ public:
 
     void load_program_tokens( const vstr& tokens_ ); // Load tokenized program into the parser
 
+    AST_Parser(); // Empty constructor
     AST_Parser( const vstr& tokens_ ); // Load tokenized program into the parser
 
     bool advance(); // Move to next token string
@@ -538,14 +539,14 @@ class Context{ public:
     bool  p_math_expr( const vstr& expr );
 };
 
-///// Type Definition Part /////
-void define_types( Context& context, const string& defText );
+// ///// Type Definition Part /////
+// void define_types( Context& context, const string& defText );
 
-///// Constant Definition Part /////
-void define_constants( Context& context, string defText );
+// ///// Constant Definition Part /////
+// void define_constants( Context& context, string defText );
 
-///// Variable Definition Part /////
-void define_variables( Context& context, string defText );
+// ///// Variable Definition Part /////
+// void define_variables( Context& context, string defText );
 
 
 
@@ -564,8 +565,6 @@ class PascalInterpreter{ public:
 
     void set_IO( bool in, bool out );
     void init_file( const string& sourcePath );
-
-    
 };
 
 

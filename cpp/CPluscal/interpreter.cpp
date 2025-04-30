@@ -117,14 +117,6 @@ bool Context::p_math_expr( const vstr& expr ){
 
 
 
-
-
-
-
-
-
-
-
 ////////// BUILT-IN FUNCTIONS //////////////////////////////////////////////////////////////////////
 
 Array string_2_char_array( const string& str ){
