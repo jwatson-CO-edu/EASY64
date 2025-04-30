@@ -18,7 +18,7 @@ using std::noskipws, std::skipws, std::cout, std::endl, std::flush, std::ostream
 
 /// Aliases ///
 typedef unsigned long  ulong;
-typedef vector<string> vstr;
+// typedef vector<string> vstr;
 
 
 

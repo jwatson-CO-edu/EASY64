@@ -35,8 +35,8 @@ using std::nan, std::isnan;
 /// Aliases ///
 typedef unsigned long  ulong;
 typedef unsigned char  ubyte;
-typedef vector<string> vstr;
-typedef vector<vstr>   vvstr;
+// typedef vector<string> vstr;
+// typedef vector<vstr>   vvstr;
 
 /// Defines ///
 #define INVALID   SIZE_MAX;

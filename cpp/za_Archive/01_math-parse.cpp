@@ -20,7 +20,7 @@ using std::variant, std::get;
 
 /// Aliases ///
 typedef unsigned long /*--------*/ ulong;
-typedef vector<string> /*-------*/ vstr;
+// typedef vector<string> /*-------*/ vstr;
 typedef variant<double,long,ulong> N64;
 
 /// Forward Declarations ///

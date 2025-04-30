@@ -19,7 +19,7 @@ using std::string;
 #include <map>
 using std::map, std::pair;
 #include <variant>
-using std::variant, std::get, std::holds_alternative, std::is_same_v;
+using std::variant, std::get, std::holds_alternative;
 #include <type_traits>
 using std::visit;
 #include <memory>
@@ -37,6 +37,7 @@ using std::stringstream, std::getline;
 using std::nan, std::isnan, std::pow;
 #include <algorithm>
 using std::min;
+using std::is_same_v;
 
 /// Aliases ///
 typedef unsigned long  ulong;
@@ -389,24 +390,26 @@ vstr get_balanced_bracketed_tokens( const vstr& tokens );
 
 ////////// FILE LEXING /////////////////////////////////////////////////////////////////////////////
 
-// template <typename T>
-// struct Portions{ 
-//     // Separates text of a file into portions so that we can treat each differently
-//     /// Sections ///
-//     T header;
-//     T type;
-//     T cnst;
-//     T var;
-//     /// Modules ///
-//     T func;
-//     T proc;
-//     /// Main ///
-//     T prog;
-// };
+template <typename T>
+struct Portions{ 
+    // Separates text of a file into portions so that we can treat each differently
+    /// Sections ///
+    T header;
+    T type;
+    T cnst;
+    T var;
+    /// Modules ///
+    T func;
+    T proc;
+    /// Main ///
+    T prog;
+};
 
 struct TextPortions{
-    Portions<vstr> tokens;
-}
+    // Giant basket of code
+    Portions<vstr>     tokens;
+    Portions<AST_Node> trees;
+};
 
 
 

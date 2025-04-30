@@ -378,10 +378,7 @@ TextPortions segment_source_file( const vstr& totLines ){
             case BEGIN:  
                 // 4. Handle header
                 if( p_program_header( tokenLine ).size() == 3 ){  
-                    rtnSctns.header = tokenLine;
-                    
-                    
-                    = trimLine;  
+                    rtnSctns.tokens.header = tokenLine;
                     mode /*------*/ = OTHER;
                     continue;
                 }
