@@ -23,7 +23,7 @@ AST_Node make_ast_type_def(){
 }
 
 
-AST_Node make_ast_const_def( const string& name ){
+AST_Node make_ast_const_def(){
     // Identifier Node, to be evaluated later
     AST_Node rtnNode{};
     rtnNode.type = CONSTANT_DEF;
@@ -31,7 +31,7 @@ AST_Node make_ast_const_def( const string& name ){
 }
 
 
-AST_Node make_ast_var_def( const string& name ){
+AST_Node make_ast_var_def(){
     // Identifier Node, to be evaluated later
     AST_Node rtnNode{};
     rtnNode.type = VARIABLE_DEF;
@@ -104,8 +104,9 @@ AST_Parser::AST_Parser( const vstr& tokens_ ){
     load_program_tokens( tokens_ );
 }
 
-// Move to next token string
+
 bool AST_Parser::advance(){    
+    // Move to next token string
     if( input.size() ){
         curTkn = input.front();
         input.pop_front();
@@ -135,8 +136,8 @@ void AST_Parser::expect( const string& expected ){
 AST_Node AST_Parser::parse_term(){
     // Parse one expression term as an AST node
     // NOTE: This function assumes that the token has been advanced to the term to be parsed
+    AST_Node value{};
 
-    AST_Node value;
     if( !curTkn.size() ){  throw runtime_error( "Unexpected end of input" );  }
     
     // Handle numbers
@@ -176,7 +177,7 @@ AST_Node AST_Parser::parse_expression(){
     // NOTE: This function assumes that the token has been advanced to the beginning of the expression to be parsed
 
     AST_Node left = parse_term();
-    AST_Node right;
+    AST_Node right{};
     string   op;
     
     if( match("=") ){
@@ -208,12 +209,13 @@ AST_Node AST_Parser::parse( const string& name ){
 
 ////////// PARSE SECTIONS //////////////////////////////////////////////////////////////////////////
 
-void parse_sections( TextPortions& progText ){
+TextPortions<AST_Node> parse_sections( TextPortions<vstr>& tokens ){
     // Turn each section into trees
-    AST_Parser treeParser{};
+    AST_Parser /*-------*/ treeParser{};
+    TextPortions<AST_Node> trees{};
 
-    treeParser.load_program_tokens( progText.tokens.header );
-    progText.trees.header = treeParser.parse( "header" );
+    treeParser.load_program_tokens( tokens.header );
+    trees.header = treeParser.parse( "header" );
 
     // treeParser.load_program_tokens( progText.tokens.type );
     // progText.trees.type = treeParser.parse( "types" );
@@ -226,4 +228,14 @@ void parse_sections( TextPortions& progText ){
 
     // treeParser.load_program_tokens( progText.tokens.prog );
     // progText.trees.prog = treeParser.parse( "main" );
+
+    return trees;
+}
+
+
+
+////////// DEBUGGING ///////////////////////////////////////////////////////////////////////////////
+
+void draw_AST( const AST_Node& node, size_t depth = 0 ){
+    deque<AST_Node> q;
 }

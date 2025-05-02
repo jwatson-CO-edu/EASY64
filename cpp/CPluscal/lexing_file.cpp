@@ -57,20 +57,21 @@ vstr p_program_header( const vstr& line ){
 }
 
 
-TextPortions segment_source_file( const vstr& totLines ){
+TextPortions<vstr> segment_source_file( const vstr& totLines ){
     // Load sections of the program into the struct so that we can lex/interpret them
     enum Section{ BEGIN, TYPE, CONST, VAR, COMMENT, STRING, OTHER };
-    /**/ string /*--*/ trimLine;
-    /**/ vstr /*----*/ tokenLine;
-    /**/ string /*--*/ line;
-    /**/ Section /*-*/ mode     = BEGIN;
-    /**/ Section /*-*/ lastMode = BEGIN;
-    /**/ size_t /*--*/ cmmntBgn = string::npos;
-    /**/ size_t /*--*/ cmmntEnd = string::npos;
-    /**/ size_t /*--*/ N /*--*/ = totLines.size();
-    /**/ size_t /*--*/ i /*--*/ = 0;
-    /**/ deque<string> qLines;
-    /**/ TextPortions  rtnSctns;
+
+    string /*-------*/ trimLine;
+    vstr /*---------*/ tokenLine;
+    string /*-------*/ line;
+    Section /*------*/ mode     = BEGIN;
+    Section /*------*/ lastMode = BEGIN;
+    size_t /*-------*/ cmmntBgn = string::npos;
+    size_t /*-------*/ cmmntEnd = string::npos;
+    size_t /*-------*/ N /*--*/ = totLines.size();
+    size_t /*-------*/ i /*--*/ = 0;
+    deque<string> /**/ qLines;
+    TextPortions<vstr> rtnSctns;
 
     auto check_section_switch = [&]{  
         if( p_section_header( trimLine ) ){ // WARNING, ASSUMPTION: SECTION HEADINGS OCCUPY THEIR OWN LINE
@@ -133,27 +134,27 @@ TextPortions segment_source_file( const vstr& totLines ){
             case BEGIN:  
                 // 4. Handle header
                 if( p_program_header( tokenLine ).size() == 3 ){  
-                    rtnSctns.tokens.header = tokenLine;
+                    rtnSctns.header = tokenLine;
                     mode /*------*/ = OTHER;
                     continue;
                 }
             case OTHER:  
                 // 3. Handle section headers
-                vec_extend( rtnSctns.tokens.prog, tokenLine );  
+                vec_extend( rtnSctns.prog, tokenLine );  
                 break;  
             case TYPE:   
                 if( p_vec_has( tokenLine, string{"begin"} ) ){  mode = OTHER;  }else{
-                    vec_extend( rtnSctns.tokens.type, tokenLine );  
+                    vec_extend( rtnSctns.type, tokenLine );  
                 }
                 break;
             case CONST:  
                 if( p_vec_has( tokenLine, string{"begin"} ) ){  mode = OTHER;  }else{
-                    vec_extend( rtnSctns.tokens.cnst, tokenLine );
+                    vec_extend( rtnSctns.cnst, tokenLine );
                 }
                 break;
             case VAR:    
                 if( p_vec_has( tokenLine, string{"begin"} ) ){  mode = OTHER;  }else{
-                    vec_extend( rtnSctns.tokens.var, tokenLine );
+                    vec_extend( rtnSctns.var, tokenLine );
                 }
                 break;
             case COMMENT: 

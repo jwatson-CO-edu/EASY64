@@ -365,6 +365,68 @@ class P_File{ public:
 
 
 
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////// lexing_basic.cpp ////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+bool p_special( const string& q ); // Return True if `q` matches a symbol, otherwise return False
+bool p_reserved( const string& q ); // Return True if `q` matches a symbol, otherwise return False
+bool p_prim_type( const string& q ); // Return True if `q` matches a primtive type name, otherwise return False
+bool p_infix_op( const string& q );
+// Return True for strings that are: 1. Not symbols, 2. Begin with a letter, 3. Are composed of alphanumeric chars
+bool p_identifier( const string& q );
+    
+    
+bool  p_number_string( const string& q );
+P_Val str_2_number( const string& q );
+
+vvstr  segment_statements( const vstr& tokens_ );
+vvstr  text_block_to_tokenized_statements( const string& textBlock );
+string concat( const vstr& parts, char sepChar = 0 );
+
+bool p_has_balanced_parenthetical( const vstr& tokens );
+bool p_has_balanced_bracketed( const vstr& tokens );
+vstr get_balanced_parenthetical_tokens( const vstr& tokens );
+vstr get_balanced_bracketed_tokens( const vstr& tokens );
+
+string strip( const string& inputStr );
+// Return a vector of tokenized strings that a separated by whitespace within `expStr`
+vstr   tokenize( const string& totStr, char sepChr = ' ' ); 
+size_t q_line_begins_comment( const string& q ); // Does the stripped line begin a comment? 
+bool   p_str_has( const string& str, const string& q );
+size_t q_line_ends_comment( const string& q ); // Does the stripped line end a comment?
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////// lexing_file.cpp /////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+////////// FILE LEXING /////////////////////////////////////////////////////////////////////////////
+
+template <typename T>
+struct TextPortions{ 
+    // Separates text of a file into portions so that we can treat each differently
+    /// Sections ///
+    T header;
+    T type;
+    T cnst;
+    T var;
+    /// Modules ///
+    T func;
+    T proc;
+    /// Main ///
+    T prog;
+};
+
+
+vstr read_file_to_lines( string path );
+TextPortions<vstr> segment_source_file( const vstr& totLines );
+
+
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////// AST_Node.cpp ////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -374,6 +436,7 @@ class P_File{ public:
 
 enum NodeType{
     // Types of syntax nodes
+    EMPTY,
     PROGRAM, 
     TYPE_DEF, 
     CONSTANT_DEF, 
@@ -394,13 +457,22 @@ struct AST_Node{
     vstr /*-------*/ tokens;
     vector<AST_Node> edges;
     P_Val /*------*/ value;
+    size_t /*-----*/ depth;
+    bool /*-------*/ visited;
+
+    AST_Node(){
+        type    = EMPTY;
+        value   = make_nan();
+        depth   = 0;
+        visited = false;
+    }
 };
 
 
 AST_Node make_ast_program( const string& name ); // Identifier Node, to be evaluated later
-AST_Node make_ast_type_def( const string& name ); // Identifier Node, to be evaluated later
-AST_Node make_ast_const_def( const string& name ); // Identifier Node, to be evaluated later
-AST_Node make_ast_var_def( const string& name ); // Identifier Node, to be evaluated later
+AST_Node make_ast_type_def(); // Identifier Node, to be evaluated later
+AST_Node make_ast_const_def(); // Identifier Node, to be evaluated later
+AST_Node make_ast_var_def(); // Identifier Node, to be evaluated later
 AST_Node make_ast_type_name( const string& name ); // Identifier Node, to be evaluated later
 AST_Node make_ast_identifier( const string& name ); // Identifier Node, to be evaluated later
 AST_Node make_ast_number_literal( const string& literalStr ); // Number Literal Node, to be evaluated later
@@ -432,72 +504,7 @@ class AST_Parser{ public:
 };
 
 
-void parse_sections( TextPortions& progText ); // Turn each section into trees
-
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-////////// lexing_basic.cpp ////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////
-bool p_special( const string& q ); // Return True if `q` matches a symbol, otherwise return False
-bool p_reserved( const string& q ); // Return True if `q` matches a symbol, otherwise return False
-bool p_prim_type( const string& q ); // Return True if `q` matches a primtive type name, otherwise return False
-bool p_infix_op( const string& q );
-// Return True for strings that are: 1. Not symbols, 2. Begin with a letter, 3. Are composed of alphanumeric chars
-bool p_identifier( const string& q );
-    
-    
-bool p_number_string( const string& q );
-P_Val str_2_number( const string& q );
-
-vvstr segment_statements( const vstr& tokens_ );
-vvstr text_block_to_tokenized_statements( const string& textBlock );
-string concat( const vstr& parts, char sepChar = 0 );
-
-bool p_has_balanced_parenthetical( const vstr& tokens );
-bool p_has_balanced_bracketed( const vstr& tokens );
-vstr get_balanced_parenthetical_tokens( const vstr& tokens );
-vstr get_balanced_bracketed_tokens( const vstr& tokens );
-
-string strip( const string& inputStr );
-// Return a vector of tokenized strings that a separated by whitespace within `expStr`
-vstr tokenize( const string& totStr, char sepChr = ' ' ); 
-size_t q_line_begins_comment( const string& q ); // Does the stripped line begin a comment? 
-bool p_str_has( const string& str, const string& q );
-size_t q_line_ends_comment( const string& q ); // Does the stripped line end a comment?
-
-
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-////////// lexing_file.cpp /////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-////////// FILE LEXING /////////////////////////////////////////////////////////////////////////////
-
-template <typename T>
-struct Portions{ 
-    // Separates text of a file into portions so that we can treat each differently
-    /// Sections ///
-    T header;
-    T type;
-    T cnst;
-    T var;
-    /// Modules ///
-    T func;
-    T proc;
-    /// Main ///
-    T prog;
-};
-
-
-struct TextPortions{
-    // Giant basket of code
-    Portions<vstr>     tokens;
-    Portions<AST_Node> trees;
-};
-
-
-vstr read_file_to_lines( string path );
-TextPortions segment_source_file( const vstr& totLines );
+TextPortions<AST_Node> parse_sections( TextPortions<vstr>& tokens ); // Turn each section into trees
 
 
 
@@ -537,7 +544,7 @@ class ValStore{ public:
     // If the `token` is a variable or a literal, then return its value, Otherwise return NaN
     P_Val get_var_or_literal( const string& token ); 
     // Return the primitive name associated with the alias, otherwise return an empty string
-    string resolve_prim_alias( const string& name );
+    string   resolve_prim_alias( const string& name );
     TypeName where_name( const string& name ); // Identify what kind of thing the identifier identifies
 };
 
@@ -570,10 +577,10 @@ class Context{ public:
 
 class PascalInterpreter{ public:
     // The actual interpreter
-    string /*----*/ progName;
-    bool /*------*/ enableInput;
-    bool /*------*/ enableOutput;
-    Context /*---*/ context;
+    string  progName;
+    bool    enableInput;
+    bool    enableOutput;
+    Context context;
     
 
     PascalInterpreter();
