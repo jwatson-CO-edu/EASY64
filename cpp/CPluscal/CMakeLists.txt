@@ -26,6 +26,7 @@ cmake_print_variables( PROJECT_SOURCE_DIR )
 add_library( CPC_LIB
              types_builtin.cpp 
              lexing_basic.cpp 
+             lexing_file.cpp 
              AST_Node.cpp 
              interpreter.cpp )
 
