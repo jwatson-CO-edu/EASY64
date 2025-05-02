@@ -4,7 +4,7 @@ typedef vector<char>    vchar;
 typedef vector<vchar>   vvchar;
 typedef array<size_t,2> vec2i;
 typedef array<double,2> vec2d;
-
+typedef array<vec2i,2>  m2x2i;
 
 
 ////////// CANVAS //////////////////////////////////////////////////////////////////////////////////
@@ -50,11 +50,11 @@ class TerminalCanvas{ public:
     void draw(){  cout << endl << as_string() << endl;  } // Render canvas
 
 
-    void line( const vec2i& bgn, const vec2i& end ){
+    m2x2i line( const vec2i& bgn, const vec2i& end ){
         // FIXME, START HERE: DRAW A LINE
     }
 
-    void text_box( const vvstr& contents, const vec2i& upperLeft ){
+    m2x2i text_box( const vvstr& contents, const vec2i& upperLeft ){
         // PLEASE STOP
     }
 };
