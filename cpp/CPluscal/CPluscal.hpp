@@ -15,7 +15,7 @@ using std::set;
 #include <stack>
 using std::stack;
 #include <string>
-using std::string;
+using std::string, std::to_string;
 #include <map>
 using std::map, std::pair;
 #include <variant>
@@ -38,6 +38,7 @@ using std::nan, std::isnan, std::pow;
 #include <algorithm>
 using std::min, std::max;
 using std::is_same_v;
+#include <random>
 
 /// Aliases ///
 typedef unsigned long  ulong;
@@ -176,6 +177,44 @@ vector<T> vec_remove( const vector<T>& vec, T remElem ){
     vector<T> rtnVec;
     for( const T& item : vec ){  if( item != remElem ){  rtnVec.push_back( item );  }  }
     return rtnVec;
+}
+
+
+////////// HELPER UTILS ////////////////////////////////////////////////////////////////////////////
+
+namespace uuid{
+    // Author: happy_sisyphus, https://stackoverflow.com/a/60198074
+    static std::random_device              rd;
+    static std::mt19937                    gen(rd());
+    static std::uniform_int_distribution<> dis(0, 15);
+    static std::uniform_int_distribution<> dis2(8, 11);
+
+    std::string generate_uuid_v4() {
+        std::stringstream ss;
+        int i;
+        ss << std::hex;
+        for (i = 0; i < 8; i++) {
+            ss << dis(gen);
+        }
+        ss << "-";
+        for (i = 0; i < 4; i++) {
+            ss << dis(gen);
+        }
+        ss << "-4";
+        for (i = 0; i < 3; i++) {
+            ss << dis(gen);
+        }
+        ss << "-";
+        ss << dis2(gen);
+        for (i = 0; i < 3; i++) {
+            ss << dis(gen);
+        }
+        ss << "-";
+        for (i = 0; i < 12; i++) {
+            ss << dis(gen);
+        };
+        return ss.str();
+    }
 }
 
 
