@@ -35,7 +35,7 @@ class JSON{ public:
 
     void unset(){  leaf = false;  value = uuid::generate_uuid_v4();  }
 
-    void add_child( const string& key, const JSON& val ){  unset();  dict[ key ] = val;  } // Nest some data
+    void add_child( const string& key, const JSON& val ){  if( leaf ) unset();  dict[ key ] = val;  } // Nest some data
 
     string as_string( size_t depth = 0 ) const {
         // Return a `string` representation
