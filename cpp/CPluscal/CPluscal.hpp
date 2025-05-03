@@ -36,11 +36,12 @@ using std::stringstream, std::getline;
 #include <cmath>
 using std::nan, std::isnan, std::pow;
 #include <algorithm>
-using std::min;
+using std::min, std::max;
 using std::is_same_v;
 
 /// Aliases ///
 typedef unsigned long  ulong;
+typedef long long /**/ llong;
 typedef unsigned char  ubyte;
 typedef vector<string> vstr;
 typedef vector<vstr>   vvstr; 
