@@ -15,11 +15,11 @@ class JSON{ public:
 
     /// Constructors ///
     JSON(){  indent = 2;  }
-    JSON( bool   val ){  set( val );  indent = 2;  }
-    JSON( double val ){  set( val );  indent = 2;  }
-    JSON( llong  val ){  set( val );  indent = 2;  }
-    JSON( size_t val ){  set( val );  indent = 2;  }
-    JSON( string val ){  set( val );  indent = 2;  }
+    JSON( bool   val ) : JSON() {  set( val );  }
+    JSON( double val ) : JSON() {  set( val );  }
+    JSON( llong  val ) : JSON() {  set( val );  }
+    JSON( size_t val ) : JSON() {  set( val );  }
+    JSON( string val ) : JSON() {  set( val );  }
 
     /// Setters ///
     void set( bool   val ){  leaf = true;  value = (val ? "true" : "false");  }
