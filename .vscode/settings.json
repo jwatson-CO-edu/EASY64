@@ -87,7 +87,8 @@
         "locale": "cpp",
         "span": "cpp",
         "__bit_reference": "cpp",
-        "__string": "cpp"
+        "__string": "cpp",
+        "climits": "cpp"
     },
     "makefile.configureOnOpen": false
 }
