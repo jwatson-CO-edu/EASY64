@@ -10,6 +10,8 @@ using std::string;
 using std::array;
 #include <vector>
 using std::vector;
+#include <deque>
+using std::deque;
 
 
 /// Aliases ///
@@ -77,6 +79,10 @@ bool p_letter( const char& q ); // ---- Return True if `q` matches a letter, oth
 bool p_digit( const char& q ); // ----- Return True if `q` matches a digit, otherwise return False
 // Return True for strings that are: 1. Not symbols, 2. Begin with a letter, 3. Are composed of alphanumeric chars
 bool p_identifier( const string& q ); 
+// Handle the case when reserved symbols are substrings of each other (2 tokens only!)
+vstr attempt_reserved_symbol_merge( const vstr& tokens ); 
+// Return a vector of tokenized strings that a separated by whitespace within `expStr`
+vstr tokenize( const string& totStr, char sepChr );
 
 
 ////////// LEXER ///////////////////////////////////////////////////////////////////////////////////

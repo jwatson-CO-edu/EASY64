@@ -63,3 +63,80 @@ bool p_identifier( const string& q ){
     }
     return true;
 }
+
+vstr attempt_reserved_symbol_merge( const vstr& tokens ){
+    // Handle the case when reserved symbols are substrings of each other (2 tokens only!)
+    vstr /*----*/ rtnTokens;
+    deque<string> accumQue;
+    string /*--*/ accumStr = "";
+    string /*--*/ validStr = "";
+
+    for( const string& token : tokens ){
+        // while( accumQue.size() > 1 ){  accumQue.pop_front();  }
+        accumQue.push_back( token );
+        // cout << '\t' << accumQue;
+        if( accumQue.size() >= 2 ){  
+            accumStr = accumQue[0] + accumQue[1];  
+            if( p_special( accumStr ) ){
+                rtnTokens.push_back( accumStr );
+                accumQue.clear();
+            }else{
+                rtnTokens.push_back( accumQue[0] );
+                accumQue.pop_front();
+            }
+        }
+        // cout << " : " << rtnTokens << endl;
+    }
+    while( accumQue.size() ){  
+        rtnTokens.push_back( accumQue[0] );
+        accumQue.pop_front();  
+    }
+    return rtnTokens;
+}
+
+
+vstr tokenize( const string& totStr, char sepChr ){
+    // Return a vector of tokenized strings that a separated by whitespace within `expStr`
+    vstr   tokens;
+    char   c;
+    string cStr;
+    string token  = "";
+    bool   sepWs  = (sepChr == ' ');
+    string expStr = totStr + sepChr; // Apply the postfix hack
+    bool   strAccum = false;
+    string strToken = "";
+
+    // Helpers //
+    auto stow_token = [&]{  tokens.push_back( token );  token = "";  };
+    auto stow_char  = [&]{  tokens.push_back( string(1,c) );  };
+    auto cache_char = [&]{  token.push_back( c );  };
+
+    // 1. For every character in the string
+    for( char ch_i : expStr ){
+        // 2. Fetch character
+        c    = ch_i;
+        cStr = string(1,c);
+        // 3. Either add char to present token or create a new one
+        // A. Case String Begin/End
+        if( cStr == "'" ){
+            strToken += '\'';
+            if( strAccum ){
+                tokens.push_back( strToken );
+                strToken = "";
+            }
+            strAccum = !strAccum;
+
+        // B. Case Reserved
+        }else if( p_symbol( cStr ) ){  
+            // cout << "Reserved Token: " << find_reserved_token( cStr ) << endl;
+            if( token.size() > 0 ){  stow_token();  }
+            stow_char();  
+        // C. Case separator
+        }else if( (c == sepChr) || (sepWs && isspace(c)) ){
+            if(token.size() > 0){  stow_token();  }
+        // D. Case any other char
+        }else{  cache_char();  } 
+    }
+    // N. Return the vector of tokens
+    return attempt_reserved_symbol_merge( tokens );
+}
