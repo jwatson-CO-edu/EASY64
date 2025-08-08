@@ -1,8 +1,11 @@
+////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 #include "include/CPluscal.hpp"
 
 
 
 ////////// STRING PROCESSING ///////////////////////////////////////////////////////////////////////
+
+size_t vstr_find_index( const vstr& vec, const string& q ){  return vec_find_index( vec, string{q} );  }
 
 std::ostream& operator<<( std::ostream& os , vvstr arr ){ 
     // Print string vector vector
@@ -186,8 +189,11 @@ vstr read_file_to_lines( string path ){
 
 ////////// LEXER ///////////////////////////////////////////////////////////////////////////////////
 
+LexMachine::LexMachine(){}
+
 LexMachine::LexMachine( string fPath ){
     progPath = fPath;
     lines    = read_file_to_lines( progPath );
     for( const string& line : lines ){  lineTokens.push_back( tokenize( line ) );  }
+    cout << lineTokens << endl;
 }

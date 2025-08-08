@@ -12,6 +12,8 @@ using std::array;
 using std::vector;
 #include <deque>
 using std::deque;
+#include <list>
+using std::list;
 #include <fstream>
 using std::ifstream;
 #include <sstream>
@@ -20,6 +22,8 @@ using std::stringstream, std::getline;
 using std::cout, std::endl, std::flush, std::cerr, std::ostream;
 #include <stdexcept>
 using std::runtime_error;
+#include <memory>
+using std::shared_ptr;
 
 
 /// Aliases ///
@@ -75,11 +79,38 @@ const array<string,2> NL_INDICATORS = { "\r\n", "\n" };
 const string TKN_NEWLINE = "<nl>";
 
 
+////////// CONTAINERS //////////////////////////////////////////////////////////////////////////////
+
+template<typename T>
+size_t vec_find_index( const vector<T>& vec, const T q ){
+    // Return the index of an element, if it can be found
+    typename vector<T>::const_iterator it = std::find( vec.begin(), vec.end(), q );
+    // Check if the element was found
+    if( it != vec.end() ){
+        return std::distance( vec.begin(), it ); // Calculate the index
+    }else{
+        return SIZE_MAX;
+    }
+}
+
+
+template<typename T>
+vector<T> get_sub_vec( const vector<T>& vec, size_t bgn, size_t end ){
+    vector<T> rtnVec;
+    if( (bgn < end) && (end < vec.size()) || (bgn < vec.size()) ){  
+        rtnVec = vector<T>{ vec.begin()+bgn, vec.begin()+end };
+    }
+    return rtnVec;
+}
+
+
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////// lexer.cpp ///////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ////////// STRING PROCESSING ///////////////////////////////////////////////////////////////////////
+size_t vstr_find_index( const vstr& vec, const string& q );
 std::ostream& operator<<( std::ostream& os , vvstr arr ); // Print string vector vector
 bool p_special( const string& q ); // ---------------------- Return True if `q` matches a symbol, otherwise return False
 bool p_infix_op( const string& q ); // --------------------- Return True if `q` matches an infix arithmetic operator, otherwise return False
@@ -107,7 +138,63 @@ class LexMachine{ public:
     vstr   lines;
     vvstr  lineTokens;
 
+    LexMachine();
     LexMachine( string fPath );
 };
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////// interpreter.cpp /////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+////////// SOURCE TREE /////////////////////////////////////////////////////////////////////////////
+
+enum NodeType{
+    INVALID, 
+    PROGRAM, 
+    VAR_DECL, 
+    ASSIGNMENT, 
+    BINARY_OP, 
+    NUMBER, 
+    IDENTIFIER,
+    COMPOUND, 
+    IF_STMT, 
+    WHILE_STMT, 
+    COMPARISON
+};
+
+class ProgNode;
+typedef shared_ptr<ProgNode> NodePtr;
+
+class ProgNode{ public:
+    NodeType /**/ type = INVALID;
+    vstr /*----*/ tokens;
+    list<NodePtr> edges;
+
+    ProgNode( NodeType typ, vstr tkns );
+};
+
+
+////////// INTERPRETER /////////////////////////////////////////////////////////////////////////////
+
+class Context;
+typedef shared_ptr<Context> CntxPtr;
+
+class Context{ public:
+    CntxPtr parent = nullptr;
+};
+
+
+class CPC_Interpreter{ public:
+    LexMachine    lexer;
+    list<NodePtr> program;
+    Context /*-*/ context;
+
+    bool load_program_file( string fPath );
+    bool build_source_tree();
+};
+
+
 
 #endif
