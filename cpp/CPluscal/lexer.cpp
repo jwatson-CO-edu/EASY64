@@ -4,6 +4,20 @@
 
 ////////// STRING PROCESSING ///////////////////////////////////////////////////////////////////////
 
+std::ostream& operator<<( std::ostream& os , vvstr arr ){ 
+    // Print string vector vector
+	os << "[\n";
+    for( const vstr& row : arr ){
+        os << "\t[\n";
+        for( const string& str : row ){
+            os << "\t\t" << str << ",\n";
+        }
+        os << "\t]\n";
+    }
+    os << "]";
+	return os;
+}
+
 bool p_special( const string& q ){
     // Return True if `q` matches a symbol, otherwise return False
     for( const string& sym : SYMBOLS ){  if( q == sym ){  return true;  }  }
@@ -139,4 +153,41 @@ vstr tokenize( const string& totStr, char sepChr ){
     }
     // N. Return the vector of tokens
     return attempt_reserved_symbol_merge( tokens );
+}
+
+
+
+////////// FILE OPERATIONS /////////////////////////////////////////////////////////////////////////
+
+vstr read_file_to_lines( string path ){
+    // Read plain text to a vector of strings, separated by newlines
+    ifstream     inputFile;
+    stringstream buffer;
+    string /*-*/ errStr = "Could not open ";
+    string /*-*/ line, addLine;
+    vstr /*---*/ totLines;
+    inputFile.open( path );
+    if( !inputFile.is_open() ){
+        cerr << "Error opening " << path << "!" << endl;
+        errStr += path;
+        inputFile.close();
+        throw runtime_error( errStr ); // Exit with an error code
+    }else{
+        buffer << inputFile.rdbuf(); // https://stackoverflow.com/a/2602258
+        while( getline( buffer, line, '\n' ) ){ // https://stackoverflow.com/a/13172579
+            addLine = line + '\n';
+            totLines.push_back( addLine );
+        }
+        inputFile.close();
+    }
+    return totLines;
+}
+
+
+////////// LEXER ///////////////////////////////////////////////////////////////////////////////////
+
+LexMachine::LexMachine( string fPath ){
+    progPath = fPath;
+    lines    = read_file_to_lines( progPath );
+    for( const string& line : lines ){  lineTokens.push_back( tokenize( line ) );  }
 }
