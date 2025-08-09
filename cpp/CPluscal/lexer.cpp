@@ -204,5 +204,5 @@ LexMachine::LexMachine( string fPath ){
         tknLin = tokenize( line );
         if( tknLin.size() ){  lineTokens.push_back( tknLin );  }
     }
-    cout << lineTokens << endl;
+    // cout << lineTokens << endl;
 }

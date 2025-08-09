@@ -3,7 +3,7 @@
 
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 
-/// Imports ///
+///// Imports /////////////////////////////////////////////////////////////
 #include <string>
 using std::string;
 #include <array>
@@ -14,6 +14,8 @@ using std::vector;
 using std::deque;
 #include <list>
 using std::list;
+#include <map>
+using std::map;
 #include <fstream>
 using std::ifstream;
 #include <sstream>
@@ -26,13 +28,15 @@ using std::runtime_error;
 using std::shared_ptr;
 #include <filesystem>
 using std::filesystem::exists;
+#include <variant>
+using std::variant, std::get, std::holds_alternative;
 
-/// Aliases ///
-typedef unsigned long  ulong;
-typedef long long /**/ llong;
-typedef unsigned char  ubyte;
-typedef vector<string> vstr;
-typedef vector<vstr>   vvstr; 
+///// Aliases /////////////////////////////////////////////////////////////
+typedef unsigned long long ulong;
+typedef long long /*----*/ llong;
+typedef unsigned char /**/ ubyte;
+typedef vector<string>     vstr;
+typedef vector<vstr> /*-*/ vvstr; 
 
 
 
@@ -78,6 +82,12 @@ const array<string,2> NL_INDICATORS = { "\r\n", "\n" };
 
 ///// Internal Tokens /////////////////////////////////////////////////////
 const string TKN_NEWLINE = "<nl>";
+
+
+
+////////// PRIMITIVE TYPES /////////////////////////////////////////////////////////////////////////
+typedef variant<double,llong,char,bool> P_Val; // Primitive Values // WARNING: ASSUMPTION 
+
 
 
 ////////// CONTAINERS //////////////////////////////////////////////////////////////////////////////

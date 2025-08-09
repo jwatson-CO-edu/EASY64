@@ -90,17 +90,20 @@ bool CPC_Interpreter::build_source_tree(){
     bool readConst   = false;
     // For every line of tokens, do ...
     for( const vstr& tknLin : lexer.lineTokens ){
+        cout << "Line: " << tknLin << endl;
 
         ///// Comment Continue / End /////////////
         if( openComment ){
             // ASSUMPTION: COMMENT ENDS AT THE END OF THE LINE
             if( tknLin.back() == "}" ){  openComment = false;  }
+            cout << "\tComment End!" << endl;
             continue;
 
         ///// Program Start //////////////////////
         // ASSUMPTION: PROGRAM DECLARATION IS ON ITS OWN LINE
         }else if( p_vstr_has_str( tknLin, "program" ) ){
             program.push_back( NodePtr{ new ProgNode{ PROGRAM, tknLin } } );
+            cout << "\tProgram Start!" << endl;
         
         ///// Comment Start //////////////////////
         // ASSUMPTION: COMMENT BEGINS AT THE START OF THE LINE
@@ -108,22 +111,27 @@ bool CPC_Interpreter::build_source_tree(){
             openComment = true;
             readVars    = false;
             readConst   = false;
+            cout << "\tComment Start!" << endl;
 
         ///// Variable Section Start /////////////
         // ASSUMPTION: VAR SECTION DECLARATION IS ON ITS OWN LINE
         }else if( p_vstr_has_str( tknLin, "var" ) ){
             readVars  = true;
             readConst = false;
+            cout << "\tVariable Start!" << endl;
 
         ///// Variable Section Start /////////////
         // ASSUMPTION: CONST SECTION DECLARATION IS ON ITS OWN LINE
         }else if( p_vstr_has_str( tknLin, "const" ) ){
             readConst = true;
             readVars  = false;
+            cout << "\tConst Start!" << endl;
 
         ///// Constants Section //////////////////
         }else if( readConst ){
-            
+            if( p_assignment_statememt( tknLin ) ){
+                
+            }
 
         }else{  
             cout << "Line " << tknLin << " could not be parsed!" << endl;
