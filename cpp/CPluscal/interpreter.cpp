@@ -51,12 +51,14 @@ bool p_number_string( const string& q ){
 
 
 bool p_math_op( const string& q ){
+    // Is this string an infix math operator?
     for( ubyte i = 0; i < NUM_INFIX; ++i ){  if( q == SYMBOLS[i] ){  return true;  }  }
     return false;
 }
 
 
-bool p_math_expr( const vstr& tokens ){
+bool p_literal_math_expr( const vstr& tokens ){
+    // Does this expression contain only numbers and infix math operators?
     if( tokens.size() == 0 ){  return false;  }
     for( const string& token : tokens ){
         if( !( p_math_op( token ) || p_number_string( token ) ) ){  return false;  }
@@ -66,6 +68,7 @@ bool p_math_expr( const vstr& tokens ){
 
 
 bool p_assignment_statememt( const vstr& tokens ){
+    // Does this statement fit the pattern `<identifier> = <literal math expr>`?
     size_t eqDex  = vstr_find_index( tokens, "=" );
     size_t expEnd = vstr_find_index( tokens, ";" );
     vstr   valExpr;
@@ -75,14 +78,16 @@ bool p_assignment_statememt( const vstr& tokens ){
     if( eqDex  == SIZE_MAX ){  return false;  }
     if( expEnd == SIZE_MAX ){  expEnd = tokens.size();  }
     valExpr = get_sub_vec( tokens, eqDex+1, expEnd );
-    return p_math_expr( valExpr );
+    return p_literal_math_expr( valExpr );
 }
 
 
 bool CPC_Interpreter::build_source_tree(){
+    // State flags: Should probably be an enum!
     bool openComment = false;
     bool readVars    = false;
     bool readConst   = false;
+    // For every line of tokens, do ...
     for( const vstr& tknLin : lexer.lineTokens ){
 
         ///// Comment Continue / End /////////////

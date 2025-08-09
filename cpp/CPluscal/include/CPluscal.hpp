@@ -24,7 +24,8 @@ using std::cout, std::endl, std::flush, std::cerr, std::ostream;
 using std::runtime_error;
 #include <memory>
 using std::shared_ptr;
-
+#include <filesystem>
+using std::filesystem::exists;
 
 /// Aliases ///
 typedef unsigned long  ulong;
@@ -84,24 +85,35 @@ const string TKN_NEWLINE = "<nl>";
 template<typename T>
 size_t vec_find_index( const vector<T>& vec, const T q ){
     // Return the index of an element, if it can be found
-    typename vector<T>::const_iterator it = std::find( vec.begin(), vec.end(), q );
-    // Check if the element was found
-    if( it != vec.end() ){
-        return std::distance( vec.begin(), it ); // Calculate the index
-    }else{
-        return SIZE_MAX;
-    }
+    size_t i = 0;
+    for( const T& elem : vec ){  if( elem == q ){  return i;  }  ++i;  }
+    return SIZE_MAX;
 }
 
 
 template<typename T>
 vector<T> get_sub_vec( const vector<T>& vec, size_t bgn, size_t end ){
+    // Return the specified subvector
     vector<T> rtnVec;
     if( (bgn < end) && (end < vec.size()) || (bgn < vec.size()) ){  
         rtnVec = vector<T>{ vec.begin()+bgn, vec.begin()+end };
     }
     return rtnVec;
 }
+
+
+template<typename T>
+ostream& operator<<( ostream& os , const deque<T>& deq ) { 
+    // ostream '<<' operator for vectors
+    // NOTE: This function assumes that the ostream '<<' operator for T has already been defined
+    os << "(front)[ ";
+    for (size_t i = 0; i < deq.size(); i++) {
+        os << (T) deq[i];
+        if (i + 1 < deq.size()) { os << ", "; }
+    }
+    os << " ](back)";
+    return os; // You must return a reference to the stream!
+} 
 
 
 
@@ -129,6 +141,9 @@ vstr tokenize( const string& totStr, char sepChr = ' ' );
 
 ////////// FILE OPERATIONS /////////////////////////////////////////////////////////////////////////
 vstr read_file_to_lines( string path ); // Read plain text to a vector of strings, separated by newlines
+// Return the first existing file path, Otherwise return an empty string if none exist
+string first_existing_file_path( const vstr& possiblePaths );
+    
 
 
 ////////// LEXER ///////////////////////////////////////////////////////////////////////////////////
@@ -161,7 +176,8 @@ enum NodeType{
     COMPOUND, 
     IF_STMT, 
     WHILE_STMT, 
-    COMPARISON
+    COMPARISON,
+    FUNCTION,
 };
 
 class ProgNode;

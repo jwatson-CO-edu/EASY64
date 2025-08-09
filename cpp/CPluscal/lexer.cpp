@@ -87,11 +87,8 @@ vstr attempt_reserved_symbol_merge( const vstr& tokens ){
     deque<string> accumQue;
     string /*--*/ accumStr = "";
     string /*--*/ validStr = "";
-
     for( const string& token : tokens ){
-        // while( accumQue.size() > 1 ){  accumQue.pop_front();  }
         accumQue.push_back( token );
-        // cout << '\t' << accumQue;
         if( accumQue.size() >= 2 ){  
             accumStr = accumQue[0] + accumQue[1];  
             if( p_special( accumStr ) ){
@@ -102,7 +99,6 @@ vstr attempt_reserved_symbol_merge( const vstr& tokens ){
                 accumQue.pop_front();
             }
         }
-        // cout << " : " << rtnTokens << endl;
     }
     while( accumQue.size() ){  
         rtnTokens.push_back( accumQue[0] );
@@ -136,16 +132,16 @@ vstr tokenize( const string& totStr, char sepChr ){
         // 3. Either add char to present token or create a new one
         // A. Case String Begin/End
         if( cStr == "'" ){
-            strToken += '\'';
-            if( strAccum ){
-                tokens.push_back( strToken );
-                strToken = "";
+            strToken += "'";
+            if( strAccum ){  
+                tokens.push_back( strToken );  
             }
             strAccum = !strAccum;
+        }else if( strAccum ){
+            strToken += cStr;
 
         // B. Case Reserved
         }else if( p_symbol( cStr ) ){  
-            // cout << "Reserved Token: " << find_reserved_token( cStr ) << endl;
             if( token.size() > 0 ){  stow_token();  }
             stow_char();  
         // C. Case separator
@@ -187,6 +183,13 @@ vstr read_file_to_lines( string path ){
 }
 
 
+string first_existing_file_path( const vstr& possiblePaths ){
+    // Return the first existing file path, Otherwise return an empty string if none exist
+    for( const string& pPath : possiblePaths ){  if( exists( pPath ) ){  return pPath;  }  }
+    return "";
+}
+
+
 ////////// LEXER ///////////////////////////////////////////////////////////////////////////////////
 
 LexMachine::LexMachine(){}
@@ -194,6 +197,11 @@ LexMachine::LexMachine(){}
 LexMachine::LexMachine( string fPath ){
     progPath = fPath;
     lines    = read_file_to_lines( progPath );
-    for( const string& line : lines ){  lineTokens.push_back( tokenize( line ) );  }
+    vstr tknLin;
+    for( const string& line : lines ){  
+        tknLin = tokenize( line );
+        if( tknLin.size() ){  lineTokens.push_back( tknLin );  }
+        
+    }
     cout << lineTokens << endl;
 }

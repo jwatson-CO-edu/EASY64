@@ -89,7 +89,11 @@
         "__bit_reference": "cpp",
         "__string": "cpp",
         "climits": "cpp",
-        "cfenv": "cpp"
+        "cfenv": "cpp",
+        "charconv": "cpp",
+        "source_location": "cpp",
+        "shared_mutex": "cpp",
+        "stdfloat": "cpp"
     },
     "makefile.configureOnOpen": false
 }
