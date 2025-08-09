@@ -50,13 +50,32 @@ bool p_number_string( const string& q ){
 }
 
 
+bool p_math_op( const string& q ){
+    for( ubyte i = 0; i < NUM_INFIX; ++i ){  if( q == SYMBOLS[i] ){  return true;  }  }
+    return false;
+}
+
+
+bool p_math_expr( const vstr& tokens ){
+    if( tokens.size() == 0 ){  return false;  }
+    for( const string& token : tokens ){
+        if( !( p_math_op( token ) || p_number_string( token ) ) ){  return false;  }
+    }
+    return true;
+}
+
+
 bool p_assignment_statememt( const vstr& tokens ){
-    size_t eqDex = SIZE_MAX;
+    size_t eqDex  = vstr_find_index( tokens, "=" );
+    size_t expEnd = vstr_find_index( tokens, ";" );
+    vstr   valExpr;
     if( tokens.size() == 0 ){  return false;  }
     // ASSUMPTION: FIRST TOKEN IS THE IDENTIFIER
     if( !p_identifier( tokens[0] ) ){  return false;  }
-    eqDex = vstr_find_index( tokens, "=" );
-    if( eqDex == SIZE_MAX ){  return false;  }
+    if( eqDex  == SIZE_MAX ){  return false;  }
+    if( expEnd == SIZE_MAX ){  expEnd = tokens.size();  }
+    valExpr = get_sub_vec( tokens, eqDex+1, expEnd );
+    return p_math_expr( valExpr );
 }
 
 
