@@ -83,6 +83,7 @@ bool p_assignment_statememt( const vstr& tokens ){
 
 
 bool CPC_Interpreter::build_source_tree(){
+    // Build a cheap Abstract Source Tree to be executed later
     // State flags: Should probably be an enum!
     bool openComment = false;
     bool readVars    = false;
@@ -105,22 +106,29 @@ bool CPC_Interpreter::build_source_tree(){
         // ASSUMPTION: COMMENT BEGINS AT THE START OF THE LINE
         }else if( tknLin.front() == "{" ){
             openComment = true;
+            readVars    = false;
+            readConst   = false;
 
         ///// Variable Section Start /////////////
         // ASSUMPTION: VAR SECTION DECLARATION IS ON ITS OWN LINE
         }else if( p_vstr_has_str( tknLin, "var" ) ){
-            readVars = true;
+            readVars  = true;
+            readConst = false;
 
         ///// Variable Section Start /////////////
         // ASSUMPTION: CONST SECTION DECLARATION IS ON ITS OWN LINE
         }else if( p_vstr_has_str( tknLin, "const" ) ){
             readConst = true;
+            readVars  = false;
 
         ///// Constants Section //////////////////
         }else if( readConst ){
+            
 
-
-        }else{  return false;  }
+        }else{  
+            cout << "Line " << tknLin << " could not be parsed!" << endl;
+            return false;  
+        }
         return true;
     }
 }

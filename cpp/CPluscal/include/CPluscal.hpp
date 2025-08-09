@@ -116,6 +116,20 @@ ostream& operator<<( ostream& os , const deque<T>& deq ) {
 } 
 
 
+template<typename T>
+ostream& operator<<( ostream& os , const vector<T>& vec ) { 
+    // ostream '<<' operator for vectors
+    // NOTE: This function assumes that the ostream '<<' operator for T has already been defined
+    os << "[ ";
+    for (size_t i = 0; i < vec.size(); i++) {
+        os << (T) vec[i];
+        if (i + 1 < vec.size()) { os << ", "; }
+    }
+    os << " ]";
+    return os; // You must return a reference to the stream!
+}
+
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////// lexer.cpp ///////////////////////////////////////////////////////////////////////////////

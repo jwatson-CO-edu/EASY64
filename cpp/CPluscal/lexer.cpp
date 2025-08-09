@@ -190,18 +190,19 @@ string first_existing_file_path( const vstr& possiblePaths ){
 }
 
 
+
 ////////// LEXER ///////////////////////////////////////////////////////////////////////////////////
 
-LexMachine::LexMachine(){}
+LexMachine::LexMachine(){} // Empty Constructor
 
 LexMachine::LexMachine( string fPath ){
+    // Init object, Load and Lex Pascal file
     progPath = fPath;
     lines    = read_file_to_lines( progPath );
     vstr tknLin;
     for( const string& line : lines ){  
         tknLin = tokenize( line );
         if( tknLin.size() ){  lineTokens.push_back( tknLin );  }
-        
     }
     cout << lineTokens << endl;
 }
