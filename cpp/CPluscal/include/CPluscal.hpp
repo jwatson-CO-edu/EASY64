@@ -32,7 +32,7 @@ using std::filesystem::exists;
 using std::variant, std::get, std::holds_alternative;
 
 ///// Aliases /////////////////////////////////////////////////////////////
-typedef unsigned long long ulong;
+typedef size_t /*-------*/ ullong;
 typedef long long /*----*/ llong;
 typedef unsigned char /**/ ubyte;
 typedef vector<string>     vstr;
@@ -202,6 +202,8 @@ enum NodeType{
     WHILE_STMT, 
     COMPARISON,
     FUNCTION,
+    MATH_EXPR,
+    TYPENAME,
 };
 
 class ProgNode;
@@ -222,7 +224,10 @@ class Context;
 typedef shared_ptr<Context> CntxPtr;
 
 class Context{ public:
-    CntxPtr parent = nullptr;
+    CntxPtr /*-*/ parent = nullptr;
+    list<NodePtr> types;
+    list<NodePtr> constants;
+    list<NodePtr> variables;
 };
 
 

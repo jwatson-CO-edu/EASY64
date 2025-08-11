@@ -82,12 +82,40 @@ bool p_assignment_statememt( const vstr& tokens ){
 }
 
 
+vstr get_RHS( const vstr& expr ){
+    // Return the Right Hand Side of an `expr`ession
+    size_t eqDex  = vstr_find_index( expr, "=" );
+    size_t expEnd = vstr_find_index( expr, ";" );
+    if( eqDex  == SIZE_MAX ){  return vstr{};  }
+    if( expEnd == SIZE_MAX ){  expEnd = expr.size();  }
+    return get_sub_vec( expr, eqDex+1, expEnd );
+}
+
+
+bool p_prim_type( const string& q ){
+    // Return True if `q` matches a primtive type name, otherwise return False
+    for( const string& typ : PRIM_TYPE_NAMES ){  if( q == typ ){  return true;  }  }
+    return false;
+}
+
+
+bool p_var_declare_statememt( const vstr& tokens ){
+    size_t colonDex = vstr_find_index( tokens, ":" );
+    if( colonDex == SIZE_MAX ){  return false;  }
+    if( !p_identifier( tokens[0] ) ){  return false;  }
+    if( !p_prim_type( tokens[colonDex+1] ) ){  return false;  }
+    return true;
+}
+
+
 bool CPC_Interpreter::build_source_tree(){
     // Build a cheap Abstract Source Tree to be executed later
     // State flags: Should probably be an enum!
-    bool openComment = false;
-    bool readVars    = false;
-    bool readConst   = false;
+    bool    openComment = false;
+    bool    readVars    = false;
+    bool    readConst   = false;
+    NodePtr root /*--*/ = nullptr;
+    size_t  chrDex /**/ = SIZE_MAX;
     // For every line of tokens, do ...
     for( const vstr& tknLin : lexer.lineTokens ){
         cout << "Line: " << tknLin << endl;
@@ -130,13 +158,29 @@ bool CPC_Interpreter::build_source_tree(){
         ///// Constants Section //////////////////
         }else if( readConst ){
             if( p_assignment_statememt( tknLin ) ){
-                
+                cout << "\tConst Assignment!" << endl;
+                root = NodePtr{ new ProgNode{ ASSIGNMENT, tknLin } };
+                root->edges.push_back( NodePtr{ new ProgNode{ IDENTIFIER, get_sub_vec( tknLin, 0, 1 ) } } );
+                root->edges.push_back( NodePtr{ new ProgNode{ MATH_EXPR , get_RHS( tknLin ) } } );
+                context.constants.push_back( root );
             }
 
+        ///// Variables Section //////////////////
+        }else if( readVars ){
+            if( p_var_declare_statememt( tknLin ) ){
+                cout << "\tVar Declaration!" << endl;
+                root = NodePtr{ new ProgNode{ VAR_DECL, tknLin } };
+                root->edges.push_back( NodePtr{ new ProgNode{ IDENTIFIER, get_sub_vec( tknLin, 0, 1 ) } } );
+                chrDex = vstr_find_index( tknLin, ":" );
+                root->edges.push_back( NodePtr{ new ProgNode{ TYPENAME, get_sub_vec( tknLin, chrDex, chrDex+1 ) } } );
+                context.variables.push_back( root );
+            }
+
+        ///// Unknown Expression /////////////////
         }else{  
             cout << "Line " << tknLin << " could not be parsed!" << endl;
             return false;  
         }
-        return true;
     }
+    return true;
 }
