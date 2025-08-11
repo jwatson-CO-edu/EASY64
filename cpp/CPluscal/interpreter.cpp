@@ -92,13 +92,6 @@ vstr get_RHS( const vstr& expr ){
 }
 
 
-bool p_prim_type( const string& q ){
-    // Return True if `q` matches a primtive type name, otherwise return False
-    for( const string& typ : PRIM_TYPE_NAMES ){  if( q == typ ){  return true;  }  }
-    return false;
-}
-
-
 bool p_var_declare_statememt( const vstr& tokens ){
     size_t colonDex = vstr_find_index( tokens, ":" );
     if( colonDex == SIZE_MAX ){  return false;  }
