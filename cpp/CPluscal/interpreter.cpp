@@ -101,22 +101,34 @@ bool p_var_declare_statememt( const vstr& tokens ){
 }
 
 
+enum ParseMode{ 
+    BEGIN, 
+    COMMENT, 
+    VAR_SECT,
+    CONST_SECT,
+    MAIN_SECT,
+};
+
+
 bool CPC_Interpreter::build_source_tree(){
     // Build a cheap Abstract Source Tree to be executed later
     // State flags: Should probably be an enum!
-    bool    openComment = false;
-    bool    readVars    = false;
-    bool    readConst   = false;
-    NodePtr root /*--*/ = nullptr;
-    size_t  chrDex /**/ = SIZE_MAX;
+    ParseMode mode   = BEGIN;
+    NodePtr   root   = nullptr;
+    size_t    chrDex = SIZE_MAX;
+
+    
+
     // For every line of tokens, do ...
     for( const vstr& tknLin : lexer.lineTokens ){
         cout << "Line: " << tknLin << endl;
 
+        if( mode == BEGIN ){  cout << "\tDefault Mode!" << endl;  }
+
         ///// Comment Continue / End /////////////
-        if( openComment ){
+        if( mode == COMMENT ){
             // ASSUMPTION: COMMENT ENDS AT THE END OF THE LINE
-            if( tknLin.back() == "}" ){  openComment = false;  }
+            if( tknLin.back() == "}" ){  mode = BEGIN;  }
             cout << "\tComment End!" << endl;
             continue;
 
@@ -129,27 +141,28 @@ bool CPC_Interpreter::build_source_tree(){
         ///// Comment Start //////////////////////
         // ASSUMPTION: COMMENT BEGINS AT THE START OF THE LINE
         }else if( tknLin.front() == "{" ){
-            openComment = true;
-            readVars    = false;
-            readConst   = false;
+            mode = COMMENT;
             cout << "\tComment Start!" << endl;
 
         ///// Variable Section Start /////////////
         // ASSUMPTION: VAR SECTION DECLARATION IS ON ITS OWN LINE
         }else if( p_vstr_has_str( tknLin, "var" ) ){
-            readVars  = true;
-            readConst = false;
+            mode = VAR_SECT;
             cout << "\tVariable Start!" << endl;
 
         ///// Variable Section Start /////////////
         // ASSUMPTION: CONST SECTION DECLARATION IS ON ITS OWN LINE
         }else if( p_vstr_has_str( tknLin, "const" ) ){
-            readConst = true;
-            readVars  = false;
+            mode = CONST_SECT;
             cout << "\tConst Start!" << endl;
 
+        ///// Main Program Start /////////////////
+        // ASSUMPTION: PROGRAM START `begin` IS ON ITS OWN LINE
+        }else if( p_vstr_has_str( tknLin, "begin" ) && (tknLin.size() == 1) ){
+            cout << "\tProgram Start!" << endl;
+
         ///// Constants Section //////////////////
-        }else if( readConst ){
+        }else if( mode == CONST_SECT ){
             if( p_assignment_statememt( tknLin ) ){
                 cout << "\tConst Assignment!" << endl;
                 root = NodePtr{ new ProgNode{ ASSIGNMENT, tknLin } };
@@ -159,7 +172,7 @@ bool CPC_Interpreter::build_source_tree(){
             }
 
         ///// Variables Section //////////////////
-        }else if( readVars ){
+        }else if( mode == VAR_SECT ){
             if( p_var_declare_statememt( tknLin ) ){
                 cout << "\tVar Declaration!" << endl;
                 root = NodePtr{ new ProgNode{ VAR_DECL, tknLin } };
