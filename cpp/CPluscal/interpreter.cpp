@@ -160,6 +160,7 @@ bool CPC_Interpreter::build_source_tree(){
         // ASSUMPTION: PROGRAM START `begin` IS ON ITS OWN LINE
         }else if( p_vstr_has_str( tknLin, "begin" ) && (tknLin.size() == 1) ){
             cout << "\tProgram Start!" << endl;
+            mode = MAIN_SECT;
 
         ///// Constants Section //////////////////
         }else if( mode == CONST_SECT ){
