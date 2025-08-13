@@ -13,7 +13,13 @@ ProgNode::ProgNode( NodeType typ, vstr tkns ){
 
 ////////// INTERPRETER /////////////////////////////////////////////////////////////////////////////
 
+CPC_Interpreter::CPC_Interpreter(){
+    // Default Constructor
+    context = CntxPtr{ new Context{} };
+}
+
 bool CPC_Interpreter::load_program_file( string fPath ){
+    // Invoke the lexer
     lexer = LexMachine{ fPath };
     return true;
 }
@@ -67,10 +73,20 @@ bool p_literal_math_expr( const vstr& tokens ){
 }
 
 
-bool p_assignment_statememt( const vstr& tokens ){
+bool p_ident_math_expr( const vstr& tokens ){
+    // Does this expression contain only numbers and infix math operators?
+    if( tokens.size() == 0 ){  return false;  }
+    for( const string& token : tokens ){
+        if( !( p_math_op( token ) || p_number_string( token ) || p_identifier( token ) ) ){  return false;  }
+    }
+    return true;
+}
+
+
+bool p_assignment_statememt( const vstr& tokens, const string& eqSym = ":=" ){
     // Does this statement fit the pattern `<identifier> = <literal math expr>`?
-    size_t eqDex  = vstr_find_index( tokens, "=" );
-    size_t expEnd = vstr_find_index( tokens, ";" );
+    size_t eqDex  = vstr_find_index( tokens, eqSym );
+    size_t expEnd = vstr_find_index( tokens, ";"   );
     vstr   valExpr;
     if( tokens.size() == 0 ){  return false;  }
     // ASSUMPTION: FIRST TOKEN IS THE IDENTIFIER
@@ -78,14 +94,14 @@ bool p_assignment_statememt( const vstr& tokens ){
     if( eqDex  == SIZE_MAX ){  return false;  }
     if( expEnd == SIZE_MAX ){  expEnd = tokens.size();  }
     valExpr = get_sub_vec( tokens, eqDex+1, expEnd );
-    return p_literal_math_expr( valExpr );
+    return p_ident_math_expr( valExpr );
 }
 
 
-vstr get_RHS( const vstr& expr ){
+vstr get_RHS( const vstr& expr, const string& eqSym = ":=" ){
     // Return the Right Hand Side of an `expr`ession
-    size_t eqDex  = vstr_find_index( expr, "=" );
-    size_t expEnd = vstr_find_index( expr, ";" );
+    size_t eqDex  = vstr_find_index( expr, eqSym );
+    size_t expEnd = vstr_find_index( expr, ";"   );
     if( eqDex  == SIZE_MAX ){  return vstr{};  }
     if( expEnd == SIZE_MAX ){  expEnd = expr.size();  }
     return get_sub_vec( expr, eqDex+1, expEnd );
@@ -129,23 +145,37 @@ vstr get_func_args( const vstr& expr ){
 ///// AST Parsing /////////////////////////////////////////////////////////
 
 enum ParseMode{ 
+    // What is the parser working on?
     BEGIN, 
     COMMENT, 
     VAR_SECT,
     CONST_SECT,
     MAIN_SECT,
+    FOR_CNTX,
 };
 
+vstr concat( const vvstr& tokenLines ){
+    size_t N = 0;
+    vstr   rtnVec;
+    for( const vstr& line : tokenLines ){  N += line.size();  }
+    rtnVec.reserve( N );
+    for( const vstr& line : tokenLines ){  for( const string& token : line ){  rtnVec.push_back( token );  }  }
+    return rtnVec;
+}
 
-bool CPC_Interpreter::build_source_tree(){
+
+NodePtr CPC_Interpreter::build_source_tree( CntxPtr cntx, const vvstr& lineTokens ){
     // Build a cheap Abstract Source Tree to be executed later
-    // State flags: Should probably be an enum!
-    ParseMode mode   = BEGIN;
-    NodePtr   root   = nullptr;
-    size_t    chrDex = SIZE_MAX;
-
+    ParseMode mode    = BEGIN;
+    NodePtr   root    = nullptr;
+    size_t    chrDex  = SIZE_MAX;
+    NodePtr   rtnPtr{ new ProgNode{  PROGRAM, concat( lineTokens )  } };
+    NodePtr   conSctn = nullptr;
+    NodePtr   varSctn = nullptr;
+    NodePtr   typSctn = nullptr;
+    
     // For every line of tokens, do ...
-    for( const vstr& tknLin : lexer.lineTokens ){
+    for( const vstr& tknLin : lineTokens ){
         cout << "Line: " << tknLin << endl;
 
         if( mode == BEGIN ){  cout << "\tDefault Mode!" << endl;  }
@@ -172,13 +202,15 @@ bool CPC_Interpreter::build_source_tree(){
         ///// Variable Section Start /////////////
         // ASSUMPTION: VAR SECTION DECLARATION IS ON ITS OWN LINE
         }else if( p_vstr_has_str( tknLin, "var" ) ){
-            mode = VAR_SECT;
+            mode    = VAR_SECT;
+            varSctn = NodePtr{ new ProgNode{ VAR_SCTN, tknLin } };
             cout << "\tVariable Start!" << endl;
 
         ///// Variable Section Start /////////////
         // ASSUMPTION: CONST SECTION DECLARATION IS ON ITS OWN LINE
         }else if( p_vstr_has_str( tknLin, "const" ) ){
-            mode = CONST_SECT;
+            mode    = CONST_SECT;
+            conSctn = NodePtr{ new ProgNode{ CON_SCTN, tknLin } };
             cout << "\tConst Start!" << endl;
 
         ///// Main Program Start /////////////////
@@ -189,12 +221,12 @@ bool CPC_Interpreter::build_source_tree(){
 
         ///// Constants Section //////////////////
         }else if( mode == CONST_SECT ){
-            if( p_assignment_statememt( tknLin ) ){
+            if( p_assignment_statememt( tknLin, "=" ) ){
                 cout << "\tConst Assignment!" << endl;
                 root = NodePtr{ new ProgNode{ ASSIGNMENT, tknLin } };
                 root->edges.push_back( NodePtr{ new ProgNode{ IDENTIFIER, get_sub_vec( tknLin, 0, 1 ) } } );
-                root->edges.push_back( NodePtr{ new ProgNode{ MATH_EXPR , get_RHS( tknLin ) } } );
-                context.constants.push_back( root );
+                root->edges.push_back( NodePtr{ new ProgNode{ MATH_EXPR , get_RHS( tknLin, "=" ) } } );
+                conSctn->edges.push_back( root );
             }
 
         ///// Variables Section //////////////////
@@ -205,20 +237,37 @@ bool CPC_Interpreter::build_source_tree(){
                 root->edges.push_back( NodePtr{ new ProgNode{ IDENTIFIER, get_sub_vec( tknLin, 0, 1 ) } } );
                 chrDex = vstr_find_index( tknLin, ":" );
                 root->edges.push_back( NodePtr{ new ProgNode{ TYPENAME, get_sub_vec( tknLin, chrDex, chrDex+1 ) } } );
-                context.variables.push_back( root );
+                varSctn->edges.push_back( root );
             }
 
         ///// Main Program ///////////////////////
         }else if( mode == MAIN_SECT ){
+            ///// Function Call /////
             if( p_function_call( tknLin ) ){
+                cout << "\tFunction Call!" << endl;
+                root = NodePtr{ new ProgNode{ FUNCTION, tknLin } };
+                root->edges.push_back( NodePtr{ new ProgNode{ IDENTIFIER, get_sub_vec( tknLin, 0, 1 ) } } );
+                root->edges.push_back( NodePtr{ new ProgNode{ ARGUMENTS , get_func_args( tknLin ) } } );
+                rtnPtr->edges.push_back( root );
 
+            ///// For Loop /////
+            }else if( p_vstr_has_str( tknLin, "for" ) ){
+                cout << "\tFor Loop Begin!" << endl;
+
+            ///// Variable Assignment /////
+            }else if( p_assignment_statememt( tknLin, ":=" ) ){
+                cout << "\tVar Assignment!" << endl;
+                root = NodePtr{ new ProgNode{ ASSIGNMENT, tknLin } };
+                root->edges.push_back( NodePtr{ new ProgNode{ IDENTIFIER, get_sub_vec( tknLin, 0, 1 ) } } );
+                root->edges.push_back( NodePtr{ new ProgNode{ MATH_EXPR , get_RHS( tknLin, ":=" ) } } );
+                rtnPtr->edges.push_back( root );
             }
 
         ///// Unknown Expression /////////////////
         }else{  
             cout << "Line " << tknLin << " could not be parsed!" << endl;
-            return false;  
+            break;
         }
     }
-    return true;
+    return rtnPtr;
 }

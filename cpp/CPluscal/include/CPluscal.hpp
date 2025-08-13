@@ -196,6 +196,9 @@ class LexMachine{ public:
 enum NodeType{
     INVALID, 
     PROGRAM, 
+    VAR_SCTN, 
+    CON_SCTN, 
+    TYP_SCTN, 
     VAR_DECL, 
     ASSIGNMENT, 
     BINARY_OP, 
@@ -206,6 +209,7 @@ enum NodeType{
     WHILE_STMT, 
     COMPARISON,
     FUNCTION,
+    ARGUMENTS,
     MATH_EXPR,
     TYPENAME,
 };
@@ -238,11 +242,13 @@ class Context{ public:
 class CPC_Interpreter{ public:
     LexMachine    lexer;
     NodePtr /*-*/ header;    
-    list<NodePtr> program;
-    Context /*-*/ context;
+    CntxPtr /*-*/ context;
+    list<NodePtr> code;
 
-    bool load_program_file( string fPath );
-    bool build_source_tree();
+    CPC_Interpreter(); // Default Constructor
+
+    bool load_program_file( string fPath ); // ------------------------ Invoke the lexer
+    NodePtr build_source_tree( CntxPtr cntx, const vvstr& lineTokens ); // Build a cheap Abstract Source Tree to be executed later
 };
 
 
