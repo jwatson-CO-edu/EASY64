@@ -82,12 +82,23 @@ bool p_assignment_statememt( const vstr& tokens ){
 }
 
 
+vstr get_RHS( const vstr& expr ){
+    // Get the Right Hand Side of an `expr`ession
+    size_t eqDex  = vstr_find_index( expr, "=" );
+    size_t expEnd = vstr_find_index( expr, ";" );
+    if( eqDex  == SIZE_MAX ){  return vstr{};  }
+    if( expEnd == SIZE_MAX ){  expEnd = expr.size();  }
+    return get_sub_vec( expr, eqDex+1, expEnd );
+}
+
+
 bool CPC_Interpreter::build_source_tree(){
     // Build a cheap Abstract Source Tree to be executed later
     // State flags: Should probably be an enum!
-    bool openComment = false;
-    bool readVars    = false;
-    bool readConst   = false;
+    bool    openComment = false;
+    bool    readVars    = false;
+    bool    readConst   = false;
+    NodePtr root /*--*/ = nullptr;
     // For every line of tokens, do ...
     for( const vstr& tknLin : lexer.lineTokens ){
         cout << "Line: " << tknLin << endl;
@@ -130,7 +141,11 @@ bool CPC_Interpreter::build_source_tree(){
         ///// Constants Section //////////////////
         }else if( readConst ){
             if( p_assignment_statememt( tknLin ) ){
-                
+                root = NodePtr{ new ProgNode{ ASSIGNMENT, tknLin } };
+                // ASSUMPTION: IDENTIFIER IS THE FIRST TOKEN
+                root->edges.push_back( NodePtr{ new ProgNode{ IDENTIFIER, get_sub_vec( tknLin, 0, 1 ) } } );
+                root->edges.push_back( NodePtr{ new ProgNode{ MATH, get_RHS( tknLin ) } } );
+                context.constants.push_back( root );
             }
 
         }else{  

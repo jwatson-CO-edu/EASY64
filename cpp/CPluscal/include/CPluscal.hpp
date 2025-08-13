@@ -202,6 +202,7 @@ enum NodeType{
     WHILE_STMT, 
     COMPARISON,
     FUNCTION,
+    MATH,
 };
 
 class ProgNode;
@@ -223,6 +224,9 @@ typedef shared_ptr<Context> CntxPtr;
 
 class Context{ public:
     CntxPtr parent = nullptr;
+    list<NodePtr> types;
+    list<NodePtr> constants;
+    list<NodePtr> variables;
 };
 
 
