@@ -32,7 +32,7 @@ using std::filesystem::exists;
 using std::variant, std::get, std::holds_alternative;
 
 ///// Aliases /////////////////////////////////////////////////////////////
-typedef unsigned long long ulong;
+typedef size_t /*-------*/ ullong;
 typedef long long /*----*/ llong;
 typedef unsigned char /**/ ubyte;
 typedef vector<string>     vstr;
@@ -63,6 +63,10 @@ const array<string,35> RESERVED = { /// Word Symbols ///
     "and", "array", "begin", "case", "const", "div", "do", "downto", "else", "end", "file", "for",
     "function", "goto", "if", "in", "label", "mod", "nil", "not", "of", "or", "packed", "procedure",
     "program", "record", "repeat", "set", "then", "to", "type", "until", "var", "while", "with"
+};
+
+const array<string,1> BUILTINS = { /// Included Functions ///
+    "writeln"
 };
 
 const array<string,3> PRIM_TYPE_NAMES = { /// Primitive Type Names ///
@@ -202,7 +206,8 @@ enum NodeType{
     WHILE_STMT, 
     COMPARISON,
     FUNCTION,
-    MATH,
+    MATH_EXPR,
+    TYPENAME,
 };
 
 class ProgNode;
@@ -223,7 +228,7 @@ class Context;
 typedef shared_ptr<Context> CntxPtr;
 
 class Context{ public:
-    CntxPtr parent = nullptr;
+    CntxPtr /*-*/ parent = nullptr;
     list<NodePtr> types;
     list<NodePtr> constants;
     list<NodePtr> variables;
@@ -232,6 +237,7 @@ class Context{ public:
 
 class CPC_Interpreter{ public:
     LexMachine    lexer;
+    NodePtr /*-*/ header;    
     list<NodePtr> program;
     Context /*-*/ context;
 
