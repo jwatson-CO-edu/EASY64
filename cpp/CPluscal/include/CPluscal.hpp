@@ -228,6 +228,22 @@ class ProgNode{ public:
 
 ////////// PARSER //////////////////////////////////////////////////////////////////////////////////
 
+class CPC_Parser{ public:
+    LexMachine    lexer;
+    NodePtr /*-*/ header;    
+    CntxPtr /*-*/ context;
+    list<NodePtr> code;
+
+    CPC_Parser(); // Default Constructor
+
+    bool    load_program_file( string fPath ); // ---------- Invoke the lexer
+    NodePtr build_source_tree( const vvstr& lineTokens ); // Build a cheap Abstract Source Tree to be executed later
+};
+
+
+
+////////// INTERPRETER /////////////////////////////////////////////////////////////////////////////
+
 class Context;
 typedef shared_ptr<Context> CntxPtr;
 
@@ -237,20 +253,6 @@ class Context{ public:
     list<NodePtr> constants;
     list<NodePtr> variables;
 };
-
-
-class CPC_Parser{ public:
-    LexMachine    lexer;
-    NodePtr /*-*/ header;    
-    CntxPtr /*-*/ context;
-    list<NodePtr> code;
-
-    CPC_Parser(); // Default Constructor
-
-    bool load_program_file( string fPath ); // ------------------------ Invoke the lexer
-    NodePtr build_source_tree( CntxPtr cntx, const vvstr& lineTokens ); // Build a cheap Abstract Source Tree to be executed later
-};
-
 
 
 #endif

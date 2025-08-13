@@ -164,7 +164,7 @@ vstr concat( const vvstr& tokenLines ){
 }
 
 
-NodePtr CPC_Parser::build_source_tree( CntxPtr cntx, const vvstr& lineTokens ){
+NodePtr CPC_Parser::build_source_tree( const vvstr& lineTokens ){
     // Build a cheap Abstract Source Tree to be executed later
     ParseMode mode    = BEGIN;
     NodePtr   root    = nullptr;
