@@ -25,7 +25,7 @@ cmake_print_variables( PROJECT_SOURCE_DIR )
 
 add_library( CPC_LIB
              lexer.cpp 
-             interpreter.cpp )
+             parser.cpp )
 
 target_link_libraries( CPC_LIB )
 

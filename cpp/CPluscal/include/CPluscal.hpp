@@ -239,13 +239,13 @@ class Context{ public:
 };
 
 
-class CPC_Interpreter{ public:
+class CPC_Parser{ public:
     LexMachine    lexer;
     NodePtr /*-*/ header;    
     CntxPtr /*-*/ context;
     list<NodePtr> code;
 
-    CPC_Interpreter(); // Default Constructor
+    CPC_Parser(); // Default Constructor
 
     bool load_program_file( string fPath ); // ------------------------ Invoke the lexer
     NodePtr build_source_tree( CntxPtr cntx, const vvstr& lineTokens ); // Build a cheap Abstract Source Tree to be executed later

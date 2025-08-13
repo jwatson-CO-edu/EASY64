@@ -13,12 +13,12 @@ ProgNode::ProgNode( NodeType typ, vstr tkns ){
 
 ////////// INTERPRETER /////////////////////////////////////////////////////////////////////////////
 
-CPC_Interpreter::CPC_Interpreter(){
+CPC_Parser::CPC_Parser(){
     // Default Constructor
     context = CntxPtr{ new Context{} };
 }
 
-bool CPC_Interpreter::load_program_file( string fPath ){
+bool CPC_Parser::load_program_file( string fPath ){
     // Invoke the lexer
     lexer = LexMachine{ fPath };
     return true;
@@ -164,7 +164,7 @@ vstr concat( const vvstr& tokenLines ){
 }
 
 
-NodePtr CPC_Interpreter::build_source_tree( CntxPtr cntx, const vvstr& lineTokens ){
+NodePtr CPC_Parser::build_source_tree( CntxPtr cntx, const vvstr& lineTokens ){
     // Build a cheap Abstract Source Tree to be executed later
     ParseMode mode    = BEGIN;
     NodePtr   root    = nullptr;
