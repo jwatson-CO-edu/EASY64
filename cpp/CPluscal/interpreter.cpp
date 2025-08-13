@@ -93,6 +93,7 @@ vstr get_RHS( const vstr& expr ){
 
 
 bool p_var_declare_statememt( const vstr& tokens ){
+    // Return True if `tokens` is a variable declaration statement
     size_t colonDex = vstr_find_index( tokens, ":" );
     if( colonDex == SIZE_MAX ){  return false;  }
     if( !p_identifier( tokens[0] ) ){  return false;  }
@@ -100,6 +101,32 @@ bool p_var_declare_statememt( const vstr& tokens ){
     return true;
 }
 
+
+bool p_function_call( const vstr& expr ){
+    // Determine if `expr` is a function call
+    // ASSUMPTION: ENTIRE FUNCTION CALL IS ON THE SAME LINE
+    size_t openDex = vstr_find_index( expr, "(" );
+    size_t closDex = vstr_find_index( expr, ")" );
+    if( !p_identifier( expr[0] ) ){  return false;  }
+    if( openDex == SIZE_MAX ){  return false;  }
+    if( closDex == SIZE_MAX ){  return false;  }
+    return true;
+}
+
+
+vstr get_func_args( const vstr& expr ){
+    // Return the function arguments in `expr`, Otherwise return an empty vector
+    // ASSUMPTION: ENTIRE FUNCTION CALL IS ON THE SAME LINE
+    size_t openDex = vstr_find_index( expr, "(" );
+    size_t closDex = vstr_find_index( expr, ")" );
+    if( openDex == SIZE_MAX ){  return vstr{};  }
+    if( closDex == SIZE_MAX ){  return vstr{};  }
+    return get_sub_vec( expr, openDex+1, closDex );
+}
+
+
+
+///// AST Parsing /////////////////////////////////////////////////////////
 
 enum ParseMode{ 
     BEGIN, 
@@ -117,8 +144,6 @@ bool CPC_Interpreter::build_source_tree(){
     NodePtr   root   = nullptr;
     size_t    chrDex = SIZE_MAX;
 
-    
-
     // For every line of tokens, do ...
     for( const vstr& tknLin : lexer.lineTokens ){
         cout << "Line: " << tknLin << endl;
@@ -135,7 +160,7 @@ bool CPC_Interpreter::build_source_tree(){
         ///// Program Start //////////////////////
         // ASSUMPTION: PROGRAM DECLARATION IS ON ITS OWN LINE
         }else if( p_vstr_has_str( tknLin, "program" ) ){
-            program.push_back( NodePtr{ new ProgNode{ PROGRAM, tknLin } } );
+            header = NodePtr{ new ProgNode{ PROGRAM, tknLin } };
             cout << "\tProgram Start!" << endl;
         
         ///// Comment Start //////////////////////
@@ -181,6 +206,12 @@ bool CPC_Interpreter::build_source_tree(){
                 chrDex = vstr_find_index( tknLin, ":" );
                 root->edges.push_back( NodePtr{ new ProgNode{ TYPENAME, get_sub_vec( tknLin, chrDex, chrDex+1 ) } } );
                 context.variables.push_back( root );
+            }
+
+        ///// Main Program ///////////////////////
+        }else if( mode == MAIN_SECT ){
+            if( p_function_call( tknLin ) ){
+
             }
 
         ///// Unknown Expression /////////////////

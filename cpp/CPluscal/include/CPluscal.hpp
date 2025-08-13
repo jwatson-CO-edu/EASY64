@@ -65,6 +65,10 @@ const array<string,35> RESERVED = { /// Word Symbols ///
     "program", "record", "repeat", "set", "then", "to", "type", "until", "var", "while", "with"
 };
 
+const array<string,1> BUILTINS = { /// Included Functions ///
+    "writeln"
+};
+
 const array<string,3> PRIM_TYPE_NAMES = { /// Primitive Type Names ///
     "integer", "real", "Boolean",
 };
@@ -233,6 +237,7 @@ class Context{ public:
 
 class CPC_Interpreter{ public:
     LexMachine    lexer;
+    NodePtr /*-*/ header;    
     list<NodePtr> program;
     Context /*-*/ context;
 
