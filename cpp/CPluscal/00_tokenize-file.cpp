@@ -11,6 +11,6 @@ int main( int argc, char *argv[] ){
     };
     CPC_Parser cpc{};
     cpc.load_program_file( first_existing_file_path( pPaths ) );
-    cpc.build_source_tree( cpc.context, cpc.lexer.lineTokens );
+    cpc.build_source_tree( cpc.lexer.lineTokens );
     return 0;
 }
