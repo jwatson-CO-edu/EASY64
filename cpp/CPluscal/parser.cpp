@@ -15,7 +15,6 @@ ProgNode::ProgNode( NodeType typ, vstr tkns ){
 
 CPC_Parser::CPC_Parser(){
     // Default Constructor
-    context = CntxPtr{ new Context{} };
 }
 
 bool CPC_Parser::load_program_file( string fPath ){

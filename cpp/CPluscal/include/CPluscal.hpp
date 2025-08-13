@@ -231,7 +231,6 @@ class ProgNode{ public:
 class CPC_Parser{ public:
     LexMachine    lexer;
     NodePtr /*-*/ header;    
-    CntxPtr /*-*/ context;
     list<NodePtr> code;
 
     CPC_Parser(); // Default Constructor
