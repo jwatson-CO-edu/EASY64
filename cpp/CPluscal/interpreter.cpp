@@ -156,6 +156,22 @@ ostream& operator<<( ostream& os , const P_Val& v ){
 }
 
 
+vstr get_parenthetical( const vstr& expr, size_t bgn = 0 ){
+    size_t depth = 1;
+    size_t i     = bgn+1;
+    size_t N     = expr.size();
+    vstr   rtnVec;
+    string elem;
+    while( i < N ){
+        elem = expr[i];
+        if( elem == "(" ){  ++depth;  }
+        if( elem == ")" ){  --depth;  }
+        if( depth > 0 ){  rtnVec.push_back( elem );  }else{  break;  }
+        ++i;
+    }
+    return rtnVec;
+}
+
 
 P_Val CPC_Interpreter::calculate( const vstr& expr, CntxPtr cntx ){
     // Implements a stack-based calculator
@@ -166,13 +182,28 @@ P_Val CPC_Interpreter::calculate( const vstr& expr, CntxPtr cntx ){
     P_Val  prevVal;
     P_Val  currVal;
     string lastOp = "";
-    size_t N = expr.size();
-    size_t i = 0;
+    size_t N     = expr.size();
+    size_t i    = 0;
+    size_t skip = 0;
+    vstr   subExp;
     if( p_literal_math_expr( expr ) ){
         cout << "Is math expr!" << endl;
         for( const string& tkn : expr ){
-            if( p_number_string( tkn ) ){
-                lastVal = str_2_primitive( tkn );
+
+            if( skip > 0 ){
+                --skip;
+                continue;
+            }
+
+            if( p_number_string( tkn ) || (tkn == "(") ){
+                if( tkn == "(" ){
+                    subExp  = get_parenthetical( expr, i );
+                    cout << endl << "PARENTHETICAL: " << subExp << endl << endl;
+                    skip    = subExp.size()+1;
+                    lastVal = calculate( subExp, cntx );
+                }else{
+                    lastVal = str_2_primitive( tkn );
+                }
                 cout << "Got Value: " << lastVal << endl;
                 if( lastOp.size() ){
                     if( oprs.size() && (PEMDAS( lastOp ) <= PEMDAS( oprs.top() )) ){
@@ -204,7 +235,7 @@ P_Val CPC_Interpreter::calculate( const vstr& expr, CntxPtr cntx ){
                     if( !p_nan( lastVal ) ){
                         vals.push( lastVal );
                         cout << vals.size() << " on the VALUE stack!" << endl;
-                    }//else{  return lastVal;  }
+                    }
                 }
                 
             }else if( p_math_op( tkn ) ){
