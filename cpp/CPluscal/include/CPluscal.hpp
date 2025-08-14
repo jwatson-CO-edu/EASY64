@@ -93,10 +93,6 @@ const string TKN_NEWLINE = "<nl>";
 
 
 
-
-
-
-
 ////////// CONTAINERS //////////////////////////////////////////////////////////////////////////////
 
 template<typename T>
@@ -134,7 +130,7 @@ ostream& operator<<( ostream& os , const deque<T>& deq ) {
 
 
 template<typename T>
-ostream& operator<<( ostream& os , const vector<T>& vec ) { 
+ostream& operator<<( ostream& os , const vector<T>& vec ){ 
     // ostream '<<' operator for vectors
     // NOTE: This function assumes that the ostream '<<' operator for T has already been defined
     os << "[ ";
@@ -147,6 +143,24 @@ ostream& operator<<( ostream& os , const vector<T>& vec ) {
 }
 
 
+template<typename T>
+ostream& operator<<( ostream& os , const stack<T>& stk ){ 
+    // ostream '<<' operator for stacks
+    // NOTE: This function assumes that the ostream '<<' operator for T has already been defined
+    stack<T> pStk = stk;
+    size_t   i    = 0;
+    size_t   N    = pStk.size();
+    os << "(top)|| ";
+    if( !pStk.size() ){  os << "<empty>";  }
+    while( pStk.size() ){
+        os << (T) pStk.top();
+        pStk.pop();
+        if((i+1) < N){ os << " | "; }
+        ++i;
+    }
+    os << " ||(btm)";
+    return os; // You must return a reference to the stream!
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////// lexer.cpp ///////////////////////////////////////////////////////////////////////////////
