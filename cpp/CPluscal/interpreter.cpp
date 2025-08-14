@@ -1,0 +1,246 @@
+////////// INIT ////////////////////////////////////////////////////////////////////////////////////
+#include "include/CPluscal.hpp"
+
+
+
+////////// INTERPRETER /////////////////////////////////////////////////////////////////////////////
+
+CPC_Interpreter::CPC_Interpreter(){  context = CntxPtr{ new Context{} };  }
+
+
+P_Val make_nan(){  return P_Val{ nan("") };  }
+
+
+bool p_nan( const P_Val& q ){
+    return (holds_alternative<double>( q ) && isnan( get<double>(q) ));
+}
+
+
+P_Val str_2_primitive( const string& q ){
+    // Return interpret `q` as a primitive literal and return it
+    /// Handle `bool` ///
+    if( q == "true"  ){  return P_Val{ true  };  }
+    if( q == "false" ){  return P_Val{ false };  }
+    /// Handle `long` ///
+    try {
+        return P_Val{ stol(q) };
+    }catch( const std::invalid_argument& e ){
+        // NO-OP //
+    } catch( const std::out_of_range& e ){
+        // NO-OP //
+    }
+    /// Handle `char` ///
+    if( q.size() == 1 ){  return P_Val{ q[0] };  }
+    /// Handle `double` ///
+    try {
+        return P_Val{ stod(q) };
+    }catch( const std::invalid_argument& e ){
+        // NO-OP //
+    }catch( const std::out_of_range& e ){
+        // NO-OP //
+    }
+    /// Handle NaN ///
+    return P_Val{ nan("") };
+};
+
+
+ubyte PEMDAS( const string& q ){
+    vvstr pemdas = {
+        {"(",")"}, // Parens
+        {"**"}, // -- Exponent
+        {"*","/"}, // Mult / Div
+        {"+","-"}, // Add / Sub
+    };
+    ubyte i = 0;
+    for( const vstr& lvl : pemdas ){  if( p_vstr_has_str( lvl, q ) ){  return i;  }else{  ++i;  }  }
+    return 255;
+}
+
+
+P_Val operator+( const P_Val& lhs, const P_Val& rhs ){
+    // Add two numeric variants
+    // Using std::visit to handle all possible type combinations
+    return visit([](auto&& left, auto&& right) -> P_Val {
+        // If both are the same type, return that type
+        if constexpr ( std::is_same_v< decltype(left), decltype(right) >) {
+            return left + right;
+        }
+        // FIXME: WANT A MORE GRANULAR TYPE ESCALATION HERE
+        // If different types, convert to double for maximum precision
+        else {
+            return static_cast<double>(left) + static_cast<double>(right);
+        }
+    }, lhs, rhs);
+}
+
+
+P_Val operator-( const P_Val& lhs, const P_Val& rhs ){
+    // Add two numeric variants
+    // Using std::visit to handle all possible type combinations
+    return visit([](auto&& left, auto&& right) -> P_Val {
+        // If both are the same type, return that type
+        if constexpr ( std::is_same_v< decltype(left), decltype(right) >) {
+            return left - right;
+        }
+        // FIXME: WANT A MORE GRANULAR TYPE ESCALATION HERE
+        // If different types, convert to double for maximum precision
+        else {
+            return static_cast<double>(left) - static_cast<double>(right);
+        }
+    }, lhs, rhs);
+}
+
+
+P_Val operator*( const P_Val& lhs, const P_Val& rhs ){
+    // Add two numeric variants
+    // Using std::visit to handle all possible type combinations
+    return visit([](auto&& left, auto&& right) -> P_Val {
+        // If both are the same type, return that type
+        if constexpr ( std::is_same_v< decltype(left), decltype(right) >) {
+            return left * right;
+        }
+        // FIXME: WANT A MORE GRANULAR TYPE ESCALATION HERE
+        // If different types, convert to double for maximum precision
+        else {
+            return static_cast<double>(left) * static_cast<double>(right);
+        }
+    }, lhs, rhs);
+}
+
+
+P_Val operator/( const P_Val& lhs, const P_Val& rhs ){
+    // Add two numeric variants
+    // Using std::visit to handle all possible type combinations
+    return visit([](auto&& left, auto&& right) -> P_Val {
+        // If both are the same type, return that type
+        if constexpr ( std::is_same_v< decltype(left), decltype(right) >) {
+            return left / right;
+        }
+        // FIXME: WANT A MORE GRANULAR TYPE ESCALATION HERE
+        // If different types, convert to double for maximum precision
+        else {
+            return static_cast<double>(left) / static_cast<double>(right);
+        }
+    }, lhs, rhs);
+}
+
+
+P_Val pow( const P_Val& lhs, const P_Val& rhs ){
+    // Add two numeric variants
+    // Using std::visit to handle all possible type combinations
+    return visit([](auto&& left, auto&& right) -> P_Val {
+        return pow( static_cast<double>(left), static_cast<double>(right) );
+    }, lhs, rhs);
+}
+
+
+P_Val infix_op( const P_Val& v1, const string& op, const P_Val& v2 ){
+    if( op == "**" ){
+        return pow( v1, v2 );
+    }else if( op == "*" ){
+        return v1 * v2;
+    }else if( op == "/" ){
+        return v1 / v2;
+    }else if( op == "+" ){
+        return v1 + v2;
+    }else if( op == "-" ){
+        return v1 - v2;
+    }else{  return make_nan();  }
+}
+
+
+ostream& operator<<( ostream& os , const P_Val& v ){
+    // Helper function to stream variant contents
+    visit( [&](auto&& arg){  os << arg;  }, v );
+    return os;
+}
+
+
+
+P_Val CPC_Interpreter::calculate( const vstr& expr, CntxPtr cntx ){
+    // Implements a stack-based calculator
+    P_Val result = make_nan(); 
+    stack<string> oprs;
+    stack<P_Val>  vals;
+    P_Val  lastVal;
+    P_Val  prevVal;
+    P_Val  currVal;
+    string lastOp = "";
+    size_t N = expr.size();
+    size_t i = 0;
+    if( p_literal_math_expr( expr ) ){
+        cout << "Is math expr!" << endl;
+        for( const string& tkn : expr ){
+            if( p_number_string( tkn ) ){
+                lastVal = str_2_primitive( tkn );
+                cout << "Got Value: " << lastVal << endl;
+                if( lastOp.size() ){
+                    if( oprs.size() && (PEMDAS( lastOp ) <= PEMDAS( oprs.top() )) ){
+                        cout << lastOp << " <= " << oprs.top() << endl;
+                        prevVal = vals.top();
+                        vals.pop();
+                        cout << prevVal << " " << lastOp << " " << lastVal << endl;
+                        cout << "result: " << infix_op( prevVal, lastOp, lastVal ) << endl;
+                        vals.push( infix_op( prevVal, lastOp, lastVal ) );
+                        lastOp = "";
+                        lastVal = make_nan();
+                    }else if( oprs.size() && (PEMDAS( lastOp ) > PEMDAS( oprs.top() )) ){
+                        cout << lastOp << " > " << oprs.top() << endl;
+                        currVal = vals.top();
+                        vals.pop();
+                        prevVal = vals.top();
+                        vals.pop();
+                        cout << prevVal << " " << oprs.top() << " " << currVal << endl;
+                        cout << "result: " << infix_op( prevVal, oprs.top(), currVal ) << endl;
+                        vals.push( infix_op( prevVal, oprs.top(), currVal ) );
+                        oprs.pop();
+                    }
+                    if( lastOp.size() ){
+                        oprs.push( lastOp );
+                        cout << oprs.size() << " on the OP stack!" << endl;
+                    }
+                }
+                if( i >= (N-1) ){  
+                    if( !p_nan( lastVal ) ){
+                        vals.push( lastVal );
+                        cout << vals.size() << " on the VALUE stack!" << endl;
+                    }//else{  return lastVal;  }
+                }
+                
+            }else if( p_math_op( tkn ) ){
+                lastOp = tkn;
+                cout << "Got Op: " << lastOp << endl;
+                if( !p_nan( lastVal ) ){
+                    vals.push( lastVal );
+                    cout << vals.size() << " on the VALUE stack!" << endl;
+                }else{  return lastVal;  }
+            }
+
+            ++i;
+        }
+        while( oprs.size() ){
+        // while( 0 ){
+            lastOp  = oprs.top(); oprs.pop();
+            lastVal = vals.top(); vals.pop();
+            prevVal = vals.top(); vals.pop();
+            cout << prevVal << " " << lastOp << " " << lastVal << endl;
+            vals.push( infix_op( prevVal, lastOp, lastVal ) );
+        }
+    }
+    return vals.top();
+}
+
+
+P_Val CPC_Interpreter::interpret( NodePtr sourceTree, CntxPtr cntx ){
+    NodePtr root = sourceTree;
+    switch ( root->type ){
+        case PROGRAM:
+            cout << "Run program!" << endl;
+            for( const NodePtr node : root->edges ){  interpret( node, cntx );  }
+            break;
+        
+        default:
+            break;
+    }
+    return make_nan();
+}

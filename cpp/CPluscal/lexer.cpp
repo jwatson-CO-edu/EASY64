@@ -11,11 +11,11 @@ std::ostream& operator<<( std::ostream& os , vvstr arr ){
     // Print string vector vector
 	os << "[\n";
     for( const vstr& row : arr ){
-        os << "\t[\n";
+        os << "\t[  ";
         for( const string& str : row ){
-            os << "\t\t" << str << ",\n";
+            os << str << ",  ";
         }
-        os << "\t]\n";
+        os << "]\n";
     }
     os << "]";
 	return os;

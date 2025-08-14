@@ -16,6 +16,8 @@ using std::deque;
 using std::list;
 #include <map>
 using std::map;
+#include <stack>
+using std::stack;
 #include <fstream>
 using std::ifstream;
 #include <sstream>
@@ -30,6 +32,8 @@ using std::shared_ptr;
 using std::filesystem::exists;
 #include <variant>
 using std::variant, std::get, std::holds_alternative;
+#include <cmath>
+using std::nan, std::isnan;
 
 ///// Aliases /////////////////////////////////////////////////////////////
 typedef size_t /*-------*/ ullong;
@@ -89,8 +93,7 @@ const string TKN_NEWLINE = "<nl>";
 
 
 
-////////// PRIMITIVE TYPES /////////////////////////////////////////////////////////////////////////
-typedef variant<double,llong,char,bool> P_Val; // Primitive Values // WARNING: ASSUMPTION 
+
 
 
 
@@ -188,7 +191,7 @@ class LexMachine{ public:
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-////////// interpreter.cpp /////////////////////////////////////////////////////////////////////////
+////////// parser.cpp //////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ////////// SOURCE TREE /////////////////////////////////////////////////////////////////////////////
@@ -210,6 +213,7 @@ enum NodeType{
     COMPARISON,
     FUNCTION,
     ARGUMENTS,
+    FOR_LOOP,
     MATH_EXPR,
     TYPENAME,
 };
@@ -227,30 +231,63 @@ class ProgNode{ public:
 
 
 ////////// PARSER //////////////////////////////////////////////////////////////////////////////////
+bool p_literal_math_expr( const vstr& tokens ); // Does this expression contain only numbers and infix math operators?
+bool p_number_string( const string& q ); // Return true if the string can represent a primitive
+bool p_math_op( const string& q ); // Is this string an infix math operator?
+bool p_vstr_has_str( const vstr& vec, const string& q ); // Return true if the `vstr` contains `q`
+
+enum ParseMode{ 
+    // What is the parser working on?
+    BEGIN, 
+    COMMENT, 
+    VAR_SECT,
+    CONST_SECT,
+    MAIN_SECT,
+    FOR_BODY,
+};
+
 
 class CPC_Parser{ public:
-    LexMachine    lexer;
     NodePtr /*-*/ header;    
     list<NodePtr> code;
 
     CPC_Parser(); // Default Constructor
 
-    bool    load_program_file( string fPath ); // ---------- Invoke the lexer
-    NodePtr build_source_tree( const vvstr& lineTokens ); // Build a cheap Abstract Source Tree to be executed later
+    // Build a cheap Abstract Source Tree to be executed later
+    NodePtr build_source_tree( const vvstr& lineTokens, ParseMode bgnMode = BEGIN ); 
 };
 
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////// interpreter.cpp /////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+////////// PRIMITIVE TYPES /////////////////////////////////////////////////////////////////////////
+typedef variant<double,llong,char,bool> P_Val; // Primitive Values // WARNING: ASSUMPTION 
+
+
 ////////// INTERPRETER /////////////////////////////////////////////////////////////////////////////
+ostream& operator<<( ostream& os , const P_Val& v ); // Helper function to stream variant contents
 
 class Context;
 typedef shared_ptr<Context> CntxPtr;
 
 class Context{ public:
-    CntxPtr /*-*/ parent = nullptr;
-    list<NodePtr> types;
-    list<NodePtr> constants;
-    list<NodePtr> variables;
+    CntxPtr /*-----*/ parent = nullptr;
+    map<string,P_Val> constants;
+    map<string,P_Val> variables;
+};
+
+
+class CPC_Interpreter{ public:
+    CntxPtr context = nullptr;
+
+    CPC_Interpreter();
+
+    P_Val calculate( const vstr& expr, CntxPtr cntx );
+
+    P_Val interpret( NodePtr sourceTree, CntxPtr cntx );
 };
 
 

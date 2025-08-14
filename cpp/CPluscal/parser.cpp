@@ -11,16 +11,10 @@ ProgNode::ProgNode( NodeType typ, vstr tkns ){
 }
 
 
-////////// INTERPRETER /////////////////////////////////////////////////////////////////////////////
+////////// PARSER //////////////////////////////////////////////////////////////////////////////////
 
 CPC_Parser::CPC_Parser(){
     // Default Constructor
-}
-
-bool CPC_Parser::load_program_file( string fPath ){
-    // Invoke the lexer
-    lexer = LexMachine{ fPath };
-    return true;
 }
 
 
@@ -38,18 +32,18 @@ bool p_number_string( const string& q ){
         stol(q);
         return true;
     }catch( const std::invalid_argument& e ){
-        cerr << "Invalid argument: " << e.what() << endl;
+        return false;
     } catch( const std::out_of_range& e ){
-        cerr << "Out of range: " << e.what() << endl;
+        return false;
     }
     /// Handle `double` ///
     try {
         stod(q);
         return true;
     }catch( const std::invalid_argument& e ){
-        cerr << "Invalid argument: " << e.what() << endl;
+        return false;
     }catch( const std::out_of_range& e ){
-        cerr << "Out of range: " << e.what() << endl;
+        return false;
     }
     return false;
 }
@@ -66,17 +60,28 @@ bool p_literal_math_expr( const vstr& tokens ){
     // Does this expression contain only numbers and infix math operators?
     if( tokens.size() == 0 ){  return false;  }
     for( const string& token : tokens ){
-        if( !( p_math_op( token ) || p_number_string( token ) ) ){  return false;  }
+        if( !( 
+            p_math_op( token ) || 
+            p_number_string( token ) ||
+            (token == "(") ||
+            (token == ")") 
+         ) ){  return false;  }
     }
     return true;
 }
 
 
 bool p_ident_math_expr( const vstr& tokens ){
-    // Does this expression contain only numbers and infix math operators?
+    // Does this expression contain only numbers, infix math operators, and identifiers?
     if( tokens.size() == 0 ){  return false;  }
     for( const string& token : tokens ){
-        if( !( p_math_op( token ) || p_number_string( token ) || p_identifier( token ) ) ){  return false;  }
+        if( !( 
+            p_math_op( token ) || 
+            p_number_string( token ) || 
+            p_identifier( token ) ||
+            (token == "(") ||
+            (token == ")") 
+        ) ){  return false;  }
     }
     return true;
 }
@@ -120,10 +125,11 @@ bool p_var_declare_statememt( const vstr& tokens ){
 bool p_function_call( const vstr& expr ){
     // Determine if `expr` is a function call
     // ASSUMPTION: ENTIRE FUNCTION CALL IS ON THE SAME LINE
+    // ASSUMPTION: FUNCTION NAME IS THE FIRST TOKEN
     size_t openDex = vstr_find_index( expr, "(" );
     size_t closDex = vstr_find_index( expr, ")" );
     if( !p_identifier( expr[0] ) ){  return false;  }
-    if( openDex == SIZE_MAX ){  return false;  }
+    if( openDex != 1 ){  return false;  }
     if( closDex == SIZE_MAX ){  return false;  }
     return true;
 }
@@ -143,16 +149,6 @@ vstr get_func_args( const vstr& expr ){
 
 ///// AST Parsing /////////////////////////////////////////////////////////
 
-enum ParseMode{ 
-    // What is the parser working on?
-    BEGIN, 
-    COMMENT, 
-    VAR_SECT,
-    CONST_SECT,
-    MAIN_SECT,
-    FOR_CNTX,
-};
-
 vstr concat( const vvstr& tokenLines ){
     size_t N = 0;
     vstr   rtnVec;
@@ -162,12 +158,30 @@ vstr concat( const vvstr& tokenLines ){
     return rtnVec;
 }
 
+vvstr get_lines_up_to_next_end( const vvstr& lines, size_t bgn = 0 ){
+    vvstr  rtnLns;
+    vstr   line;
+    size_t i = bgn;
+    if( bgn < lines.size() ){
+        while( true ){
+            line = lines[i];
+            if( !p_vstr_has_str( line, "end" ) ){  rtnLns.push_back( line );  }else{  break;  }
+            ++i;
+        }
+    }
+    cout << "Return Block: " << rtnLns << endl;
+    return rtnLns;
+}
 
-NodePtr CPC_Parser::build_source_tree( const vvstr& lineTokens ){
+
+NodePtr CPC_Parser::build_source_tree( const vvstr& lineTokens, ParseMode bgnMode ){
     // Build a cheap Abstract Source Tree to be executed later
-    ParseMode mode    = BEGIN;
-    NodePtr   root    = nullptr;
-    size_t    chrDex  = SIZE_MAX;
+    ParseMode mode   = bgnMode;
+    NodePtr   root   = nullptr;
+    size_t    chrDex = SIZE_MAX;
+    size_t    i /**/ = 0;
+    size_t    skip   = 0;
+    vvstr     block;
     NodePtr   rtnPtr{ new ProgNode{  PROGRAM, concat( lineTokens )  } };
     NodePtr   conSctn = nullptr;
     NodePtr   varSctn = nullptr;
@@ -175,9 +189,17 @@ NodePtr CPC_Parser::build_source_tree( const vvstr& lineTokens ){
     
     // For every line of tokens, do ...
     for( const vstr& tknLin : lineTokens ){
-        cout << "Line: " << tknLin << endl;
 
-        if( mode == BEGIN ){  cout << "\tDefault Mode!" << endl;  }
+        if( skip > 0 ){
+            --skip;
+            cout << ">" << flush;
+            continue;
+        }
+
+        cout << endl << "Line " << (i+1) << ": " << tknLin << endl;
+
+        if( mode == BEGIN    ){  cout << "\tDefault Mode!" << endl;  }
+        if( mode == FOR_BODY ){  cout << "\tInside For Loop!" << endl;  }
 
         ///// Comment Continue / End /////////////
         if( mode == COMMENT ){
@@ -240,7 +262,7 @@ NodePtr CPC_Parser::build_source_tree( const vvstr& lineTokens ){
             }
 
         ///// Main Program ///////////////////////
-        }else if( mode == MAIN_SECT ){
+        }else if( (mode == MAIN_SECT)||(mode == FOR_BODY) ){
             ///// Function Call /////
             if( p_function_call( tknLin ) ){
                 cout << "\tFunction Call!" << endl;
@@ -250,8 +272,15 @@ NodePtr CPC_Parser::build_source_tree( const vvstr& lineTokens ){
                 rtnPtr->edges.push_back( root );
 
             ///// For Loop /////
-            }else if( p_vstr_has_str( tknLin, "for" ) ){
+            // ASSUMPTION: FOR LOOP DEFINITION APPEARS ON ONE LINE
+            // FIXME: NEED A TIGHTER DEFINITION OF `for`
+            }else if( p_vstr_has_str( tknLin, "for" ) && p_vstr_has_str( tknLin, "begin" ) ){
                 cout << "\tFor Loop Begin!" << endl;
+                block = get_lines_up_to_next_end( lineTokens, i+2 );
+                skip  = block.size()+1;
+                root  = NodePtr{ new ProgNode{ FOR_LOOP, tknLin } };
+                root->edges.push_back( build_source_tree( block, FOR_BODY ) );
+                rtnPtr->edges.push_back( root );
 
             ///// Variable Assignment /////
             }else if( p_assignment_statememt( tknLin, ":=" ) ){
@@ -260,6 +289,12 @@ NodePtr CPC_Parser::build_source_tree( const vvstr& lineTokens ){
                 root->edges.push_back( NodePtr{ new ProgNode{ IDENTIFIER, get_sub_vec( tknLin, 0, 1 ) } } );
                 root->edges.push_back( NodePtr{ new ProgNode{ MATH_EXPR , get_RHS( tknLin, ":=" ) } } );
                 rtnPtr->edges.push_back( root );
+            
+            ///// End Program /////
+            // ASSUMPTION: PROGRAM *ALWAYS* ENDS WITH "end." 
+            }else if( p_vstr_has_str( tknLin, "end" ) && p_vstr_has_str( tknLin, "." ) && (tknLin.size() == 2) ){
+                cout << "\tEnd Program!" << endl;
+                break; // Stop parsing!
             }
 
         ///// Unknown Expression /////////////////
@@ -267,6 +302,7 @@ NodePtr CPC_Parser::build_source_tree( const vvstr& lineTokens ){
             cout << "Line " << tknLin << " could not be parsed!" << endl;
             break;
         }
+        ++i;
     }
     return rtnPtr;
 }

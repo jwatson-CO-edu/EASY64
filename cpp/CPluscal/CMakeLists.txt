@@ -25,7 +25,8 @@ cmake_print_variables( PROJECT_SOURCE_DIR )
 
 add_library( CPC_LIB
              lexer.cpp 
-             parser.cpp )
+             parser.cpp 
+             interpreter.cpp )
 
 target_link_libraries( CPC_LIB )
 
@@ -33,9 +34,14 @@ target_link_libraries( CPC_LIB )
 
 ########## PROGRAMS ################################################################################
 
-##### 01: CMake Test #####
+##### 00: Lexer Test #####
 set( EXECUTABLE_NAME 00_tokenize-file.out )
 add_executable( ${EXECUTABLE_NAME} 00_tokenize-file.cpp )
+target_link_libraries( ${EXECUTABLE_NAME} CPC_LIB )
+
+##### 01: Math Test #####
+set( EXECUTABLE_NAME 01_math-ops.out )
+add_executable( ${EXECUTABLE_NAME} 01_math-ops.cpp )
 target_link_libraries( ${EXECUTABLE_NAME} CPC_LIB )
 
 
