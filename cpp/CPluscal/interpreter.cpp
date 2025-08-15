@@ -149,11 +149,10 @@ P_Val infix_op( const P_Val& v1, const string& op, const P_Val& v2 ){
 }
 
 
-ostream& operator<<( ostream& os , const P_Val& v ){
-    // Helper function to stream variant contents
-    visit( [&](auto&& arg){  os << arg;  }, v );
-    return os;
-}
+
+
+
+
 
 
 vstr get_parenthetical( const vstr& expr, size_t bgn = 0 ){

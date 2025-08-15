@@ -37,7 +37,7 @@ using std::nan, std::isnan;
 
 ///// Aliases /////////////////////////////////////////////////////////////
 typedef size_t /*-------*/ ullong;
-typedef long long /*----*/ llong;
+typedef long long int /**/ llong;
 typedef unsigned char /**/ ubyte;
 typedef vector<string>     vstr;
 typedef vector<vstr> /*-*/ vvstr; 
@@ -91,6 +91,10 @@ const array<string,2> NL_INDICATORS = { "\r\n", "\n" };
 ///// Internal Tokens /////////////////////////////////////////////////////
 const string TKN_NEWLINE = "<nl>";
 
+////////// PRIMITIVE TYPES /////////////////////////////////////////////////////////////////////////
+typedef variant<double,llong,char,bool> P_Val; // Primitive Values // WARNING: ASSUMPTION 
+
+ostream& operator<<(ostream& os, const P_Val& v);
 
 
 ////////// CONTAINERS //////////////////////////////////////////////////////////////////////////////
@@ -150,10 +154,12 @@ ostream& operator<<( ostream& os , const stack<T>& stk ){
     stack<T> pStk = stk;
     size_t   i    = 0;
     size_t   N    = pStk.size();
+    T        elem;
     os << "(top)|| ";
     if( !pStk.size() ){  os << "<empty>";  }
     while( pStk.size() ){
-        os << (T) pStk.top();
+        elem = pStk.top();
+        os << elem;
         pStk.pop();
         if((i+1) < N){ os << " | "; }
         ++i;
@@ -277,8 +283,7 @@ class CPC_Parser{ public:
 ////////// interpreter.cpp /////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-////////// PRIMITIVE TYPES /////////////////////////////////////////////////////////////////////////
-typedef variant<double,llong,char,bool> P_Val; // Primitive Values // WARNING: ASSUMPTION 
+
 
 
 ////////// INTERPRETER /////////////////////////////////////////////////////////////////////////////

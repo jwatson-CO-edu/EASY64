@@ -24,6 +24,7 @@ cmake_print_variables( PROJECT_SOURCE_DIR )
 ##### Local Libraries #####
 
 add_library( CPC_LIB
+             utils.cpp 
              lexer.cpp 
              parser.cpp 
              interpreter.cpp )
