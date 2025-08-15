@@ -91,10 +91,26 @@ const array<string,2> NL_INDICATORS = { "\r\n", "\n" };
 ///// Internal Tokens /////////////////////////////////////////////////////
 const string TKN_NEWLINE = "<nl>";
 
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////// primitives.cpp //////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 ////////// PRIMITIVE TYPES /////////////////////////////////////////////////////////////////////////
 typedef variant<double,llong,char,bool> P_Val; // Primitive Values // WARNING: ASSUMPTION 
 
 ostream& operator<<(ostream& os, const P_Val& v);
+P_Val    make_nan();
+bool     p_nan( const P_Val& q );
+P_Val    str_2_primitive( const string& q ); // ------------ Return interpret `q` as a primitive literal and return it
+P_Val    operator+( const P_Val& lhs, const P_Val& rhs ); // Add two numeric variants
+P_Val    operator-( const P_Val& lhs, const P_Val& rhs ); // Subtract two numeric variants
+P_Val    operator*( const P_Val& lhs, const P_Val& rhs ); // Multiply two numeric variants
+P_Val    operator/( const P_Val& lhs, const P_Val& rhs ); // Divide two numeric variants
+P_Val    pow( const P_Val& lhs, const P_Val& rhs ); // ----- Raise `lhs` to the `rhs` power
+    
+    
+    
 
 
 ////////// CONTAINERS //////////////////////////////////////////////////////////////////////////////

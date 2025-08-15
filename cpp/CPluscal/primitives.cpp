@@ -1,0 +1,128 @@
+////////// INIT ////////////////////////////////////////////////////////////////////////////////////
+#include "include/CPluscal.hpp"
+
+
+ostream& operator<<(ostream& os, const P_Val& v) {
+    std::visit([&os](const auto& value) {
+        using T = std::decay_t<decltype(value)>;
+        if constexpr (std::is_same_v<T, char>) {
+            os << (int)value;  // Print char as integer
+        } else {
+            os << value;
+        }
+    }, v);
+    return os;
+}
+
+
+P_Val make_nan(){  return P_Val{ nan("") };  }
+
+
+bool p_nan( const P_Val& q ){
+    return (holds_alternative<double>( q ) && isnan( get<double>(q) ));
+}
+
+
+P_Val str_2_primitive( const string& q ){
+    // Return interpret `q` as a primitive literal and return it
+    /// Handle `bool` ///
+    if( q == "true"  ){  return P_Val{ true  };  }
+    if( q == "false" ){  return P_Val{ false };  }
+    /// Handle `long` ///
+    try {
+        return P_Val{ stol(q) };
+    }catch( const std::invalid_argument& e ){
+        // NO-OP //
+    } catch( const std::out_of_range& e ){
+        // NO-OP //
+    }
+    /// Handle `char` ///
+    if( q.size() == 1 ){  return P_Val{ q[0] };  }
+    /// Handle `double` ///
+    try {
+        return P_Val{ stod(q) };
+    }catch( const std::invalid_argument& e ){
+        // NO-OP //
+    }catch( const std::out_of_range& e ){
+        // NO-OP //
+    }
+    /// Handle NaN ///
+    return P_Val{ nan("") };
+};
+
+
+P_Val operator+( const P_Val& lhs, const P_Val& rhs ){
+    // Add two numeric variants
+    // Using std::visit to handle all possible type combinations
+    return visit([](auto&& left, auto&& right) -> P_Val {
+        // If both are the same type, return that type
+        if constexpr ( std::is_same_v< decltype(left), decltype(right) >) {
+            return left + right;
+        }
+        // FIXME: WANT A MORE GRANULAR TYPE ESCALATION HERE
+        // If different types, convert to double for maximum precision
+        else {
+            return static_cast<double>(left) + static_cast<double>(right);
+        }
+    }, lhs, rhs);
+}
+
+
+P_Val operator-( const P_Val& lhs, const P_Val& rhs ){
+    // Subtract two numeric variants
+    // Using std::visit to handle all possible type combinations
+    return visit([](auto&& left, auto&& right) -> P_Val {
+        // If both are the same type, return that type
+        if constexpr ( std::is_same_v< decltype(left), decltype(right) >) {
+            return left - right;
+        }
+        // FIXME: WANT A MORE GRANULAR TYPE ESCALATION HERE
+        // If different types, convert to double for maximum precision
+        else {
+            return static_cast<double>(left) - static_cast<double>(right);
+        }
+    }, lhs, rhs);
+}
+
+
+P_Val operator*( const P_Val& lhs, const P_Val& rhs ){
+    // Multiply two numeric variants
+    // Using std::visit to handle all possible type combinations
+    return visit([](auto&& left, auto&& right) -> P_Val {
+        // If both are the same type, return that type
+        if constexpr ( std::is_same_v< decltype(left), decltype(right) >) {
+            return left * right;
+        }
+        // FIXME: WANT A MORE GRANULAR TYPE ESCALATION HERE
+        // If different types, convert to double for maximum precision
+        else {
+            return static_cast<double>(left) * static_cast<double>(right);
+        }
+    }, lhs, rhs);
+}
+
+
+P_Val operator/( const P_Val& lhs, const P_Val& rhs ){
+    // Divide two numeric variants
+    // Using std::visit to handle all possible type combinations
+    return visit([](auto&& left, auto&& right) -> P_Val {
+        // If both are the same type, return that type
+        if constexpr ( std::is_same_v< decltype(left), decltype(right) >) {
+            return left / right;
+        }
+        // FIXME: WANT A MORE GRANULAR TYPE ESCALATION HERE
+        // If different types, convert to double for maximum precision
+        else {
+            return static_cast<double>(left) / static_cast<double>(right);
+        }
+    }, lhs, rhs);
+}
+
+
+P_Val pow( const P_Val& lhs, const P_Val& rhs ){
+    // Raise `lhs` to the `rhs` power
+    // Using std::visit to handle all possible type combinations
+    return visit([](auto&& left, auto&& right) -> P_Val {
+        return pow( static_cast<double>(left), static_cast<double>(right) );
+    }, lhs, rhs);
+}
