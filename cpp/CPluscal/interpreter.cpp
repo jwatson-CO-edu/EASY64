@@ -71,8 +71,12 @@ P_Val CPC_Interpreter::calculate( const vstr& expr, CntxPtr cntx ){
         cout << endl << "BGN!-----------------" << endl << endl;
         for( const string& tkn : expr ){
 
+            cout << "## Iter: " << i << ", Token: " << tkn << ", `lastVal`: " << lastVal << ", `lastOp`: " << lastOp 
+                 << ", Skip: " << skip << " ##" << endl;
+
             if( skip > 0 ){
                 --skip;
+                cout << ">skip!>" << endl;
                 continue;
             }
 
