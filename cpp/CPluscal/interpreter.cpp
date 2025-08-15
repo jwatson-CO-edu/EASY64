@@ -55,17 +55,18 @@ vstr get_parenthetical( const vstr& expr, size_t bgn = 0 ){
 
 P_Val CPC_Interpreter::calculate( const vstr& expr, CntxPtr cntx ){
     // Implements a stack-based calculator
-    P_Val result = make_nan(); 
+    P_Val /*---*/ result = make_nan(); 
+    string /*--*/ lastOp = "";
+    size_t /*--*/ N /**/ = expr.size();
+    size_t /*--*/ i /**/ = 0;
+    size_t /*--*/ skip   = 0;
+    vstr /*----*/ subExp;
     stack<string> oprs;
     stack<P_Val>  vals;
-    P_Val  lastVal;
-    P_Val  prevVal;
-    P_Val  currVal;
-    string lastOp = "";
-    size_t N     = expr.size();
-    size_t i    = 0;
-    size_t skip = 0;
-    vstr   subExp;
+    P_Val /*---*/ lastVal;
+    P_Val /*---*/ prevVal;
+    P_Val /*---*/ currVal;
+    
     if( p_literal_math_expr( expr ) ){
         cout << endl << "BGN!-----------------" << endl << endl;
         for( const string& tkn : expr ){
