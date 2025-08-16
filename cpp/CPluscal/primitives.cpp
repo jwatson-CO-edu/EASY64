@@ -23,11 +23,27 @@ bool p_nan( const P_Val& q ){
 }
 
 
+bool p_has_substring( const string& str, const string& sub ){
+    // Find the substring
+    return (str.find( sub ) != string::npos);
+}
+
+
 P_Val str_2_primitive( const string& q ){
     // Return interpret `q` as a primitive literal and return it
     /// Handle `bool` ///
     if( q == "true"  ){  return P_Val{ true  };  }
     if( q == "false" ){  return P_Val{ false };  }
+    /// Handle `double` ///
+    if( p_has_substring( q, "." ) ){
+        try {
+            return P_Val{ stod(q) };
+        }catch( const std::invalid_argument& e ){
+            // NO-OP //
+        }catch( const std::out_of_range& e ){
+            // NO-OP //
+        }
+    }
     /// Handle `long` ///
     try {
         return P_Val{ stol(q) };
@@ -38,14 +54,7 @@ P_Val str_2_primitive( const string& q ){
     }
     /// Handle `char` ///
     if( q.size() == 1 ){  return P_Val{ q[0] };  }
-    /// Handle `double` ///
-    try {
-        return P_Val{ stod(q) };
-    }catch( const std::invalid_argument& e ){
-        // NO-OP //
-    }catch( const std::out_of_range& e ){
-        // NO-OP //
-    }
+    
     /// Handle NaN ///
     return P_Val{ nan("") };
 };

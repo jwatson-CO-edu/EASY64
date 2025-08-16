@@ -16,7 +16,7 @@ int main( int argc, char *argv[] ){
     vstr /*------*/ expr8{ "2", "-", "3" }; // -1
     vstr /*------*/ expr9{ "2", "-", "3", "*", "4" }; // -10
     vstr /*------*/ exprA{ "2", "*", "(", "3", "+", "4", ")", "/", "5" }; // 2.8
-    vstr /*------*/ exprB{ "2.1", "-", "3" }; // -1.1
+    vstr /*------*/ exprB{ "2.1", "-", "3" }; // -0.9
 
     CntxPtr /*---*/ cntx{ new Context{} };
     CPC_Interpreter cpc{};
@@ -29,6 +29,7 @@ int main( int argc, char *argv[] ){
     cout << cpc.calculate( expr6, cntx ) << endl; // 300
     cout << cpc.calculate( expr7, cntx ) << endl; // 170
     cout << cpc.calculate( expr8, cntx ) << endl; //  -1
-    cout << cpc.calculate( exprA, cntx ) << endl; // -10
-    cout << cpc.calculate( exprB, cntx ) << endl; // -10
+    cout << cpc.calculate( expr9, cntx ) << endl; // -10
+    cout << cpc.calculate( exprA, cntx ) << endl; //   2.8
+    cout << cpc.calculate( exprB, cntx ) << endl; //  -0.9
 }
