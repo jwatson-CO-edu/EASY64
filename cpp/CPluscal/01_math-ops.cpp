@@ -15,11 +15,11 @@ int main( int argc, char *argv[] ){
     vstr /*------*/ expr7{ "2", "*", "(", "(", "4", "+", "6", ")", "+", "7", ")", "*", "5" }; // 170
     CntxPtr /*---*/ cntx{ new Context{} };
     CPC_Interpreter cpc{};
-    cout << cpc.calculate( expr0, cntx ) << endl; // 5
-    cout << cpc.calculate( expr1, cntx ) << endl; // 14
-    cout << cpc.calculate( expr2, cntx ) << endl; // 10
-    cout << cpc.calculate( expr3, cntx ) << endl; // 26
-    cout << cpc.calculate( expr4, cntx ) << endl; // 70
+    cout << cpc.calculate( expr0, cntx ) << endl; //   5
+    cout << cpc.calculate( expr1, cntx ) << endl; //  14
+    cout << cpc.calculate( expr2, cntx ) << endl; //  10
+    cout << cpc.calculate( expr3, cntx ) << endl; //  26
+    cout << cpc.calculate( expr4, cntx ) << endl; //  70
     cout << cpc.calculate( expr5, cntx ) << endl; // 370
     cout << cpc.calculate( expr6, cntx ) << endl; // 300
     cout << cpc.calculate( expr7, cntx ) << endl; // 170
