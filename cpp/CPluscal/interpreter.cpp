@@ -77,16 +77,15 @@ P_Val CPC_Interpreter::calculate( const vstr& expr, CntxPtr cntx ){
             if( skip > 0 ){
                 --skip;
                 cout << ">skip!>" << endl;
-                continue;
+                ++i; continue;
             }
-
             if( p_number_string( tkn ) || (tkn == "(") ){
                 if( tkn == "(" ){
                     subExp  = get_parenthetical( expr, i );
                     cout << endl << "PARENTHETICAL: " << subExp << endl << endl;
                     skip    = subExp.size()+1;
                     lastVal = calculate( subExp, cntx );
-                }else{
+                }else if( p_number_string( tkn ) ){
                     lastVal = str_2_primitive( tkn );
                 }
                 cout << "Got Value: " << lastVal << endl;
@@ -119,7 +118,7 @@ P_Val CPC_Interpreter::calculate( const vstr& expr, CntxPtr cntx ){
                 if( i >= (N-1) ){  
                     if( !p_nan( lastVal ) ){
                         vals.push( lastVal );
-                        // cout << vals.size() << " on the VALUE stack!" << endl;
+                        lastVal = make_nan();
                     }
                 }
                 
@@ -137,6 +136,10 @@ P_Val CPC_Interpreter::calculate( const vstr& expr, CntxPtr cntx ){
                  << "Ops: _ " << oprs << endl << endl;
 
             ++i;
+        }
+        if( !p_nan( lastVal ) ){
+            vals.push( lastVal );
+            // cout << vals.size() << " on the VALUE stack!" << endl;
         }
         while( oprs.size() ){
         // while( 0 ){
