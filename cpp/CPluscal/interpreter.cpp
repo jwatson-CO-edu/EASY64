@@ -27,7 +27,7 @@ P_Val infix_op( const P_Val& v1, const string& op, const P_Val& v2 ){
     }else if( op == "*" ){
         return v1 * v2;
     }else if( op == "/" ){
-        return v1 / v2;
+        return 1.0 * v1 / v2; // FORCE devision to be float!
     }else if( op == "+" ){
         return v1 + v2;
     }else if( op == "-" ){
@@ -68,53 +68,46 @@ P_Val CPC_Interpreter::calculate( const vstr& expr, CntxPtr cntx ){
     P_Val /*---*/ currVal;
     
     if( p_literal_math_expr( expr ) ){
-        cout << endl << "BGN!-----------------" << endl << endl;
+        // cout << endl << "BGN!-----------------" << endl << endl;
         for( const string& tkn : expr ){
 
-            cout << "## Iter: " << i << ", Token: " << tkn << ", `lastVal`: " << lastVal << ", `lastOp`: " << lastOp 
-                 << ", Skip: " << skip << " ##" << endl;
+            // cout << "## Iter: " << i << ", Token: " << tkn << ", `lastVal`: " << lastVal << ", `lastOp`: " << lastOp 
+            //      << ", Skip: " << skip << " ##" << endl;
 
             if( skip > 0 ){
                 --skip;
-                cout << ">skip!>" << endl;
+                // cout << ">skip!>" << endl;
                 ++i; continue;
             }
             if( p_number_string( tkn ) || (tkn == "(") ){
                 if( tkn == "(" ){
                     subExp  = get_parenthetical( expr, i );
-                    cout << endl << "PARENTHETICAL: " << subExp << endl << endl;
+                    // cout << endl << "PARENTHETICAL: " << subExp << endl << endl;
                     skip    = subExp.size()+1;
                     lastVal = calculate( subExp, cntx );
                 }else if( p_number_string( tkn ) ){
                     lastVal = str_2_primitive( tkn );
                 }
-                cout << "Got Value: " << lastVal << endl;
-                // if( lastOp.size() ){
+                // cout << "Got Value: " << lastVal << endl;
                 if( oprs.size() && (PEMDAS( lastOp ) <= PEMDAS( oprs.top() )) ){
-                    cout << lastOp << " <= " << oprs.top() << endl;
+                    // cout << lastOp << " <= " << oprs.top() << endl;
                     prevVal = vals.top();
                     vals.pop();
-                    // cout << prevVal << " " << lastOp << " " << lastVal << endl;
-                    // cout << "result: " << infix_op( prevVal, lastOp, lastVal ) << endl;
                     vals.push( infix_op( prevVal, lastOp, lastVal ) );
                     lastOp = "";
                     lastVal = make_nan();
                 }else if( oprs.size() && (PEMDAS( lastOp ) > PEMDAS( oprs.top() )) ){
-                    cout << lastOp << " > " << oprs.top() << endl;
+                    // cout << lastOp << " > " << oprs.top() << endl;
                     currVal = vals.top();
                     vals.pop();
                     prevVal = vals.top();
                     vals.pop();
-                    // cout << prevVal << " " << oprs.top() << " " << currVal << endl;
-                    // cout << "result: " << infix_op( prevVal, oprs.top(), currVal ) << endl;
                     vals.push( infix_op( prevVal, oprs.top(), currVal ) );
                     oprs.pop();
                 }
                 if( lastOp.size() ){
                     oprs.push( lastOp );
-                    // cout << oprs.size() << " on the OP stack!" << endl;
                 }
-                // }
                 if( i >= (N-1) ){  
                     if( !p_nan( lastVal ) ){
                         vals.push( lastVal );
@@ -124,16 +117,15 @@ P_Val CPC_Interpreter::calculate( const vstr& expr, CntxPtr cntx ){
                 
             }else if( p_math_op( tkn ) ){
                 lastOp = tkn;
-                cout << "Got Op: " << lastOp << endl;
+                // cout << "Got Op: " << lastOp << endl;
                 if( !p_nan( lastVal ) ){
                     vals.push( lastVal );
-                    // cout << vals.size() << " on the VALUE stack!" << endl;
                 }else{  return lastVal;  }
             }
 
-            cout << "\n/// Stack State ///" << endl  
-                 << "Values:" << vals << endl
-                 << "Ops: _ " << oprs << endl << endl;
+            // cout << "\n/// Stack State ///" << endl  
+            //      << "Values:" << vals << endl
+            //      << "Ops: _ " << oprs << endl << endl;
 
             ++i;
         }
@@ -142,15 +134,14 @@ P_Val CPC_Interpreter::calculate( const vstr& expr, CntxPtr cntx ){
             // cout << vals.size() << " on the VALUE stack!" << endl;
         }
         while( oprs.size() ){
-        // while( 0 ){
             lastOp  = oprs.top(); oprs.pop();
             lastVal = vals.top(); vals.pop();
             prevVal = vals.top(); vals.pop();
-            cout << prevVal << " " << lastOp << " " << lastVal << endl;
+            // cout << prevVal << " " << lastOp << " " << lastVal << endl;
             vals.push( infix_op( prevVal, lastOp, lastVal ) );
         }
     }
-    cout << endl << "------------END!---> " << vals.top() << endl << endl;
+    // cout << endl << "------------END!---> " << vals.top() << endl << endl;
     return vals.top();
 }
 

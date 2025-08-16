@@ -13,6 +13,11 @@ int main( int argc, char *argv[] ){
     vstr /*------*/ expr5{ "2", "*", "(", "3", "*", "(", "4", "+", "6", ")", "+", "7", ")", "*", "5" }; // 370
     vstr /*------*/ expr6{ "2", "*", "(", "3", "*", "(", "4", "+", "6", ")", ")", "*", "5" }; // 300
     vstr /*------*/ expr7{ "2", "*", "(", "(", "4", "+", "6", ")", "+", "7", ")", "*", "5" }; // 170
+    vstr /*------*/ expr8{ "2", "-", "3" }; // -1
+    vstr /*------*/ expr9{ "2", "-", "3", "*", "4" }; // -10
+    vstr /*------*/ exprA{ "2", "*", "(", "3", "+", "4", ")", "/", "5" }; // 2.8
+    vstr /*------*/ exprB{ "2.1", "-", "3" }; // -1.1
+
     CntxPtr /*---*/ cntx{ new Context{} };
     CPC_Interpreter cpc{};
     cout << cpc.calculate( expr0, cntx ) << endl; //   5
@@ -23,4 +28,7 @@ int main( int argc, char *argv[] ){
     cout << cpc.calculate( expr5, cntx ) << endl; // 370
     cout << cpc.calculate( expr6, cntx ) << endl; // 300
     cout << cpc.calculate( expr7, cntx ) << endl; // 170
+    cout << cpc.calculate( expr8, cntx ) << endl; //  -1
+    cout << cpc.calculate( exprA, cntx ) << endl; // -10
+    cout << cpc.calculate( exprB, cntx ) << endl; // -10
 }
