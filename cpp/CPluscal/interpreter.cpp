@@ -148,13 +148,36 @@ P_Val CPC_Interpreter::calculate( const vstr& expr, CntxPtr cntx ){
 
 P_Val CPC_Interpreter::interpret( NodePtr sourceTree, CntxPtr cntx ){
     NodePtr root = sourceTree;
+    string  ident;
+    P_Val   value;
     switch ( root->type ){
+
         case PROGRAM:
             cout << "Run program!" << endl;
             for( const NodePtr node : root->edges ){  interpret( node, cntx );  }
             break;
-        
+
+        case CON_SCTN:
+            for( const NodePtr node : root->edges ){  
+                switch( node->type ){
+
+                    case ASSIGNMENT:
+                        ident = node->edges.front()->tokens[0];
+                        node->edges.pop_front();
+                        value = calculate( node->edges.front()->tokens, cntx );
+                        cntx->constants[ ident ] = value;
+                        break;
+                    
+                    default:
+                        cerr << "CANNOT PROCESS: " << node->tokens << endl;
+                        break;
+                }
+            }
+            break;
+
+        case INVALID:
         default:
+            cerr << "CANNOT PROCESS: " << root->tokens << endl;
             break;
     }
     return make_nan();
