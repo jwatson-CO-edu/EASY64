@@ -45,4 +45,7 @@ set( EXECUTABLE_NAME 01_math-ops.out )
 add_executable( ${EXECUTABLE_NAME} 01_math-ops.cpp )
 target_link_libraries( ${EXECUTABLE_NAME} CPC_LIB )
 
-
+##### 02: Interpreter Test 00 #####
+set( EXECUTABLE_NAME 02_interpreter-test-00.out )
+add_executable( ${EXECUTABLE_NAME} 02_interpreter-test-00.cpp )
+target_link_libraries( ${EXECUTABLE_NAME} CPC_LIB )

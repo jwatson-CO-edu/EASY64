@@ -15,7 +15,7 @@ using std::deque;
 #include <list>
 using std::list;
 #include <map>
-using std::map;
+using std::map, std::pair;
 #include <stack>
 using std::stack;
 #include <fstream>
@@ -238,6 +238,7 @@ enum NodeType{
     CON_SCTN, 
     VAR_SCTN, 
     TYP_SCTN, 
+    CODE_BLC,
     VAR_DECL, 
     ASSIGNMENT, 
     BINARY_OP, 
@@ -299,27 +300,33 @@ class CPC_Parser{ public:
 ////////// interpreter.cpp /////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-////////// INTERPRETER /////////////////////////////////////////////////////////////////////////////
 ostream& operator<<( ostream& os , const P_Val& v ); // Helper function to stream variant contents
+
+
+////////// CONTEXT /////////////////////////////////////////////////////////////////////////////////
 
 class Context;
 typedef shared_ptr<Context> CntxPtr;
 
 class Context{ public:
     CntxPtr /*-----*/ parent = nullptr;
-    map<string,P_Val> constants;
-    map<string,P_Val> variables;
+    map<string,P_Val> constants; // Values that can't change
+    map<string,P_Val> variables; // Values that change
+
+    void print_constant_state(); // Print all the constants in this context
 };
 
+
+////////// INTERPRETER /////////////////////////////////////////////////////////////////////////////
 
 class CPC_Interpreter{ public:
     CntxPtr context = nullptr;
 
     CPC_Interpreter();
 
-    P_Val calculate( const vstr& expr, CntxPtr cntx );
+    P_Val calculate( const vstr& expr, CntxPtr cntx ); // Implements a stack-based calculator
 
-    P_Val interpret( NodePtr sourceTree, CntxPtr cntx );
+    P_Val interpret( NodePtr sourceTree, CntxPtr cntx = nullptr ); // RUN THE CODE (Source Tree)!
 };
 
 

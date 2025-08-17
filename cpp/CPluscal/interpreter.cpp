@@ -2,6 +2,16 @@
 #include "include/CPluscal.hpp"
 
 
+////////// CONTEXT /////////////////////////////////////////////////////////////////////////////////
+
+void Context::print_constant_state(){
+    // Print all the constants in this context
+    cout << "///// Program Constants /////" << endl;
+    for( const pair<string,P_Val>& elem : constants ){
+        cout << "{" << elem.first << "}: " << elem.second << endl;
+    }
+}
+
 
 ////////// INTERPRETER /////////////////////////////////////////////////////////////////////////////
 
@@ -147,9 +157,14 @@ P_Val CPC_Interpreter::calculate( const vstr& expr, CntxPtr cntx ){
 
 
 P_Val CPC_Interpreter::interpret( NodePtr sourceTree, CntxPtr cntx ){
+    // RUN THE CODE (Source Tree)!
     NodePtr root = sourceTree;
     string  ident;
     P_Val   value;
+    if( !cntx ){  cntx = context; }
+
+    cout << "Node with " << root->edges.size() << " child nodes., Code: " << root->tokens << endl;
+
     switch ( root->type ){
 
         case PROGRAM:
@@ -165,6 +180,7 @@ P_Val CPC_Interpreter::interpret( NodePtr sourceTree, CntxPtr cntx ){
                         ident = node->edges.front()->tokens[0];
                         node->edges.pop_front();
                         value = calculate( node->edges.front()->tokens, cntx );
+                        node->edges.pop_front();
                         cntx->constants[ ident ] = value;
                         break;
                     

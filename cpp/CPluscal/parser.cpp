@@ -186,6 +186,7 @@ NodePtr CPC_Parser::build_source_tree( const vvstr& lineTokens, ParseMode bgnMod
     NodePtr   conSctn = nullptr;
     NodePtr   varSctn = nullptr;
     NodePtr   typSctn = nullptr;
+    NodePtr   codeSec = nullptr;
     
     // For every line of tokens, do ...
     for( const vstr& tknLin : lineTokens ){
@@ -199,7 +200,10 @@ NodePtr CPC_Parser::build_source_tree( const vvstr& lineTokens, ParseMode bgnMod
         cout << endl << "Line " << (i+1) << ": " << tknLin << endl;
 
         if( mode == BEGIN    ){  cout << "\tDefault Mode!" << endl;  }
-        if( mode == FOR_BODY ){  cout << "\tInside For Loop!" << endl;  }
+        if( mode == FOR_BODY ){  
+            codeSec = NodePtr{ new ProgNode{ CODE_BLC, tknLin } };
+            cout << "\tInside For Loop!" << endl;  
+        }
 
         ///// Comment Continue / End /////////////
         if( mode == COMMENT ){
@@ -238,7 +242,8 @@ NodePtr CPC_Parser::build_source_tree( const vvstr& lineTokens, ParseMode bgnMod
         // ASSUMPTION: PROGRAM START `begin` IS ON ITS OWN LINE
         }else if( p_vstr_has_str( tknLin, "begin" ) && (tknLin.size() == 1) ){
             cout << "\tProgram Start!" << endl;
-            mode = MAIN_SECT;
+            mode    = MAIN_SECT;
+            codeSec = NodePtr{ new ProgNode{ CODE_BLC, tknLin } };
 
         ///// Constants Section //////////////////
         }else if( mode == CONST_SECT ){
@@ -269,7 +274,7 @@ NodePtr CPC_Parser::build_source_tree( const vvstr& lineTokens, ParseMode bgnMod
                 root = NodePtr{ new ProgNode{ FUNCTION, tknLin } };
                 root->edges.push_back( NodePtr{ new ProgNode{ IDENTIFIER, get_sub_vec( tknLin, 0, 1 ) } } );
                 root->edges.push_back( NodePtr{ new ProgNode{ ARGUMENTS , get_func_args( tknLin ) } } );
-                rtnPtr->edges.push_back( root );
+                codeSec->edges.push_back( root );
 
             ///// For Loop /////
             // ASSUMPTION: FOR LOOP DEFINITION APPEARS ON ONE LINE
@@ -280,7 +285,7 @@ NodePtr CPC_Parser::build_source_tree( const vvstr& lineTokens, ParseMode bgnMod
                 skip  = block.size()+1;
                 root  = NodePtr{ new ProgNode{ FOR_LOOP, tknLin } };
                 root->edges.push_back( build_source_tree( block, FOR_BODY ) );
-                rtnPtr->edges.push_back( root );
+                codeSec->edges.push_back( root );
 
             ///// Variable Assignment /////
             }else if( p_assignment_statememt( tknLin, ":=" ) ){
@@ -288,7 +293,7 @@ NodePtr CPC_Parser::build_source_tree( const vvstr& lineTokens, ParseMode bgnMod
                 root = NodePtr{ new ProgNode{ ASSIGNMENT, tknLin } };
                 root->edges.push_back( NodePtr{ new ProgNode{ IDENTIFIER, get_sub_vec( tknLin, 0, 1 ) } } );
                 root->edges.push_back( NodePtr{ new ProgNode{ MATH_EXPR , get_RHS( tknLin, ":=" ) } } );
-                rtnPtr->edges.push_back( root );
+                codeSec->edges.push_back( root );
             
             ///// End Program /////
             // ASSUMPTION: PROGRAM *ALWAYS* ENDS WITH "end." 
@@ -304,5 +309,8 @@ NodePtr CPC_Parser::build_source_tree( const vvstr& lineTokens, ParseMode bgnMod
         }
         ++i;
     }
+    if( conSctn ){  rtnPtr->edges.push_back( conSctn );  }
+    if( varSctn ){  rtnPtr->edges.push_back( varSctn );  }
+    if( codeSec ){  for( const NodePtr edge : codeSec->edges ){  rtnPtr->edges.push_back( edge );  }  }
     return rtnPtr;
 }
