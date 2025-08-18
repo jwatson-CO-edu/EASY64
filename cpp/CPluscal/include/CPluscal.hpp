@@ -100,16 +100,21 @@ const string TKN_NEWLINE = "<nl>";
 typedef variant<double,llong,char,bool> P_Val; // Primitive Values // WARNING: ASSUMPTION 
 
 ostream& operator<<(ostream& os, const P_Val& v);
-P_Val    make_nan();
-bool     p_nan( const P_Val& q );
-P_Val    str_2_primitive( const string& q ); // ------------ Return interpret `q` as a primitive literal and return it
-P_Val    operator+( const P_Val& lhs, const P_Val& rhs ); // Add two numeric variants
-P_Val    operator-( const P_Val& lhs, const P_Val& rhs ); // Subtract two numeric variants
-P_Val    operator*( const P_Val& lhs, const P_Val& rhs ); // Multiply two numeric variants
-P_Val    operator/( const P_Val& lhs, const P_Val& rhs ); // Divide two numeric variants
-P_Val    pow( const P_Val& lhs, const P_Val& rhs ); // ----- Raise `lhs` to the `rhs` power
-    
-    
+
+P_Val make_nan();
+P_Val make_double();
+P_Val make_llong();
+P_Val make_char();
+P_Val make_bool();
+
+bool p_nan( const P_Val& q );
+
+P_Val str_2_primitive( const string& q ); // ------------ Return interpret `q` as a primitive literal and return it
+P_Val operator+( const P_Val& lhs, const P_Val& rhs ); // Add two numeric variants
+P_Val operator-( const P_Val& lhs, const P_Val& rhs ); // Subtract two numeric variants
+P_Val operator*( const P_Val& lhs, const P_Val& rhs ); // Multiply two numeric variants
+P_Val operator/( const P_Val& lhs, const P_Val& rhs ); // Divide two numeric variants
+P_Val pow( const P_Val& lhs, const P_Val& rhs ); // ----- Raise `lhs` to the `rhs` power
     
 
 
@@ -314,6 +319,7 @@ class Context{ public:
     map<string,P_Val> variables; // Values that change
 
     void print_constant_state(); // Print all the constants in this context
+    void print_variable_state(); // Print all the variables in this context
 };
 
 

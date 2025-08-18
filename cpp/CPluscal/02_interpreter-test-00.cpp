@@ -22,4 +22,5 @@ int main( int argc, char *argv[] ){
     P_Val res = cpc.interpret( prog );
     cout << "Result: " << res << endl << "DONE!" << endl;
     cpc.context->print_constant_state();
+    cpc.context->print_variable_state();
 }

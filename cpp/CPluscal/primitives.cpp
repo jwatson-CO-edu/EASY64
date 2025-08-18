@@ -15,7 +15,11 @@ ostream& operator<<(ostream& os, const P_Val& v) {
 }
 
 
-P_Val make_nan(){  return P_Val{ nan("") };  }
+P_Val make_nan(){     return P_Val{ nan("") };    }
+P_Val make_double(){  return P_Val{ 0.0 }; /*--*/ }
+P_Val make_llong(){   return P_Val{ (llong) 0 };  }
+P_Val make_char(){    return P_Val{ (char) 0 };   }
+P_Val make_bool(){    return P_Val{ false }; /**/ }
 
 
 bool p_nan( const P_Val& q ){

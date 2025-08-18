@@ -16,6 +16,7 @@
         "deque": "cpp",
         "cmath": "cpp",
         "map": "cpp",
-        "fstream": "cpp"
+        "fstream": "cpp",
+        "stack": "cpp"
     }
 }

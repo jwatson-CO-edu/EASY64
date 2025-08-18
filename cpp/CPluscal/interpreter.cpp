@@ -13,12 +13,22 @@ void Context::print_constant_state(){
 }
 
 
+void Context::print_variable_state(){
+    // Print all the variables in this context
+    cout << "///// Program Variables /////" << endl;
+    for( const pair<string,P_Val>& elem : variables ){
+        cout << "{" << elem.first << "}: " << elem.second << endl;
+    }
+}
+
+
 ////////// INTERPRETER /////////////////////////////////////////////////////////////////////////////
 
-CPC_Interpreter::CPC_Interpreter(){  context = CntxPtr{ new Context{} };  }
+CPC_Interpreter::CPC_Interpreter(){  context = CntxPtr{ new Context{} };  } // Default Constructor
 
 
 ubyte PEMDAS( const string& q ){
+    // Express the priority of the math operator as a number
     vvstr pemdas = {
         {"(",")"}, // Parens
         {"**"}, // -- Exponent
@@ -32,6 +42,7 @@ ubyte PEMDAS( const string& q ){
 
 
 P_Val infix_op( const P_Val& v1, const string& op, const P_Val& v2 ){
+    // Invoke the math operator based on the token
     if( op == "**" ){
         return pow( v1, v2 );
     }else if( op == "*" ){
@@ -47,6 +58,7 @@ P_Val infix_op( const P_Val& v1, const string& op, const P_Val& v2 ){
 
 
 vstr get_parenthetical( const vstr& expr, size_t bgn = 0 ){
+    // Get the contents of balanced parentheses starting at `bgn`
     size_t depth = 1;
     size_t i     = bgn+1;
     size_t N     = expr.size();
@@ -161,6 +173,7 @@ P_Val CPC_Interpreter::interpret( NodePtr sourceTree, CntxPtr cntx ){
     NodePtr root = sourceTree;
     string  ident;
     P_Val   value;
+    string  valStr;
     CntxPtr nextCntx;
     if( !cntx ){  cntx = context; }
 
@@ -168,11 +181,13 @@ P_Val CPC_Interpreter::interpret( NodePtr sourceTree, CntxPtr cntx ){
 
     switch ( root->type ){
 
+        ///// Program Start ///////////////////////////////////////////////
         case PROGRAM:
             cout << "Run program!" << endl;
             for( const NodePtr node : root->edges ){  interpret( node, cntx );  }
             break;
 
+        ///// Constant Declaration ////////////////////////////////////////
         case CON_SCTN:
             for( const NodePtr node : root->edges ){  
                 switch( node->type ){
@@ -186,17 +201,48 @@ P_Val CPC_Interpreter::interpret( NodePtr sourceTree, CntxPtr cntx ){
                         break;
                     
                     default:
-                        cerr << "CANNOT PROCESS: " << node->tokens << endl;
+                        cerr << "CONSTANTS, CANNOT PROCESS: " << node->tokens << endl;
                         break;
                 }
             }
             break;
 
+        ///// Variable Declaration ////////////////////////////////////////
+        case VAR_SCTN:
+            for( const NodePtr node : root->edges ){  
+                switch( node->type ){
+
+                    // NOTE: VAR TYPE IS DYNAMIC AND **NOT** ENFORCED!
+                    case VAR_DECL:
+                        ident = node->edges.front()->tokens[0];
+                        node->edges.pop_front();
+                        valStr = node->edges.front()->tokens[0];
+                        node->edges.pop_front();
+                        if( valStr == "integer" ){
+                            cout << "Create `llong`: " << valStr << endl;
+                            cntx->variables[ ident ] = make_llong();
+                        }else if( valStr == "real" ){
+                            cout << "Create `double`: " << valStr << endl;
+                            cntx->variables[ ident ] = make_double();
+                        }else{
+                            cerr << "VARIABLES, TYPE NOT RECOGNIZED: " << valStr << ", " << node->tokens << endl;    
+                        }
+                        break;
+
+                    default:
+                        cerr << "VARIABLES, CANNOT PROCESS: " << node->tokens << endl;
+                        break;
+                }
+            }
+            break;
+
+        ///// Function Call ///////////////////////////////////////////////
         case FUNCTION:
             nextCntx = CntxPtr{ new Context{} };
             nextCntx->parent = cntx;
             break;
 
+        ///// Logical Error ///////////////////////////////////////////////
         case INVALID:
         default:
             cerr << "CANNOT PROCESS: " << root->tokens << endl;

@@ -262,7 +262,7 @@ NodePtr CPC_Parser::build_source_tree( const vvstr& lineTokens, ParseMode bgnMod
                 root = NodePtr{ new ProgNode{ VAR_DECL, tknLin } };
                 root->edges.push_back( NodePtr{ new ProgNode{ IDENTIFIER, get_sub_vec( tknLin, 0, 1 ) } } );
                 chrDex = vstr_find_index( tknLin, ":" );
-                root->edges.push_back( NodePtr{ new ProgNode{ TYPENAME, get_sub_vec( tknLin, chrDex, chrDex+1 ) } } );
+                root->edges.push_back( NodePtr{ new ProgNode{ TYPENAME, get_sub_vec( tknLin, chrDex+1, chrDex+2 ) } } );
                 varSctn->edges.push_back( root );
             }
 
