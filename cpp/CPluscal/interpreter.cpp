@@ -161,6 +161,7 @@ P_Val CPC_Interpreter::interpret( NodePtr sourceTree, CntxPtr cntx ){
     NodePtr root = sourceTree;
     string  ident;
     P_Val   value;
+    CntxPtr nextCntx;
     if( !cntx ){  cntx = context; }
 
     cout << "Node with " << root->edges.size() << " child nodes., Code: " << root->tokens << endl;
@@ -189,6 +190,11 @@ P_Val CPC_Interpreter::interpret( NodePtr sourceTree, CntxPtr cntx ){
                         break;
                 }
             }
+            break;
+
+        case FUNCTION:
+            nextCntx = CntxPtr{ new Context{} };
+            nextCntx->parent = cntx;
             break;
 
         case INVALID:
