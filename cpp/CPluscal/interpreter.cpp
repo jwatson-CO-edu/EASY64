@@ -236,6 +236,12 @@ P_Val CPC_Interpreter::interpret( NodePtr sourceTree, CntxPtr cntx ){
             }
             break;
 
+        ///// For Loop ////////////////////////////////////////////////////
+        case FOR_LOOP:
+            nextCntx = CntxPtr{ new Context{} };
+            nextCntx->parent = cntx;
+            break;
+
         ///// Function Call ///////////////////////////////////////////////
         case FUNCTION:
             nextCntx = CntxPtr{ new Context{} };

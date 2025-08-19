@@ -158,14 +158,18 @@ vstr concat( const vvstr& tokenLines ){
     return rtnVec;
 }
 
-vvstr get_lines_up_to_next_end( const vvstr& lines, size_t bgn = 0 ){
+vvstr get_lines_up_to_end( const vvstr& lines, size_t bgn = 0, size_t d = 0 ){
     vvstr  rtnLns;
     vstr   line;
     size_t i = bgn;
+    size_t N = lines.size();
     if( bgn < lines.size() ){
         while( true ){
+            if( i >= N ){  break;  }
             line = lines[i];
-            if( !p_vstr_has_str( line, "end" ) ){  rtnLns.push_back( line );  }else{  break;  }
+            if( p_vstr_has_str( line, "end"   ) ){  --d;  }
+            if( p_vstr_has_str( line, "begin" ) ){  ++d;  }
+            if( d > 0 ){  rtnLns.push_back( line );  }else{  break;  }
             ++i;
         }
     }
@@ -205,47 +209,47 @@ NodePtr CPC_Parser::build_source_tree( const vvstr& lineTokens, ParseMode bgnMod
             cout << "\tInside For Loop!" << endl;  
         }
 
-        ///// Comment Continue / End /////////////
+        ///// Comment Continue / End //////////////////////////////////////
         if( mode == COMMENT ){
             // ASSUMPTION: COMMENT ENDS AT THE END OF THE LINE
             if( tknLin.back() == "}" ){  mode = BEGIN;  }
             cout << "\tComment End!" << endl;
             continue;
 
-        ///// Program Start //////////////////////
+        ///// Program Start ///////////////////////////////////////////////
         // ASSUMPTION: PROGRAM DECLARATION IS ON ITS OWN LINE
         }else if( p_vstr_has_str( tknLin, "program" ) ){
             header = NodePtr{ new ProgNode{ PROGRAM, tknLin } };
             cout << "\tProgram Start!" << endl;
         
-        ///// Comment Start //////////////////////
+        ///// Comment Start ///////////////////////////////////////////////
         // ASSUMPTION: COMMENT BEGINS AT THE START OF THE LINE
         }else if( tknLin.front() == "{" ){
             mode = COMMENT;
             cout << "\tComment Start!" << endl;
 
-        ///// Variable Section Start /////////////
+        ///// Variable Section Start //////////////////////////////////////
         // ASSUMPTION: VAR SECTION DECLARATION IS ON ITS OWN LINE
         }else if( p_vstr_has_str( tknLin, "var" ) ){
             mode    = VAR_SECT;
             varSctn = NodePtr{ new ProgNode{ VAR_SCTN, tknLin } };
             cout << "\tVariable Start!" << endl;
 
-        ///// Variable Section Start /////////////
+        ///// Variable Section Start //////////////////////////////////////
         // ASSUMPTION: CONST SECTION DECLARATION IS ON ITS OWN LINE
         }else if( p_vstr_has_str( tknLin, "const" ) ){
             mode    = CONST_SECT;
             conSctn = NodePtr{ new ProgNode{ CON_SCTN, tknLin } };
             cout << "\tConst Start!" << endl;
 
-        ///// Main Program Start /////////////////
+        ///// Main Program Start //////////////////////////////////////////
         // ASSUMPTION: PROGRAM START `begin` IS ON ITS OWN LINE
         }else if( p_vstr_has_str( tknLin, "begin" ) && (tknLin.size() == 1) ){
             cout << "\tProgram Start!" << endl;
             mode    = MAIN_SECT;
             codeSec = NodePtr{ new ProgNode{ CODE_BLC, tknLin } };
 
-        ///// Constants Section //////////////////
+        ///// Constants Section ///////////////////////////////////////////
         }else if( mode == CONST_SECT ){
             if( p_assignment_statememt( tknLin, "=" ) ){
                 cout << "\tConst Assignment!" << endl;
@@ -255,7 +259,7 @@ NodePtr CPC_Parser::build_source_tree( const vvstr& lineTokens, ParseMode bgnMod
                 conSctn->edges.push_back( root );
             }
 
-        ///// Variables Section //////////////////
+        ///// Variables Section ///////////////////////////////////////////
         }else if( mode == VAR_SECT ){
             if( p_var_declare_statememt( tknLin ) ){
                 cout << "\tVar Declaration!" << endl;
@@ -266,9 +270,9 @@ NodePtr CPC_Parser::build_source_tree( const vvstr& lineTokens, ParseMode bgnMod
                 varSctn->edges.push_back( root );
             }
 
-        ///// Main Program ///////////////////////
+        ///// Main / Code Block ///////////////////////////////////////////
         }else if( (mode == MAIN_SECT)||(mode == FOR_BODY) ){
-            ///// Function Call /////
+            ///// Function Call //////////////////
             if( p_function_call( tknLin ) ){
                 cout << "\tFunction Call!" << endl;
                 root = NodePtr{ new ProgNode{ FUNCTION, tknLin } };
@@ -276,18 +280,18 @@ NodePtr CPC_Parser::build_source_tree( const vvstr& lineTokens, ParseMode bgnMod
                 root->edges.push_back( NodePtr{ new ProgNode{ ARGUMENTS , get_func_args( tknLin ) } } );
                 codeSec->edges.push_back( root );
 
-            ///// For Loop /////
+            ///// For Loop ///////////////////////
             // ASSUMPTION: FOR LOOP DEFINITION APPEARS ON ONE LINE
             // FIXME: NEED A TIGHTER DEFINITION OF `for`
             }else if( p_vstr_has_str( tknLin, "for" ) && p_vstr_has_str( tknLin, "begin" ) ){
                 cout << "\tFor Loop Begin!" << endl;
-                block = get_lines_up_to_next_end( lineTokens, i+2 );
+                block = get_lines_up_to_end( lineTokens, i );
                 skip  = block.size()+1;
                 root  = NodePtr{ new ProgNode{ FOR_LOOP, tknLin } };
                 root->edges.push_back( build_source_tree( block, FOR_BODY ) );
                 codeSec->edges.push_back( root );
 
-            ///// Variable Assignment /////
+            ///// Variable Assignment ////////////
             }else if( p_assignment_statememt( tknLin, ":=" ) ){
                 cout << "\tVar Assignment!" << endl;
                 root = NodePtr{ new ProgNode{ ASSIGNMENT, tknLin } };
@@ -295,14 +299,14 @@ NodePtr CPC_Parser::build_source_tree( const vvstr& lineTokens, ParseMode bgnMod
                 root->edges.push_back( NodePtr{ new ProgNode{ MATH_EXPR , get_RHS( tknLin, ":=" ) } } );
                 codeSec->edges.push_back( root );
             
-            ///// End Program /////
+            ///// End Program ////////////////////
             // ASSUMPTION: PROGRAM *ALWAYS* ENDS WITH "end." 
             }else if( p_vstr_has_str( tknLin, "end" ) && p_vstr_has_str( tknLin, "." ) && (tknLin.size() == 2) ){
                 cout << "\tEnd Program!" << endl;
                 break; // Stop parsing!
             }
 
-        ///// Unknown Expression /////////////////
+        ///// Unknown Expression //////////////////////////////////////////
         }else{  
             cout << "Line " << tknLin << " could not be parsed!" << endl;
             break;
