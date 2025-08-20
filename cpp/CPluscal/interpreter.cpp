@@ -22,9 +22,36 @@ void Context::print_variable_state(){
 }
 
 
+////////// BUILT-IN FUNCTIONS //////////////////////////////////////////////////////////////////////
+
+map<string,BuiltInFunction> Built_In_Functions;
+
+bool p_string_token( const string& q ){
+    if( q.front() != '\'' ){  return false;  }
+    if( q.back()  != '\'' ){  return false;  }
+    return true;
+}
+
+void writeln( const vstr& args, CntxPtr cntx ){
+    for( const string& arg : args ){
+        if( p_string_token( arg ) ){  cout << arg << " ";  }
+    }
+    cout << endl;
+}
+
+void load_builtins(){
+    Built_In_Functions["writeln"] = writeln;
+}
+
+
+
 ////////// INTERPRETER /////////////////////////////////////////////////////////////////////////////
 
-CPC_Interpreter::CPC_Interpreter(){  context = CntxPtr{ new Context{} };  } // Default Constructor
+CPC_Interpreter::CPC_Interpreter(){  
+    // Default Constructor
+    context = CntxPtr{ new Context{} };  
+    load_builtins();
+} 
 
 
 ubyte PEMDAS( const string& q ){
@@ -168,6 +195,7 @@ P_Val CPC_Interpreter::calculate( const vstr& expr, CntxPtr cntx ){
 }
 
 
+
 P_Val CPC_Interpreter::interpret( NodePtr sourceTree, CntxPtr cntx ){
     // RUN THE CODE (Source Tree)!
     NodePtr root = sourceTree;
@@ -175,6 +203,7 @@ P_Val CPC_Interpreter::interpret( NodePtr sourceTree, CntxPtr cntx ){
     P_Val   value;
     string  valStr;
     CntxPtr nextCntx;
+    vstr    tknLin;
     if( !cntx ){  cntx = context; }
 
     cout << "Node with " << root->edges.size() << " child nodes., Code: " << root->tokens << endl;
@@ -236,14 +265,16 @@ P_Val CPC_Interpreter::interpret( NodePtr sourceTree, CntxPtr cntx ){
             }
             break;
 
-        ///// For Loop ////////////////////////////////////////////////////
-        case FOR_LOOP:
-            nextCntx = CntxPtr{ new Context{} };
-            nextCntx->parent = cntx;
-            break;
-
         ///// Function Call ///////////////////////////////////////////////
         case FUNCTION:
+            nextCntx = CntxPtr{ new Context{} };
+            nextCntx->parent = cntx;
+            ident = root->edges.front()->tokens[0];
+            root->edges.pop_front();
+            break;
+
+        ///// For Loop ////////////////////////////////////////////////////
+        case FOR_LOOP:
             nextCntx = CntxPtr{ new Context{} };
             nextCntx->parent = cntx;
             break;

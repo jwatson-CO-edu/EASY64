@@ -235,7 +235,7 @@ NodePtr CPC_Parser::build_source_tree( const vvstr& lineTokens, ParseMode bgnMod
             varSctn = NodePtr{ new ProgNode{ VAR_SCTN, tknLin } };
             cout << "\tVariable Start!" << endl;
 
-        ///// Variable Section Start //////////////////////////////////////
+        ///// Constant Section Start //////////////////////////////////////
         // ASSUMPTION: CONST SECTION DECLARATION IS ON ITS OWN LINE
         }else if( p_vstr_has_str( tknLin, "const" ) ){
             mode    = CONST_SECT;
