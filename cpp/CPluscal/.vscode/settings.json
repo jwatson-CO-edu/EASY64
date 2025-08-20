@@ -17,6 +17,7 @@
         "cmath": "cpp",
         "map": "cpp",
         "fstream": "cpp",
-        "stack": "cpp"
+        "stack": "cpp",
+        "__node_handle": "cpp"
     }
 }

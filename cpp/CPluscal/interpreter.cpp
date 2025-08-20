@@ -268,10 +268,15 @@ P_Val CPC_Interpreter::interpret( NodePtr sourceTree, CntxPtr cntx ){
 
         ///// Function Call ///////////////////////////////////////////////
         case FUNCTION:
+            // FIXME: NEED TO BUILD A CONTEXT ACCORDING TO THE ARGS!
             nextCntx = CntxPtr{ new Context{} };
             nextCntx->parent = cntx;
             ident = root->edges.front()->tokens[0];
             root->edges.pop_front();
+            if( Built_In_Functions.count( ident ) ){
+                tknLin = root->edges.front()->tokens;
+                Built_In_Functions[ ident ]( tknLin, nextCntx );
+            }
             break;
 
         ///// For Loop ////////////////////////////////////////////////////
