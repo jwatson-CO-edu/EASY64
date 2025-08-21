@@ -169,6 +169,7 @@ vvstr get_lines_up_to_end( const vvstr& lines, size_t bgn = 0, size_t d = 0 ){
             line = lines[i];
             if( p_vstr_has_str( line, "end"   ) ){  --d;  }
             if( p_vstr_has_str( line, "begin" ) ){  ++d;  }
+            cout << d << ", line: " << line << endl;
             if( d > 0 ){  rtnLns.push_back( line );  }else{  break;  }
             ++i;
         }
@@ -198,7 +199,7 @@ NodePtr CPC_Parser::build_source_tree( const vvstr& lineTokens, ParseMode bgnMod
         if( skip > 0 ){
             --skip;
             cout << ">" << flush;
-            continue;
+            ++i; continue;
         }
 
         cout << endl << "Line " << (i+1) << ": " << tknLin << endl;
@@ -207,8 +208,8 @@ NodePtr CPC_Parser::build_source_tree( const vvstr& lineTokens, ParseMode bgnMod
             cout << "\tDefault Mode!" << endl;  
             rtnPtr = NodePtr{ new ProgNode{ PROGRAM, concat( lineTokens )  } };
         }else if( mode == FOR_BODY ){  
-            rtnPtr  = NodePtr{ new ProgNode{ CODE_BLC, concat( lineTokens ) } };
-            codeSec = NodePtr{ new ProgNode{ CODE_BLC, tknLin } };
+            if( !rtnPtr  ){ rtnPtr  = NodePtr{ new ProgNode{ CODE_BLC, concat( lineTokens ) } }; }
+            if( !codeSec ){ codeSec = NodePtr{ new ProgNode{ CODE_BLC, tknLin } }; }
             cout << "\tInside For Loop!" << endl;  
         }
 
@@ -217,7 +218,7 @@ NodePtr CPC_Parser::build_source_tree( const vvstr& lineTokens, ParseMode bgnMod
             // ASSUMPTION: COMMENT ENDS AT THE END OF THE LINE
             if( tknLin.back() == "}" ){  mode = BEGIN;  }
             cout << "\tComment End!" << endl;
-            continue;
+            ++i; continue;
 
         ///// Program Start ///////////////////////////////////////////////
         // ASSUMPTION: PROGRAM DECLARATION IS ON ITS OWN LINE
@@ -288,7 +289,7 @@ NodePtr CPC_Parser::build_source_tree( const vvstr& lineTokens, ParseMode bgnMod
             // FIXME: NEED A TIGHTER DEFINITION OF `for`
             }else if( p_vstr_has_str( tknLin, "for" ) && p_vstr_has_str( tknLin, "begin" ) ){
                 cout << "\tFor Loop Begin!" << endl;
-                block = get_lines_up_to_end( lineTokens, i );
+                block = get_lines_up_to_end( lineTokens, i+1, 1 );
                 skip  = block.size()+1;
                 root  = NodePtr{ new ProgNode{ FOR_LOOP, tknLin } };
                 root->edges.push_back( build_source_tree( block, FOR_BODY ) );
@@ -307,12 +308,13 @@ NodePtr CPC_Parser::build_source_tree( const vvstr& lineTokens, ParseMode bgnMod
             }else if( p_vstr_has_str( tknLin, "end" ) && p_vstr_has_str( tknLin, "." ) && (tknLin.size() == 2) ){
                 cout << "\tEnd Program!" << endl;
                 break; // Stop parsing!
+            }else{  
+                cout << "Line " << tknLin << " could not be parsed!" << endl;
             }
 
         ///// Unknown Expression //////////////////////////////////////////
         }else{  
             cout << "Line " << tknLin << " could not be parsed!" << endl;
-            break;
         }
         ++i;
     }

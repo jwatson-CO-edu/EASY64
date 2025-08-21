@@ -265,9 +265,9 @@ class ProgNode;
 typedef shared_ptr<ProgNode> NodePtr;
 
 class ProgNode{ public:
-    NodeType /**/ type = INVALID;
-    vstr /*----*/ tokens;
-    list<NodePtr> edges;
+    NodeType /*--*/ type = INVALID;
+    vstr /*------*/ tokens;
+    vector<NodePtr> edges;
 
     ProgNode( NodeType typ, vstr tkns );
 };
@@ -275,6 +275,7 @@ class ProgNode{ public:
 
 ////////// PARSER //////////////////////////////////////////////////////////////////////////////////
 bool p_literal_math_expr( const vstr& tokens ); // Does this expression contain only numbers and infix math operators?
+bool p_ident_math_expr( const vstr& tokens ); // Does this expression contain only numbers, infix math operators, and identifiers?
 bool p_number_string( const string& q ); // Return true if the string can represent a primitive
 bool p_math_op( const string& q ); // Is this string an infix math operator?
 bool p_vstr_has_str( const vstr& vec, const string& q ); // Return true if the `vstr` contains `q`
@@ -292,8 +293,8 @@ enum ParseMode{
 
 
 class CPC_Parser{ public:
-    NodePtr /*-*/ header;    
-    list<NodePtr> code;
+    NodePtr /*---*/ header;    
+    vector<NodePtr> code;
 
     CPC_Parser(); // Default Constructor
 

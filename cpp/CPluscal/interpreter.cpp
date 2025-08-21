@@ -147,7 +147,7 @@ P_Val CPC_Interpreter::calculate( const vstr& expr, CntxPtr cntx ){
     P_Val /*---*/ prevVal;
     P_Val /*---*/ currVal;
     
-    if( p_literal_math_expr( expr ) ){
+    if( p_ident_math_expr( expr ) ){
         // cout << endl << "BGN!-----------------" << endl << endl;
         for( const string& tkn : expr ){
 
@@ -159,7 +159,7 @@ P_Val CPC_Interpreter::calculate( const vstr& expr, CntxPtr cntx ){
                 // cout << ">skip!>" << endl;
                 ++i; continue;
             }
-            if( p_number_string( tkn ) || (tkn == "(") ){
+            if( p_number_string( tkn ) || (tkn == "(") || p_identifier( tkn ) ){
                 if( tkn == "(" ){
                     subExp  = get_parenthetical( expr, i );
                     // cout << endl << "PARENTHETICAL: " << subExp << endl << endl;
@@ -167,6 +167,11 @@ P_Val CPC_Interpreter::calculate( const vstr& expr, CntxPtr cntx ){
                     lastVal = calculate( subExp, cntx );
                 }else if( p_number_string( tkn ) ){
                     lastVal = str_2_primitive( tkn );
+                }else if( p_identifier( tkn ) ){
+                    lastVal = cntx->get_value_by_name( tkn );
+                }else{
+                    cerr << "MATH TOKEN NOT RECOGNIZED: " << tkn << endl;
+                    return make_nan();
                 }
                 // cout << "Got Value: " << lastVal << endl;
                 if( oprs.size() && (PEMDAS( lastOp ) <= PEMDAS( oprs.top() )) ){
@@ -211,7 +216,6 @@ P_Val CPC_Interpreter::calculate( const vstr& expr, CntxPtr cntx ){
         }
         if( !p_nan( lastVal ) ){
             vals.push( lastVal );
-            // cout << vals.size() << " on the VALUE stack!" << endl;
         }
         while( oprs.size() ){
             lastOp  = oprs.top(); oprs.pop();
@@ -227,17 +231,16 @@ P_Val CPC_Interpreter::calculate( const vstr& expr, CntxPtr cntx ){
 
 
 
-P_Val CPC_Interpreter::interpret( NodePtr sourceTree, CntxPtr cntx ){
+P_Val CPC_Interpreter::interpret( NodePtr root, CntxPtr cntx ){
     // RUN THE CODE (Source Tree)!
-    NodePtr root = sourceTree;
     string  ident;
     P_Val   value;
     string  valStr;
     CntxPtr nextCntx;
     vstr    tknLin;
-    P_Val  bgn;
-    P_Val  end;
-    P_Val  cur;
+    P_Val   bgn;
+    P_Val   end;
+    P_Val   cur;
     if( !cntx ){  cntx = context; }
 
     cout << "Node with " << root->edges.size() << " child nodes., Code: " << root->tokens << endl;
@@ -247,7 +250,11 @@ P_Val CPC_Interpreter::interpret( NodePtr sourceTree, CntxPtr cntx ){
         ///// Program Start ///////////////////////////////////////////////
         case PROGRAM:
             cout << "Run program!" << endl;
+            for( const NodePtr node : root->edges ){  interpret( node, cntx );  }
+            break;
+
         case CODE_BLC:
+            cout << "Run code block!" << endl;
             for( const NodePtr node : root->edges ){  interpret( node, cntx );  }
             break;
 
@@ -257,10 +264,8 @@ P_Val CPC_Interpreter::interpret( NodePtr sourceTree, CntxPtr cntx ){
                 switch( node->type ){
 
                     case ASSIGNMENT:
-                        ident = node->edges.front()->tokens[0];
-                        node->edges.pop_front();
-                        value = calculate( node->edges.front()->tokens, cntx );
-                        node->edges.pop_front();
+                        ident = node->edges[0]->tokens[0];
+                        value = calculate( node->edges[1]->tokens, cntx );
                         cntx->constants[ ident ] = value;
                         break;
                     
@@ -278,10 +283,8 @@ P_Val CPC_Interpreter::interpret( NodePtr sourceTree, CntxPtr cntx ){
 
                     // NOTE: VAR TYPE IS DYNAMIC AND **NOT** ENFORCED!
                     case VAR_DECL:
-                        ident = node->edges.front()->tokens[0];
-                        node->edges.pop_front();
-                        valStr = node->edges.front()->tokens[0];
-                        node->edges.pop_front();
+                        ident  = node->edges[0]->tokens[0];
+                        valStr = node->edges[1]->tokens[0];
                         if( valStr == "integer" ){
                             cout << "Create `llong`: " << valStr << endl;
                             cntx->variables[ ident ] = make_llong();
@@ -300,15 +303,27 @@ P_Val CPC_Interpreter::interpret( NodePtr sourceTree, CntxPtr cntx ){
             }
             break;
 
+        ///// Variable Assignment /////////////////////////////////////////
+        case ASSIGNMENT:
+            // cout << "Assignment!, " << root->edges.size() << " edges!" << endl;
+            ident = root->edges[0]->tokens[0];
+            // cout << "Assignment!, Ident: " << ident << endl;
+            value = calculate( root->edges[1]->tokens, cntx );
+            cout << "Assignment, Ident: " << ident << ", Value: "<< root->edges[1]->tokens << " = " << value << endl;
+            if( !(cntx->set_value_by_name( ident, value )) ){  
+                cerr << "Name NOT in context!: " << ident << endl;
+                return make_nan();  
+            }
+            break;
+
         ///// Function Call ///////////////////////////////////////////////
         case FUNCTION:
             // FIXME: NEED TO BUILD A CONTEXT ACCORDING TO THE ARGS!
             nextCntx = CntxPtr{ new Context{} };
             nextCntx->parent = cntx;
-            ident = root->edges.front()->tokens[0];
-            root->edges.pop_front();
+            ident = root->edges[0]->tokens[0];
             if( Built_In_Functions.count( ident ) ){
-                tknLin = root->edges.front()->tokens;
+                tknLin = root->edges[1]->tokens;
                 Built_In_Functions[ ident ]( tknLin, nextCntx );
             }
             break;
@@ -325,8 +340,8 @@ P_Val CPC_Interpreter::interpret( NodePtr sourceTree, CntxPtr cntx ){
             nextCntx->set_value_by_name( ident, bgn );
             while( cur < end ){
                 cout << "\tLoop Iteration " << cur << " < " << end << ", " << root->edges.size() << endl;
-                cout << "\tExec: " << root->edges.front()->tokens << endl;
-                interpret( root->edges.front(), nextCntx );
+                cout << "\tExec: " << root->edges[0]->tokens << endl;
+                interpret( root->edges[0], nextCntx );
                 cur += P_Val{1};
                 nextCntx->set_value_by_name( ident, cur );
             }
