@@ -18,6 +18,13 @@
         "map": "cpp",
         "fstream": "cpp",
         "stack": "cpp",
-        "__node_handle": "cpp"
+        "__node_handle": "cpp",
+        "bitset": "cpp",
+        "chrono": "cpp",
+        "algorithm": "cpp",
+        "__bit_reference": "cpp",
+        "set": "cpp",
+        "unordered_map": "cpp",
+        "type_traits": "cpp"
     }
 }

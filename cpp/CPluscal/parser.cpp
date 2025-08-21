@@ -186,7 +186,7 @@ NodePtr CPC_Parser::build_source_tree( const vvstr& lineTokens, ParseMode bgnMod
     size_t    i /**/ = 0;
     size_t    skip   = 0;
     vvstr     block;
-    NodePtr   rtnPtr{ new ProgNode{  PROGRAM, concat( lineTokens )  } };
+    NodePtr   rtnPtr  = nullptr;
     NodePtr   conSctn = nullptr;
     NodePtr   varSctn = nullptr;
     NodePtr   typSctn = nullptr;
@@ -203,8 +203,11 @@ NodePtr CPC_Parser::build_source_tree( const vvstr& lineTokens, ParseMode bgnMod
 
         cout << endl << "Line " << (i+1) << ": " << tknLin << endl;
 
-        if( mode == BEGIN    ){  cout << "\tDefault Mode!" << endl;  }
-        if( mode == FOR_BODY ){  
+        if( mode == BEGIN ){  
+            cout << "\tDefault Mode!" << endl;  
+            rtnPtr = NodePtr{ new ProgNode{ PROGRAM, concat( lineTokens )  } };
+        }else if( mode == FOR_BODY ){  
+            rtnPtr  = NodePtr{ new ProgNode{ CODE_BLC, concat( lineTokens ) } };
             codeSec = NodePtr{ new ProgNode{ CODE_BLC, tknLin } };
             cout << "\tInside For Loop!" << endl;  
         }

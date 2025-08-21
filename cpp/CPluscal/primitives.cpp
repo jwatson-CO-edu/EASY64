@@ -81,6 +81,25 @@ P_Val operator+( const P_Val& lhs, const P_Val& rhs ){
 }
 
 
+P_Val operator+=( P_Val& lhs, const P_Val& rhs ){
+    // Add two numeric variants and store in `lhs`
+    // Using std::visit to handle all possible type combinations
+    return visit([](auto&& left, auto&& right) -> P_Val {
+        // If both are the same type, return that type
+        if constexpr ( std::is_same_v< decltype(left), decltype(right) >) {
+            left = left + right;
+            return left;
+        }
+        // FIXME: WANT A MORE GRANULAR TYPE ESCALATION HERE
+        // If different types, convert to double for maximum precision
+        else {
+            left = static_cast<double>(left) + static_cast<double>(right);
+            return left;
+        }
+    }, lhs, rhs);
+}
+
+
 P_Val operator-( const P_Val& lhs, const P_Val& rhs ){
     // Subtract two numeric variants
     // Using std::visit to handle all possible type combinations

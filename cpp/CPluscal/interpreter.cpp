@@ -4,6 +4,33 @@
 
 ////////// CONTEXT /////////////////////////////////////////////////////////////////////////////////
 
+bool Context::p_name_defined( const string& ident ){
+    // Return whether the name exists in this context.
+    if( constants.count( ident ) ){  return true;  }
+    if( variables.count( ident ) ){  return true;  }
+    if( parent ){  return parent->p_name_defined( ident );  }
+    return false;
+}
+
+
+P_Val Context::get_value_by_name( const string& ident ){
+    // Resolve the name to a value, otherwise return "NaN"
+    if( constants.count( ident ) ){  return constants[ ident ];  }
+    if( variables.count( ident ) ){  return variables[ ident ];  }
+    if( parent ){  return parent->get_value_by_name( ident );  }
+    return make_nan();
+}
+
+
+bool Context::set_value_by_name( const string& ident, const P_Val& val ){
+    // Attempt to set an identifier's value and return whether the change was made
+    if( constants.count( ident ) ){  return false;  }
+    if( variables.count( ident ) ){  variables[ ident ] = val;  return true;  }
+    if( parent ){  return parent->set_value_by_name( ident, val );  }
+    return false;
+}
+
+
 void Context::print_constant_state(){
     // Print all the constants in this context
     cout << "///// Program Constants /////" << endl;
@@ -28,20 +55,23 @@ void Context::print_variable_state(){
 map<string,BuiltInFunction> Built_In_Functions;
 
 bool p_string_token( const string& q ){
+    // Does this token represent a string?
     if( q.front() != '\'' ){  return false;  }
     if( q.back()  != '\'' ){  return false;  }
     return true;
 }
 
 void writeln( const vstr& args, CntxPtr cntx ){
+    // Basic print followed by a newline
     for( const string& arg : args ){
-        if( p_string_token( arg ) ){  cout << arg << " ";  }
+        if( p_string_token( arg ) ){  cout << arg.substr( 1, arg.size()-2 ) << " ";  }
     }
     cout << endl;
 }
 
 void load_builtins(){
-    Built_In_Functions["writeln"] = writeln;
+    // Load all Built-In Functions
+    Built_In_Functions[ "writeln" ] = writeln;
 }
 
 
@@ -205,6 +235,9 @@ P_Val CPC_Interpreter::interpret( NodePtr sourceTree, CntxPtr cntx ){
     string  valStr;
     CntxPtr nextCntx;
     vstr    tknLin;
+    P_Val  bgn;
+    P_Val  end;
+    P_Val  cur;
     if( !cntx ){  cntx = context; }
 
     cout << "Node with " << root->edges.size() << " child nodes., Code: " << root->tokens << endl;
@@ -214,6 +247,7 @@ P_Val CPC_Interpreter::interpret( NodePtr sourceTree, CntxPtr cntx ){
         ///// Program Start ///////////////////////////////////////////////
         case PROGRAM:
             cout << "Run program!" << endl;
+        case CODE_BLC:
             for( const NodePtr node : root->edges ){  interpret( node, cntx );  }
             break;
 
@@ -283,6 +317,19 @@ P_Val CPC_Interpreter::interpret( NodePtr sourceTree, CntxPtr cntx ){
         case FOR_LOOP:
             nextCntx = CntxPtr{ new Context{} };
             nextCntx->parent = cntx;
+            tknLin = root->tokens;
+            ident  = tknLin[1];
+            bgn = nextCntx->get_value_by_name( tknLin[ vstr_find_index( tknLin, ":=" ) +1 ] );
+            end = nextCntx->get_value_by_name( tknLin[ vstr_find_index( tknLin, "to" ) +1 ] );
+            cur = bgn;
+            nextCntx->set_value_by_name( ident, bgn );
+            while( cur < end ){
+                cout << "\tLoop Iteration " << cur << " < " << end << ", " << root->edges.size() << endl;
+                cout << "\tExec: " << root->edges.front()->tokens << endl;
+                interpret( root->edges.front(), nextCntx );
+                cur += P_Val{1};
+                nextCntx->set_value_by_name( ident, cur );
+            }
             break;
 
         ///// Logical Error ///////////////////////////////////////////////

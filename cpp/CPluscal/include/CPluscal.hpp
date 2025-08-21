@@ -111,6 +111,7 @@ bool p_nan( const P_Val& q );
 
 P_Val str_2_primitive( const string& q ); // ------------ Return interpret `q` as a primitive literal and return it
 P_Val operator+( const P_Val& lhs, const P_Val& rhs ); // Add two numeric variants
+P_Val operator+=( P_Val& lhs, const P_Val& rhs ); // ---- Add two numeric variants and store in `lhs`
 P_Val operator-( const P_Val& lhs, const P_Val& rhs ); // Subtract two numeric variants
 P_Val operator*( const P_Val& lhs, const P_Val& rhs ); // Multiply two numeric variants
 P_Val operator/( const P_Val& lhs, const P_Val& rhs ); // Divide two numeric variants
@@ -305,19 +306,23 @@ class CPC_Parser{ public:
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////// interpreter.cpp /////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+class Context;
+typedef shared_ptr<Context> CntxPtr;
+
 typedef void (*BuiltInFunction)(const vstr&, CntxPtr);
 ostream& operator<<( ostream& os , const P_Val& v ); // Helper function to stream variant contents
 
 
 ////////// CONTEXT /////////////////////////////////////////////////////////////////////////////////
 
-class Context;
-typedef shared_ptr<Context> CntxPtr;
-
 class Context{ public:
     CntxPtr /*-----*/ parent = nullptr;
     map<string,P_Val> constants; // Values that can't change
     map<string,P_Val> variables; // Values that change
+
+    bool  p_name_defined( const string& ident );
+    P_Val get_value_by_name( const string& ident );
+    bool  set_value_by_name( const string& ident, const P_Val& val );
 
     void print_constant_state(); // Print all the constants in this context
     void print_variable_state(); // Print all the variables in this context
