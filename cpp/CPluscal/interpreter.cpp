@@ -61,50 +61,123 @@ bool p_string_token( const string& q ){
     return true;
 }
 
+string repeat_char( size_t N, char chr = ' ' ){
+    string rtnStr = "";
+    for( size_t ii = 0; ii < N; ++ii ){  rtnStr += chr;  }
+    return rtnStr;
+}
+
 void writeln( const vstr& args, CntxPtr cntx ){
     // Basic print followed by a newline
     P_Val /*--*/ val;
     stringstream valStrm;
     string /*-*/ valStr;
-    size_t /*-*/ wInt   = 0;
+    string /*-*/ nptStr;
+    string /*-*/ pad;
+    size_t /*-*/ wInt   = SIZE_MAX;
     size_t /*-*/ nInt   = 0;
-    size_t /*-*/ wDec   = 0;
+    size_t /*-*/ wDec   = SIZE_MAX;
     size_t /*-*/ nDec   = 0;
+    size_t /*-*/ wPad   = 0;
     size_t /*-*/ decPos = string::npos;
+    size_t /*-*/ i /**/ = 0;
+    size_t /*-*/ N /**/ = args.size();
     bool /*---*/ getInt = false;
     bool /*---*/ getDec = false;
+    bool /*---*/ _VERB  = false;
+
+    if( _VERB ) cout << "`writeln` got args: " << args << endl;
+
+    auto format_value = [&](){
+        getInt = false;
+        getDec = false;
+        if( _VERB ) cout << "\tAbout to format: " << valStr << ", Tot. Width: " << wInt << ":" << nInt << ", Precision: " << wDec << ":" << nDec << endl;
+        if( valStr.size() ){
+            if( wInt < SIZE_MAX ){
+                if( nInt < wInt ){
+                    wPad   = wInt-nInt;
+                    if( _VERB ) cout << "\t\tAdd Pad: " << wPad << endl;
+                    valStr = repeat_char( wPad, ' ' ) + valStr;
+                }
+            }
+            if( wDec < SIZE_MAX ){
+                if( nDec > wDec ){
+                    if( _VERB ) cout << "\t\tExcessive Precision: " << nDec << " --to-> " << wDec << endl;
+                    valStr = valStr.substr( 0, valStr.size()-(nDec-wDec) );
+                }
+                if( valStr.size() > wInt ){
+
+                    if((nInt + 1 + wDec) < wInt){
+                        valStr = valStr.substr( wPad-(wInt-(nInt+1+wDec)) );
+                    }else{
+                        valStr = valStr.substr( wPad );
+                    }
+                        
+                }else{
+                    valStr = repeat_char( wInt-valStr.size(), ' ' ) + valStr;
+                }
+            }
+            if( _VERB ) cout << "\tFormatted Number: " << valStr << endl;
+            cout << valStr;
+        }else{  cout << ' ';  }
+    };
 
     for( const string& arg : args ){
-        if( p_string_token( arg ) ){  cout << arg.substr( 1, arg.size()-2 ) << " ";  }
-        else if( p_identifier( arg ) || p_number_string( arg ) ){  
+        if( p_string_token( arg ) ){  
+            getInt = false;
+            getDec = false;
+            cout << arg.substr( 1, arg.size()-2 ) << " ";  
+        }else if( p_identifier( arg ) || p_number_string( arg ) ){  
 
             if( p_identifier( arg ) ){  val = cntx->get_value_by_name( arg );  }
             else if( p_number_string( arg ) ){  val = str_2_primitive( arg );  }
 
-            valStrm << val;
-            valStr = valStrm.str();
-            decPos = valStr.find( '.' );
+            if( _VERB ) cout << "\tProcess Number: " << val << endl;
 
-            if( decPos != string::npos ){
-                nInt = decPos;
-                nDec = valStr.size() - nInt - 1;
-            }else{
-                nInt = valStr.size();
-                nDec = 0;
-            }
+            valStrm << val;
+            nptStr = valStrm.str();
+            valStrm.flush();
+            valStrm.str("");
+            valStrm.clear();
+
             
-            if( getInt ){  wInt = strtoull( valStr.c_str(), NULL, 0 );  
-            }else if( getDec ){  wDec = strtoull( valStr.c_str(), NULL, 0 );  }
+            if( getInt ){  
+                wInt = strtoull( nptStr.c_str(), NULL, 0 );  
+                if( _VERB ) cout << "\tGot Width: " << nptStr << " --to-> " << wInt << endl;
+            }else if( getDec ){  
+                wDec = strtoull( nptStr.c_str(), NULL, 0 );  
+                if( _VERB ) cout << "\tGot Precision: "<< nptStr << " --to-> " << wDec << endl;
+            }else{  
+                valStr = nptStr;  
+                decPos = nptStr.find( '.' );
+                if( decPos != string::npos ){
+                    nInt = decPos;
+                    nDec = valStr.size() - nInt - 1;
+                }else{
+                    nInt = valStr.size();
+                    nDec = 0;
+                }
+                if( _VERB ) cout << "\tGot Value: "<< nptStr << " --to-> " << valStr << endl;
+            }
+            // nptStr = "";
             
         }else if( arg == ":" ){  
             if( !getInt ){
+                if( _VERB ) cout << "\tLook for width!" << endl;
                 getInt = true;
                 getDec = false;
             }else{
+                if( _VERB ) cout << "\tLook for precision!" << endl;
                 getInt = false;
                 getDec = true;
             }
+        }else if( (arg == ",") ){
+            format_value();
         }
+
+        if( i >= (N-1) ){  format_value();  }
+
+        ++i;
     }
     cout << endl;
 }

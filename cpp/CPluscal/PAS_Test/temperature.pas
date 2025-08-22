@@ -22,7 +22,7 @@ begin
 
 		celsius := CONVERT * (fahren - 32);
 
-		writeln( fahren: 5, celsius: 18: 2 );
+		writeln( fahren: 10, celsius: 12: 2 );
 
 	end;
 
