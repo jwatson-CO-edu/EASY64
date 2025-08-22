@@ -34,6 +34,8 @@ using std::filesystem::exists;
 using std::variant, std::get, std::holds_alternative;
 #include <cmath>
 using std::nan, std::isnan;
+#include <cstdlib>
+using std::strtoull;
 
 ///// Aliases /////////////////////////////////////////////////////////////
 typedef size_t /*-------*/ ullong;

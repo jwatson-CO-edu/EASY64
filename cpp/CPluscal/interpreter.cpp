@@ -63,8 +63,50 @@ bool p_string_token( const string& q ){
 
 void writeln( const vstr& args, CntxPtr cntx ){
     // Basic print followed by a newline
+    P_Val /*--*/ val;
+    stringstream valStrm;
+    string /*-*/ valStr;
+    size_t /*-*/ wInt   = 0;
+    size_t /*-*/ nInt   = 0;
+    size_t /*-*/ wDec   = 0;
+    size_t /*-*/ nDec   = 0;
+    size_t /*-*/ decPos = string::npos;
+    bool /*---*/ getInt = false;
+    bool /*---*/ getDec = false;
+
     for( const string& arg : args ){
         if( p_string_token( arg ) ){  cout << arg.substr( 1, arg.size()-2 ) << " ";  }
+        else if( p_identifier( arg ) || p_number_string( arg ) ){  
+
+            if( p_identifier( arg ) ){  val = cntx->get_value_by_name( arg );  }
+            else if( p_number_string( arg ) ){  val = str_2_primitive( arg );  }
+
+            valStrm << val;
+            valStr = valStrm.str();
+            decPos = valStr.find( '.' );
+            if( decPos != string::npos ){
+                nInt = decPos;
+                nDec = valStr.size() - nInt - 1;
+            }else{
+                nInt = valStr.size();
+                nDec = 0;
+            }
+            
+            if( getInt ){  
+                wInt = strtoull( valStr.c_str(), NULL, 0 );  
+            }else if( getDec ){   
+                wDec = strtoull( valStr.c_str(), NULL, 0 );  
+            }
+            
+        }else if( arg == ":" ){  
+            if( !getInt ){
+                getInt = true;
+                getDec = false;
+            }else{
+                getInt = false;
+                getDec = true;
+            }
+        }
     }
     cout << endl;
 }
