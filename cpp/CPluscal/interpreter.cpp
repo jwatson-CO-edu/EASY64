@@ -210,7 +210,8 @@ P_Val CPC_Interpreter::read( const vstr& args, CntxPtr cntx ){
 
     cout << endl;
     if( p_number_string( input ) ){
-        return str_2_primitive( input );
+        cntx->set_value_by_name( args[0], str_2_primitive( input ) );
+        return cntx->get_value_by_name( args[0] );
     }else{
         return make_nan();
     }
@@ -257,22 +258,7 @@ P_Val infix_op( const P_Val& v1, const string& op, const P_Val& v2 ){
 }
 
 
-vstr get_parenthetical( const vstr& expr, size_t bgn = 0 ){
-    // Get the contents of balanced parentheses starting at `bgn`
-    size_t depth = 1;
-    size_t i     = bgn+1;
-    size_t N     = expr.size();
-    vstr   rtnVec;
-    string elem;
-    while( i < N ){
-        elem = expr[i];
-        if( elem == "(" ){  ++depth;  }
-        if( elem == ")" ){  --depth;  }
-        if( depth > 0 ){  rtnVec.push_back( elem );  }else{  break;  }
-        ++i;
-    }
-    return rtnVec;
-}
+
 
 
 P_Val CPC_Interpreter::calculate( const vstr& expr, CntxPtr cntx ){
@@ -288,8 +274,9 @@ P_Val CPC_Interpreter::calculate( const vstr& expr, CntxPtr cntx ){
     P_Val /*---*/ lastVal;
     P_Val /*---*/ prevVal;
     P_Val /*---*/ currVal;
+    NodePtr /*-*/ funcCall = nullptr;
     
-    if( p_ident_math_expr( expr ) ){
+    if( p_func_math_expr( expr ) ){
         // cout << endl << "BGN!-----------------" << endl << endl;
         for( const string& tkn : expr ){
 
@@ -310,7 +297,21 @@ P_Val CPC_Interpreter::calculate( const vstr& expr, CntxPtr cntx ){
                 }else if( p_number_string( tkn ) ){
                     lastVal = str_2_primitive( tkn );
                 }else if( p_identifier( tkn ) ){
-                    lastVal = cntx->get_value_by_name( tkn );
+
+                    /// Function Call ///
+                    if( expr[i+1] == "(" ){
+                        subExp   = get_parenthetical( expr, i+1 );
+                        funcCall = NodePtr{ new ProgNode{ FUNCTION, get_sub_vec( expr, i, i+subExp.size()+2 ) } };
+                        funcCall->edges.push_back( NodePtr{ new ProgNode{ IDENTIFIER, vstr{ tkn } } } );
+                        funcCall->edges.push_back( NodePtr{ new ProgNode{ ARGUMENTS , subExp } } );
+                        lastVal  = interpret( funcCall, cntx );
+                        funcCall = nullptr;
+
+                    /// Variable / Constant ///
+                    }else{  lastVal = cntx->get_value_by_name( tkn );  }
+
+                    
+
                 }else{
                     cerr << "MATH TOKEN NOT RECOGNIZED: " << tkn << endl;
                     return make_nan();
@@ -383,6 +384,7 @@ P_Val CPC_Interpreter::interpret( NodePtr root, CntxPtr cntx ){
     P_Val   bgn;
     P_Val   end;
     P_Val   cur;
+    P_Val   rtnVal = make_nan();
     bool    _VERB = false;
     if( !cntx ){  cntx = context; }
 
@@ -469,9 +471,9 @@ P_Val CPC_Interpreter::interpret( NodePtr root, CntxPtr cntx ){
             if( ident == "writeln" ){
                 writeln( tknLin, nextCntx );
             }else if( ident == "sqrt" ){
-                sqrt( tknLin, nextCntx );
+                rtnVal = sqrt( tknLin, nextCntx );
             }else if( ident == "read" ){
-                read( tknLin, nextCntx );
+                rtnVal = read( tknLin, nextCntx );
             }
             break;
 
@@ -501,5 +503,5 @@ P_Val CPC_Interpreter::interpret( NodePtr root, CntxPtr cntx ){
             cerr << "CANNOT PROCESS: " << root->tokens << endl;
             break;
     }
-    return make_nan();
+    return rtnVal;
 }

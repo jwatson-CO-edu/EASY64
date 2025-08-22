@@ -278,9 +278,12 @@ class ProgNode{ public:
 ////////// PARSER //////////////////////////////////////////////////////////////////////////////////
 bool p_literal_math_expr( const vstr& tokens ); // Does this expression contain only numbers and infix math operators?
 bool p_ident_math_expr( const vstr& tokens ); // Does this expression contain only numbers, infix math operators, and identifiers?
+// Does this expression contain only numbers, infix math operators, identifiers, and function calls?
+bool p_func_math_expr( const vstr& tokens, bool allowComma = false ); 
 bool p_number_string( const string& q ); // Return true if the string can represent a primitive
 bool p_math_op( const string& q ); // Is this string an infix math operator?
 bool p_vstr_has_str( const vstr& vec, const string& q ); // Return true if the `vstr` contains `q`
+vstr get_parenthetical( const vstr& expr, size_t bgn = 0 ); // Get the contents of balanced parentheses starting at `bgn`
 
 enum ParseMode{ 
     // What is the parser working on?

@@ -49,3 +49,8 @@ target_link_libraries( ${EXECUTABLE_NAME} CPC_LIB )
 set( EXECUTABLE_NAME 02_interpreter-test-00.out )
 add_executable( ${EXECUTABLE_NAME} 02_interpreter-test-00.cpp )
 target_link_libraries( ${EXECUTABLE_NAME} CPC_LIB )
+
+##### 03: I/O Test #####
+set( EXECUTABLE_NAME 03_IO-test.out )
+add_executable( ${EXECUTABLE_NAME} 03_IO-test.cpp )
+target_link_libraries( ${EXECUTABLE_NAME} CPC_LIB )

@@ -25,6 +25,24 @@ bool p_vstr_has_str( const vstr& vec, const string& q ){
 }
 
 
+vstr get_parenthetical( const vstr& expr, size_t bgn ){
+    // Get the contents of balanced parentheses starting at `bgn`
+    size_t depth = 1;
+    size_t i     = bgn+1;
+    size_t N     = expr.size();
+    vstr   rtnVec;
+    string elem;
+    while( i < N ){
+        elem = expr[i];
+        if( elem == "(" ){  ++depth;  }
+        if( elem == ")" ){  --depth;  }
+        if( depth > 0 ){  rtnVec.push_back( elem );  }else{  break;  }
+        ++i;
+    }
+    return rtnVec;
+}
+
+
 bool p_number_string( const string& q ){
     // Return true if the string can represent a primitive
     /// Handle `long` ///
@@ -87,6 +105,50 @@ bool p_ident_math_expr( const vstr& tokens ){
 }
 
 
+bool p_balanced_parens( const vstr& tokens ){
+    // Return true if parens are balanced, Otherwise return false
+    llong depth = 0;
+    if( tokens.size() == 0 ){  return true;  }
+    for( const string& token : tokens ){
+        if(token == "("){  ++depth;  } 
+        if(token == ")"){  --depth;  }  
+    }
+    return (depth == 0);
+}
+
+
+bool p_func_math_expr( const vstr& tokens, bool allowComma ){
+    // Does this expression contain only numbers, infix math operators, identifiers, and function calls?
+    size_t i    = 0;
+    size_t N    = tokens.size();
+    size_t skip = 0;
+    vstr   tkns;
+    if( tokens.size() == 0 ){  return false;  }
+    if( !p_balanced_parens( tokens ) ){  return false; }
+    for( const string& token : tokens ){
+        if( skip > 0 ){
+            --skip;
+            ++i; continue;
+        }
+        if( !( 
+            p_math_op( token ) || 
+            p_number_string( token ) || 
+            p_identifier( token ) ||
+            (token == "(") ||
+            (token == ")") || 
+            ( allowComma ? (token == ",") : false )
+        ) ){  return false;  }
+        if( p_identifier( token ) && (tokens[i+1] == "(") ){
+            tkns = get_parenthetical( tokens, i+1 );
+            skip = tkns.size()+1;
+            if( !p_func_math_expr( tkns, true ) ){  return false;  }
+        }
+        ++i;
+    }
+    return true;
+}
+
+
 bool p_assignment_statememt( const vstr& tokens, const string& eqSym = ":=" ){
     // Does this statement fit the pattern `<identifier> = <literal math expr>`?
     size_t eqDex  = vstr_find_index( tokens, eqSym );
@@ -98,7 +160,7 @@ bool p_assignment_statememt( const vstr& tokens, const string& eqSym = ":=" ){
     if( eqDex  == SIZE_MAX ){  return false;  }
     if( expEnd == SIZE_MAX ){  expEnd = tokens.size();  }
     valExpr = get_sub_vec( tokens, eqDex+1, expEnd );
-    return p_ident_math_expr( valExpr );
+    return p_func_math_expr( valExpr );
 }
 
 
