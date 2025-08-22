@@ -52,8 +52,6 @@ void Context::print_variable_state(){
 
 ////////// BUILT-IN FUNCTIONS //////////////////////////////////////////////////////////////////////
 
-map<string,BuiltInFunction> Built_In_Functions;
-
 bool p_string_token( const string& q ){
     // Does this token represent a string?
     if( q.front() != '\'' ){  return false;  }
@@ -61,13 +59,15 @@ bool p_string_token( const string& q ){
     return true;
 }
 
+
 string repeat_char( size_t N, char chr = ' ' ){
     string rtnStr = "";
     for( size_t ii = 0; ii < N; ++ii ){  rtnStr += chr;  }
     return rtnStr;
 }
 
-void writeln( const vstr& args, CntxPtr cntx ){
+
+P_Val CPC_Interpreter::writeln( const vstr& args, CntxPtr cntx ){
     // Basic print followed by a newline
     P_Val /*--*/ val;
     stringstream valStrm;
@@ -104,6 +104,13 @@ void writeln( const vstr& args, CntxPtr cntx ){
                 if( nDec > wDec ){
                     if( _VERB ) cout << "\t\tExcessive Precision: " << nDec << " --to-> " << wDec << endl;
                     valStr = valStr.substr( 0, valStr.size()-(nDec-wDec) );
+                }else if( nDec < wDec ){
+                    if( nDec > 0 ){
+                        valStr += repeat_char( wDec-nDec, '0' );
+                    }else{
+                        decPos = valStr.size();
+                        valStr += "." + repeat_char( wDec, '0' );
+                    }
                 }
                 if( valStr.size() > wInt ){
 
@@ -180,21 +187,43 @@ void writeln( const vstr& args, CntxPtr cntx ){
         ++i;
     }
     cout << endl;
+    return P_Val{true};
 }
 
-void load_builtins(){
-    // Load all Built-In Functions
-    Built_In_Functions[ "writeln" ] = writeln;
+
+P_Val CPC_Interpreter::sqrt( const vstr& args, CntxPtr cntx ){
+    // Compute the square root of the expression
+    return P_Val{ std::sqrt( as_double( calculate( args, cntx ) ) ) };
+}
+
+
+P_Val CPC_Interpreter::read( const vstr& args, CntxPtr cntx ){
+    // Read input from the user
+    string input;
+
+    // Read Input
+    cout << endl << "Input, then [Enter]: ";
+    cin >> input;
+    
+    // Discard the remaining newline character after reading the number
+    cin.ignore( std::numeric_limits<std::streamsize>::max(), '\n' );
+
+    cout << endl;
+    if( p_number_string( input ) ){
+        return str_2_primitive( input );
+    }else{
+        return make_nan();
+    }
 }
 
 
 
 ////////// INTERPRETER /////////////////////////////////////////////////////////////////////////////
 
+
 CPC_Interpreter::CPC_Interpreter(){  
     // Default Constructor
     context = CntxPtr{ new Context{} };  
-    load_builtins();
 } 
 
 
@@ -354,20 +383,21 @@ P_Val CPC_Interpreter::interpret( NodePtr root, CntxPtr cntx ){
     P_Val   bgn;
     P_Val   end;
     P_Val   cur;
+    bool    _VERB = false;
     if( !cntx ){  cntx = context; }
 
-    cout << "Node with " << root->edges.size() << " child nodes., Code: " << root->tokens << endl;
+    if( _VERB ) cout << "Node with " << root->edges.size() << " child nodes., Code: " << root->tokens << endl;
 
     switch ( root->type ){
 
         ///// Program Start ///////////////////////////////////////////////
         case PROGRAM:
-            cout << "Run program!" << endl;
+            if( _VERB ) cout << "Run program!" << endl;
             for( const NodePtr node : root->edges ){  interpret( node, cntx );  }
             break;
 
         case CODE_BLC:
-            cout << "Run code block!" << endl;
+            if( _VERB ) cout << "Run code block!" << endl;
             for( const NodePtr node : root->edges ){  interpret( node, cntx );  }
             break;
 
@@ -399,10 +429,10 @@ P_Val CPC_Interpreter::interpret( NodePtr root, CntxPtr cntx ){
                         ident  = node->edges[0]->tokens[0];
                         valStr = node->edges[1]->tokens[0];
                         if( valStr == "integer" ){
-                            cout << "Create `llong`: " << valStr << endl;
+                            if( _VERB ) cout << "Create `llong`: " << valStr << endl;
                             cntx->variables[ ident ] = make_llong();
                         }else if( valStr == "real" ){
-                            cout << "Create `double`: " << valStr << endl;
+                            if( _VERB ) cout << "Create `double`: " << valStr << endl;
                             cntx->variables[ ident ] = make_double();
                         }else{
                             cerr << "VARIABLES, TYPE NOT RECOGNIZED: " << valStr << ", " << node->tokens << endl;    
@@ -422,7 +452,7 @@ P_Val CPC_Interpreter::interpret( NodePtr root, CntxPtr cntx ){
             ident = root->edges[0]->tokens[0];
             // cout << "Assignment!, Ident: " << ident << endl;
             value = calculate( root->edges[1]->tokens, cntx );
-            cout << "Assignment, Ident: " << ident << ", Value: "<< root->edges[1]->tokens << " = " << value << endl;
+            if( _VERB ) cout << "Assignment, Ident: " << ident << ", Value: "<< root->edges[1]->tokens << " = " << value << endl;
             if( !(cntx->set_value_by_name( ident, value )) ){  
                 cerr << "Name NOT in context!: " << ident << endl;
                 return make_nan();  
@@ -434,12 +464,17 @@ P_Val CPC_Interpreter::interpret( NodePtr root, CntxPtr cntx ){
             // FIXME: NEED TO BUILD A CONTEXT ACCORDING TO THE ARGS!
             nextCntx = CntxPtr{ new Context{} };
             nextCntx->parent = cntx;
-            ident = root->edges[0]->tokens[0];
-            if( Built_In_Functions.count( ident ) ){
-                tknLin = root->edges[1]->tokens;
-                Built_In_Functions[ ident ]( tknLin, nextCntx );
+            ident  = root->edges[0]->tokens[0];
+            tknLin = root->edges[1]->tokens;
+            if( ident == "writeln" ){
+                writeln( tknLin, nextCntx );
+            }else if( ident == "sqrt" ){
+                sqrt( tknLin, nextCntx );
+            }else if( ident == "read" ){
+                read( tknLin, nextCntx );
             }
             break;
+
 
         ///// For Loop ////////////////////////////////////////////////////
         case FOR_LOOP:
@@ -452,8 +487,8 @@ P_Val CPC_Interpreter::interpret( NodePtr root, CntxPtr cntx ){
             cur = bgn;
             nextCntx->set_value_by_name( ident, bgn );
             while( cur < end ){
-                cout << "\tLoop Iteration " << cur << " < " << end << ", " << root->edges.size() << endl;
-                cout << "\tExec: " << root->edges[0]->tokens << endl;
+                if( _VERB ) cout << "\tLoop Iteration " << cur << " < " << end << ", " << root->edges.size() << endl;
+                if( _VERB ) cout << "\tExec: " << root->edges[0]->tokens << endl;
                 interpret( root->edges[0], nextCntx );
                 cur += P_Val{1};
                 nextCntx->set_value_by_name( ident, cur );

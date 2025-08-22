@@ -18,9 +18,9 @@ int main( int argc, char *argv[] ){
     cout << "Building source tree ..." << endl;
     NodePtr /*---*/ prog{ par.build_source_tree( lexer.lineTokens ) };
     CPC_Interpreter cpc{};
-    cout << "Running program ..." << endl;
+    cout << "Running program ..." << endl << endl;
     P_Val res = cpc.interpret( prog );
-    cout << "Result: " << res << endl << "DONE!" << endl;
-    cpc.context->print_constant_state();
-    cpc.context->print_variable_state();
+    // cout << "Result: " << res << endl << "DONE!" << endl;
+    // cpc.context->print_constant_state();
+    // cpc.context->print_variable_state();
 }

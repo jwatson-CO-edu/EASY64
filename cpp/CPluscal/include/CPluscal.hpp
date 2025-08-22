@@ -23,11 +23,11 @@ using std::ifstream;
 #include <sstream>
 using std::stringstream, std::getline;
 #include <iostream>
-using std::cout, std::endl, std::flush, std::cerr, std::ostream;
+using std::cout, std::endl, std::flush, std::cerr, std::ostream, std::cin;
 #include <stdexcept>
 using std::runtime_error;
 #include <memory>
-using std::shared_ptr;
+using std::shared_ptr, std::weak_ptr;
 #include <filesystem>
 using std::filesystem::exists;
 #include <variant>
@@ -71,8 +71,8 @@ const array<string,35> RESERVED = { /// Word Symbols ///
     "program", "record", "repeat", "set", "then", "to", "type", "until", "var", "while", "with"
 };
 
-const array<string,1> BUILTINS = { /// Included Functions ///
-    "writeln"
+const array<string,2> BUILTINS = { /// Included Functions ///
+    "writeln", "sqrt",
 };
 
 const array<string,3> PRIM_TYPE_NAMES = { /// Primitive Type Names ///
@@ -118,7 +118,7 @@ P_Val operator-( const P_Val& lhs, const P_Val& rhs ); // Subtract two numeric v
 P_Val operator*( const P_Val& lhs, const P_Val& rhs ); // Multiply two numeric variants
 P_Val operator/( const P_Val& lhs, const P_Val& rhs ); // Divide two numeric variants
 P_Val pow( const P_Val& lhs, const P_Val& rhs ); // ----- Raise `lhs` to the `rhs` power
-    
+double as_double( const P_Val& val );
 
 
 ////////// CONTAINERS //////////////////////////////////////////////////////////////////////////////
@@ -312,9 +312,7 @@ class CPC_Parser{ public:
 class Context;
 typedef shared_ptr<Context> CntxPtr;
 
-typedef void (*BuiltInFunction)(const vstr&, CntxPtr);
 ostream& operator<<( ostream& os , const P_Val& v ); // Helper function to stream variant contents
-
 
 ////////// CONTEXT /////////////////////////////////////////////////////////////////////////////////
 
@@ -334,13 +332,24 @@ class Context{ public:
 
 ////////// INTERPRETER /////////////////////////////////////////////////////////////////////////////
 
-class CPC_Interpreter{ public:
-    CntxPtr context = nullptr;
+class CPC_Interpreter : public std::enable_shared_from_this<CPC_Interpreter>{ public:
+    // Implements the CPluscal Computer Language
 
+    /// Members ///
+    CntxPtr context = nullptr;
+    
+    /// Constructors ///
     CPC_Interpreter();
 
+    /// Arithmetic ///
     P_Val calculate( const vstr& expr, CntxPtr cntx ); // Implements a stack-based calculator
 
+    /// Built-In Functions ///
+    P_Val writeln( const vstr& args, CntxPtr cntx ); // Basic print followed by a newline
+    P_Val sqrt( const vstr& args, CntxPtr cntx ); // Compute the square root of the expression
+    P_Val read( const vstr& args, CntxPtr cntx ); // Read input from the user
+
+    /// Code Execution ///
     P_Val interpret( NodePtr sourceTree, CntxPtr cntx = nullptr ); // RUN THE CODE (Source Tree)!
 };
 

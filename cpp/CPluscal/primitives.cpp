@@ -158,3 +158,12 @@ P_Val pow( const P_Val& lhs, const P_Val& rhs ){
         return pow( static_cast<double>(left), static_cast<double>(right) );
     }, lhs, rhs);
 }
+
+
+double as_double( const P_Val& val ){
+    // Raise `lhs` to the `rhs` power
+    // Using std::visit to handle all possible type combinations
+    double rtnDbbl;
+    visit( [&](auto&& rtnVal) -> void {  rtnDbbl = static_cast<double>( rtnVal );  }, val );
+    return rtnDbbl;
+}

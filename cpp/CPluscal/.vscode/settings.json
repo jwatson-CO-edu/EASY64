@@ -77,6 +77,7 @@
         "format": "cpp",
         "stdfloat": "cpp",
         "__nullptr": "cpp",
-        "ios": "cpp"
+        "ios": "cpp",
+        "__mutex_base": "cpp"
     }
 }
