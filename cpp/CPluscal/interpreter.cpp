@@ -84,6 +84,7 @@ void writeln( const vstr& args, CntxPtr cntx ){
             valStrm << val;
             valStr = valStrm.str();
             decPos = valStr.find( '.' );
+
             if( decPos != string::npos ){
                 nInt = decPos;
                 nDec = valStr.size() - nInt - 1;
@@ -92,11 +93,8 @@ void writeln( const vstr& args, CntxPtr cntx ){
                 nDec = 0;
             }
             
-            if( getInt ){  
-                wInt = strtoull( valStr.c_str(), NULL, 0 );  
-            }else if( getDec ){   
-                wDec = strtoull( valStr.c_str(), NULL, 0 );  
-            }
+            if( getInt ){  wInt = strtoull( valStr.c_str(), NULL, 0 );  
+            }else if( getDec ){  wDec = strtoull( valStr.c_str(), NULL, 0 );  }
             
         }else if( arg == ":" ){  
             if( !getInt ){
