@@ -259,7 +259,7 @@ enum NodeType{
     FUNCTION,
     ARGUMENTS,
     FOR_LOOP,
-    MATH_EXPR,
+    EXPRESSION,
     TYPENAME,
 };
 
@@ -277,13 +277,15 @@ class ProgNode{ public:
 
 ////////// PARSER //////////////////////////////////////////////////////////////////////////////////
 bool p_literal_math_expr( const vstr& tokens ); // Does this expression contain only numbers and infix math operators?
-bool p_ident_math_expr( const vstr& tokens ); // Does this expression contain only numbers, infix math operators, and identifiers?
+bool p_ident_math_expr( const vstr& tokens ); // - Does this expression contain only numbers, infix math operators, and identifiers?
 // Does this expression contain only numbers, infix math operators, identifiers, and function calls?
-bool p_func_math_expr( const vstr& tokens, bool allowComma = false ); 
-bool p_number_string( const string& q ); // Return true if the string can represent a primitive
-bool p_math_op( const string& q ); // Is this string an infix math operator?
-bool p_vstr_has_str( const vstr& vec, const string& q ); // Return true if the `vstr` contains `q`
-vstr get_parenthetical( const vstr& expr, size_t bgn = 0 ); // Get the contents of balanced parentheses starting at `bgn`
+bool  p_func_math_expr( const vstr& tokens, bool allowComma = false ); 
+bool  p_number_string( const string& q ); // ------------------ Return true if the string can represent a primitive
+bool  p_math_op( const string& q ); // ------------------------ Is this string an infix math operator?
+bool  p_vstr_has_str( const vstr& vec, const string& q ); // -- Return true if the `vstr` contains `q`
+vstr  get_parenthetical( const vstr& expr, size_t bgn = 0 ); // Get the contents of balanced parentheses starting at `bgn`
+vstr  get_func_args( const vstr& expr ); // ------------------- Return the function arguments in `expr`, Otherwise return an empty vector
+vvstr get_args_list( const vstr& parenthetical ); // ---------- Break the argument tokens into individual arg expressions
 
 enum ParseMode{ 
     // What is the parser working on?
@@ -312,6 +314,9 @@ class CPC_Parser{ public:
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////// interpreter.cpp /////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+typedef variant<string,P_Val> P_Obj; // Generic Pascal Object
+typedef vector<P_Obj> /*---*/ vobj;
+
 class Context;
 typedef shared_ptr<Context> CntxPtr;
 
@@ -348,9 +353,9 @@ class CPC_Interpreter : public std::enable_shared_from_this<CPC_Interpreter>{ pu
     P_Val calculate( const vstr& expr, CntxPtr cntx ); // Implements a stack-based calculator
 
     /// Built-In Functions ///
-    P_Val writeln( const vstr& args, CntxPtr cntx ); // Basic print followed by a newline
-    P_Val sqrt( const vstr& args, CntxPtr cntx ); // Compute the square root of the expression
-    P_Val read( const vstr& args, CntxPtr cntx ); // Read input from the user
+    P_Val writeln( const vobj& args, CntxPtr cntx ); // Basic print followed by a newline
+    P_Val sqrt( const vobj& args, CntxPtr cntx ); // Compute the square root of the expression
+    P_Val read( const vobj& args, CntxPtr cntx ); // Read input from the user
 
     /// Code Execution ///
     P_Val interpret( NodePtr sourceTree, CntxPtr cntx = nullptr ); // RUN THE CODE (Source Tree)!

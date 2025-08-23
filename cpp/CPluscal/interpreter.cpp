@@ -67,13 +67,15 @@ string repeat_char( size_t N, char chr = ' ' ){
 }
 
 
-P_Val CPC_Interpreter::writeln( const vstr& args, CntxPtr cntx ){
+P_Val CPC_Interpreter::writeln( const vobj& args, CntxPtr cntx ){
     // Basic print followed by a newline
     P_Val /*--*/ val;
+    P_Val /*--*/ vArg;
     stringstream valStrm;
     string /*-*/ valStr;
     string /*-*/ nptStr;
     string /*-*/ pad;
+    string /*-*/ sArg;
     size_t /*-*/ wInt   = SIZE_MAX;
     size_t /*-*/ nInt   = 0;
     size_t /*-*/ wDec   = SIZE_MAX;
@@ -85,6 +87,8 @@ P_Val CPC_Interpreter::writeln( const vstr& args, CntxPtr cntx ){
     bool /*---*/ getInt = false;
     bool /*---*/ getDec = false;
     bool /*---*/ _VERB  = false;
+    bool /*---*/ pStr   = false;
+    bool /*---*/ pVal   = false;
 
     if( _VERB ) cout << "`writeln` got args: " << args << endl;
 
@@ -129,19 +133,27 @@ P_Val CPC_Interpreter::writeln( const vstr& args, CntxPtr cntx ){
         }else{  cout << ' ';  }
     };
 
-    for( const string& arg : args ){
-        if( p_string_token( arg ) ){  
+    for( const P_Obj& arg : args ){
+
+        if( holds_alternative<string>( arg ) ){  
+            sArg = get<string>( arg );  
+            pStr = true;
+            pVal = false;
+        }else if( holds_alternative<P_Val>( arg ) ){  
+            vArg = get<P_Val>( arg );  
+            pStr = false;
+            pVal = true;
+        }
+
+        if( pStr && p_string_token( sArg ) ){  
             getInt = false;
             getDec = false;
-            cout << arg.substr( 1, arg.size()-2 ) << " ";  
-        }else if( p_identifier( arg ) || p_number_string( arg ) ){  
+            cout << sArg.substr( 1, sArg.size()-2 ) << " ";  
+        }else if( pVal ){  
 
-            if( p_identifier( arg ) ){  val = cntx->get_value_by_name( arg );  }
-            else if( p_number_string( arg ) ){  val = str_2_primitive( arg );  }
+            if( _VERB ) cout << "\tProcess Number: " << vArg << endl;
 
-            if( _VERB ) cout << "\tProcess Number: " << val << endl;
-
-            valStrm << val;
+            valStrm << vArg;
             nptStr = valStrm.str();
             valStrm.flush();
             valStrm.str("");
@@ -166,9 +178,8 @@ P_Val CPC_Interpreter::writeln( const vstr& args, CntxPtr cntx ){
                 }
                 if( _VERB ) cout << "\tGot Value: "<< nptStr << " --to-> " << valStr << endl;
             }
-            // nptStr = "";
             
-        }else if( arg == ":" ){  
+        }else if( pStr && (sArg == ":") ){  
             if( !getInt ){
                 if( _VERB ) cout << "\tLook for width!" << endl;
                 getInt = true;
@@ -178,7 +189,7 @@ P_Val CPC_Interpreter::writeln( const vstr& args, CntxPtr cntx ){
                 getInt = false;
                 getDec = true;
             }
-        }else if( (arg == ",") ){
+        }else if( pStr && (sArg == ",") ){
             format_value();
         }
 
@@ -191,13 +202,13 @@ P_Val CPC_Interpreter::writeln( const vstr& args, CntxPtr cntx ){
 }
 
 
-P_Val CPC_Interpreter::sqrt( const vstr& args, CntxPtr cntx ){
+P_Val CPC_Interpreter::sqrt( const vobj& args, CntxPtr cntx ){
     // Compute the square root of the expression
     return P_Val{ std::sqrt( as_double( calculate( args, cntx ) ) ) };
 }
 
 
-P_Val CPC_Interpreter::read( const vstr& args, CntxPtr cntx ){
+P_Val CPC_Interpreter::read( const vobj& args, CntxPtr cntx ){
     // Read input from the user
     string input;
 
@@ -309,8 +320,6 @@ P_Val CPC_Interpreter::calculate( const vstr& expr, CntxPtr cntx ){
 
                     /// Variable / Constant ///
                     }else{  lastVal = cntx->get_value_by_name( tkn );  }
-
-                    
 
                 }else{
                     cerr << "MATH TOKEN NOT RECOGNIZED: " << tkn << endl;

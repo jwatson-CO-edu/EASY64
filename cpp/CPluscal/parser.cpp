@@ -208,6 +208,19 @@ vstr get_func_args( const vstr& expr ){
 }
 
 
+vvstr get_args_list( const vstr& parenthetical ){
+    // Break the argument tokens into individual arg expressions
+    vstr contents = parenthetical;
+    contents.push_back(","); // Terminator hack
+    vstr  arg;
+    vvstr args;
+    for( const string& token : parenthetical ){
+        if( token == "," ){  if( arg.size() ){  args.push_back( arg );  }  }
+        else{  arg.push_back( token );  }
+    }
+    return args;
+}
+
 
 ///// AST Parsing /////////////////////////////////////////////////////////
 
@@ -250,6 +263,7 @@ NodePtr CPC_Parser::build_source_tree( const vvstr& lineTokens, ParseMode bgnMod
     size_t    i /**/ = 0;
     size_t    skip   = 0;
     vvstr     block;
+    vstr      expr;
     NodePtr   rtnPtr  = nullptr;
     NodePtr   conSctn = nullptr;
     NodePtr   varSctn = nullptr;
@@ -323,7 +337,7 @@ NodePtr CPC_Parser::build_source_tree( const vvstr& lineTokens, ParseMode bgnMod
                 if( _VERB ) cout << "\tConst Assignment!" << endl;
                 root = NodePtr{ new ProgNode{ ASSIGNMENT, tknLin } };
                 root->edges.push_back( NodePtr{ new ProgNode{ IDENTIFIER, get_sub_vec( tknLin, 0, 1 ) } } );
-                root->edges.push_back( NodePtr{ new ProgNode{ MATH_EXPR , get_RHS( tknLin, "=" ) } } );
+                root->edges.push_back( NodePtr{ new ProgNode{ EXPRESSION, get_RHS( tknLin, "=" ) } } );
                 conSctn->edges.push_back( root );
             }
 
@@ -345,7 +359,12 @@ NodePtr CPC_Parser::build_source_tree( const vvstr& lineTokens, ParseMode bgnMod
                 if( _VERB ) cout << "\tFunction Call!" << endl;
                 root = NodePtr{ new ProgNode{ FUNCTION, tknLin } };
                 root->edges.push_back( NodePtr{ new ProgNode{ IDENTIFIER, get_sub_vec( tknLin, 0, 1 ) } } );
-                root->edges.push_back( NodePtr{ new ProgNode{ ARGUMENTS , get_func_args( tknLin ) } } );
+                expr  = get_func_args( tknLin );
+                block = get_args_list( expr );
+                root->edges.push_back( NodePtr{ new ProgNode{ ARGUMENTS , expr } } );
+                for( const vstr& arg : block ){
+                    root->edges.back()->edges.push_back( NodePtr{ new ProgNode{ EXPRESSION, arg } } );
+                }
                 codeSec->edges.push_back( root );
 
             ///// For Loop ///////////////////////
@@ -364,7 +383,7 @@ NodePtr CPC_Parser::build_source_tree( const vvstr& lineTokens, ParseMode bgnMod
                 if( _VERB ) cout << "\tVar Assignment!" << endl;
                 root = NodePtr{ new ProgNode{ ASSIGNMENT, tknLin } };
                 root->edges.push_back( NodePtr{ new ProgNode{ IDENTIFIER, get_sub_vec( tknLin, 0, 1 ) } } );
-                root->edges.push_back( NodePtr{ new ProgNode{ MATH_EXPR , get_RHS( tknLin, ":=" ) } } );
+                root->edges.push_back( NodePtr{ new ProgNode{ EXPRESSION, get_RHS( tknLin, ":=" ) } } );
                 codeSec->edges.push_back( root );
             
             ///// End Program ////////////////////
