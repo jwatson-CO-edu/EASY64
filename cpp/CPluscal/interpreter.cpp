@@ -211,6 +211,7 @@ P_Val CPC_Interpreter::sqrt( const vobj& args, CntxPtr cntx ){
 P_Val CPC_Interpreter::read( const vobj& args, CntxPtr cntx ){
     // Read input from the user
     string input;
+    vstr   sArgs = as_vstr( args );
 
     // Read Input
     cout << endl << "Input, then [Enter]: ";
@@ -220,9 +221,10 @@ P_Val CPC_Interpreter::read( const vobj& args, CntxPtr cntx ){
     cin.ignore( std::numeric_limits<std::streamsize>::max(), '\n' );
 
     cout << endl;
-    if( p_number_string( input ) ){
-        cntx->set_value_by_name( args[0], str_2_primitive( input ) );
-        return cntx->get_value_by_name( args[0] );
+    if( p_number_string( input ) && sArgs.size() ){
+        if( cntx->set_value_by_name( sArgs[0], str_2_primitive( input ) ) ){
+            return cntx->get_value_by_name( sArgs[0] );
+        }else{  return make_nan();  }
     }else{
         return make_nan();
     }
@@ -269,19 +271,7 @@ P_Val infix_op( const P_Val& v1, const string& op, const P_Val& v2 ){
 }
 
 
-vstr as_vstr( const vobj& expr ){
-    stringstream toString;
-    string /*-*/ token;
-    vstr /*---*/ rtnVec;
-    for( const P_Obj& item : expr ){
-        toString << item;
-        token = toString.str();
-        toString.str("");
-        toString.clear();
-        rtnVec.push_back( token );
-    }
-    return rtnVec;
-}
+
 
 
 P_Val CPC_Interpreter::calculate( const vobj& expr, CntxPtr cntx ){
@@ -292,7 +282,7 @@ P_Val CPC_Interpreter::calculate( const vobj& expr, CntxPtr cntx ){
     size_t /*--*/ N /**/ = expr.size();
     size_t /*--*/ i /**/ = 0;
     size_t /*--*/ skip   = 0;
-    vstr /*----*/ subExp;
+    vobj /*----*/ subExp;
     stack<string> oprs;
     stack<P_Val>  vals;
     P_Val /*---*/ lastVal;
@@ -302,7 +292,7 @@ P_Val CPC_Interpreter::calculate( const vobj& expr, CntxPtr cntx ){
     
     if( p_func_math_expr( sExpr ) ){
         // cout << endl << "BGN!-----------------" << endl << endl;
-        for( const string& tkn : expr ){
+        for( const string& tkn : sExpr ){
 
             // cout << "## Iter: " << i << ", Token: " << tkn << ", `lastVal`: " << lastVal << ", `lastOp`: " << lastOp 
             //      << ", Skip: " << skip << " ##" << endl;
@@ -323,7 +313,7 @@ P_Val CPC_Interpreter::calculate( const vobj& expr, CntxPtr cntx ){
                 }else if( p_identifier( tkn ) ){
 
                     /// Function Call ///
-                    if( expr[i+1] == "(" ){
+                    if( sExpr[i+1] == "(" ){
                         subExp   = get_parenthetical( expr, i+1 );
                         funcCall = NodePtr{ new ProgNode{ FUNCTION, get_sub_vec( expr, i, i+subExp.size()+2 ) } };
                         funcCall->edges.push_back( NodePtr{ new ProgNode{ IDENTIFIER, vstr{ tkn } } } );
@@ -398,11 +388,11 @@ P_Val CPC_Interpreter::calculate( const vobj& expr, CntxPtr cntx ){
 
 P_Val CPC_Interpreter::interpret( NodePtr root, CntxPtr cntx ){
     // RUN THE CODE (Source Tree)!
-    string  ident;
+    P_Obj   ident;
     P_Val   value;
     string  valStr;
     CntxPtr nextCntx;
-    vstr    tknLin;
+    vobj    tknLin;
     P_Val   bgn;
     P_Val   end;
     P_Val   cur;
@@ -431,9 +421,11 @@ P_Val CPC_Interpreter::interpret( NodePtr root, CntxPtr cntx ){
                 switch( node->type ){
 
                     case ASSIGNMENT:
-                        ident = node->edges[0]->tokens[0];
-                        value = calculate( node->edges[1]->tokens, cntx );
-                        cntx->constants[ ident ] = value;
+                        ident  = node->edges[0]->tokens[0];
+                        if( type_of( ident ) == STRING ){
+                            value = calculate( node->edges[1]->tokens, cntx );
+                            cntx->set_value_by_name( as_string( ident ), value );
+                        }
                         break;
                     
                     default:
@@ -451,13 +443,18 @@ P_Val CPC_Interpreter::interpret( NodePtr root, CntxPtr cntx ){
                     // NOTE: VAR TYPE IS DYNAMIC AND **NOT** ENFORCED!
                     case VAR_DECL:
                         ident  = node->edges[0]->tokens[0];
-                        valStr = node->edges[1]->tokens[0];
+                        valStr = as_string( node->edges[1]->tokens[0] );
                         if( valStr == "integer" ){
                             if( _VERB ) cout << "Create `llong`: " << valStr << endl;
-                            cntx->variables[ ident ] = make_llong();
+                            if( p_identifier( as_string( ident ) ) ){
+                                cntx->variables[ as_string( ident ) ] = make_llong();
+                            }
+                            
                         }else if( valStr == "real" ){
                             if( _VERB ) cout << "Create `double`: " << valStr << endl;
-                            cntx->variables[ ident ] = make_double();
+                            if( p_identifier( as_string( ident ) ) ){
+                                cntx->variables[ as_string( ident ) ] = make_double();
+                            }
                         }else{
                             cerr << "VARIABLES, TYPE NOT RECOGNIZED: " << valStr << ", " << node->tokens << endl;    
                         }
@@ -477,7 +474,7 @@ P_Val CPC_Interpreter::interpret( NodePtr root, CntxPtr cntx ){
             // cout << "Assignment!, Ident: " << ident << endl;
             value = calculate( root->edges[1]->tokens, cntx );
             if( _VERB ) cout << "Assignment, Ident: " << ident << ", Value: "<< root->edges[1]->tokens << " = " << value << endl;
-            if( !(cntx->set_value_by_name( ident, value )) ){  
+            if( !(cntx->set_value_by_name( as_string( ident ), value )) ){  
                 cerr << "Name NOT in context!: " << ident << endl;
                 return make_nan();  
             }

@@ -5,7 +5,12 @@
 
 ////////// SOURCE TREE /////////////////////////////////////////////////////////////////////////////
 
-ProgNode::ProgNode( NodeType typ, vstr tkns ){
+ProgNode::ProgNode( NodeType typ, const vstr& tkns ){
+    type   = typ;
+    tokens = as_vobj( tkns );
+}
+
+ProgNode::ProgNode( NodeType typ, const vobj& tkns ){
     type   = typ;
     tokens = tkns;
 }
@@ -37,6 +42,24 @@ vstr get_parenthetical( const vstr& expr, size_t bgn ){
         if( elem == "(" ){  ++depth;  }
         if( elem == ")" ){  --depth;  }
         if( depth > 0 ){  rtnVec.push_back( elem );  }else{  break;  }
+        ++i;
+    }
+    return rtnVec;
+}
+
+vobj get_parenthetical( const vobj& expr, size_t bgn = 0 ){
+    // Get the contents of balanced parentheses starting at `bgn`
+    size_t depth = 1;
+    size_t i     = bgn+1;
+    size_t N     = expr.size();
+    vobj   rtnVec;
+    string elem;
+    vstr   sExpr = as_vstr( expr );
+    while( i < N ){
+        elem = sExpr[i];
+        if( elem == "(" ){  ++depth;  }
+        if( elem == ")" ){  --depth;  }
+        if( depth > 0 ){  rtnVec.push_back( expr[i] );  }else{  break;  }
         ++i;
     }
     return rtnVec;

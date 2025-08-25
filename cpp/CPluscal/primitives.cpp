@@ -183,3 +183,40 @@ double as_double( const P_Val& val ){
     visit( [&](auto&& rtnVal) -> void {  rtnDbbl = static_cast<double>( rtnVal );  }, val );
     return rtnDbbl;
 }
+
+
+vstr as_vstr( const vobj& expr ){
+    stringstream toString;
+    string /*-*/ token;
+    vstr /*---*/ rtnVec;
+    rtnVec.reserve( expr.size() );
+    for( const P_Obj& item : expr ){
+        toString << item;
+        token = toString.str();
+        toString.str("");
+        toString.clear();
+        rtnVec.push_back( token );
+    }
+    return rtnVec;
+}
+
+
+vobj as_vobj( const vstr& expr ){
+    vobj rtnVec;
+    rtnVec.reserve( expr.size() );
+    for( const string& token : expr ){
+        if( p_number_string( token ) ){
+            rtnVec.push_back( P_Obj{ str_2_primitive( token ) } ); // As literal
+        }else{
+            rtnVec.push_back( P_Obj{ token } ); // As string
+        }
+    }
+    return rtnVec;
+}
+
+
+string as_string( const P_Obj& obj ){
+    stringstream toString;
+    toString << obj;
+    return toString.str();
+}

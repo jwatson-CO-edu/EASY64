@@ -133,6 +133,10 @@ P_Val operator/( const P_Val& lhs, const P_Val& rhs ); // Divide two numeric var
 P_Val pow( const P_Val& lhs, const P_Val& rhs ); // ----- Raise `lhs` to the `rhs` power
 double as_double( const P_Val& val );
 
+vstr as_vstr( const vobj& expr );
+vobj as_vobj( const vstr& expr );
+string as_string( const P_Obj& obj );
+
 
 ////////// CONTAINERS //////////////////////////////////////////////////////////////////////////////
 
@@ -281,10 +285,11 @@ typedef shared_ptr<ProgNode> NodePtr;
 
 class ProgNode{ public:
     NodeType /*--*/ type = INVALID;
-    vstr /*------*/ tokens;
+    vobj /*------*/ tokens;
     vector<NodePtr> edges;
 
-    ProgNode( NodeType typ, vstr tkns );
+    ProgNode( NodeType typ, const vstr& tkns );
+    ProgNode( NodeType typ, const vobj& tkns );
 };
 
 
@@ -297,6 +302,7 @@ bool  p_number_string( const string& q ); // ------------------ Return true if t
 bool  p_math_op( const string& q ); // ------------------------ Is this string an infix math operator?
 bool  p_vstr_has_str( const vstr& vec, const string& q ); // -- Return true if the `vstr` contains `q`
 vstr  get_parenthetical( const vstr& expr, size_t bgn = 0 ); // Get the contents of balanced parentheses starting at `bgn`
+vobj  get_parenthetical( const vobj& expr, size_t bgn = 0 ); // Get the contents of balanced parentheses starting at `bgn`
 vstr  get_func_args( const vstr& expr ); // ------------------- Return the function arguments in `expr`, Otherwise return an empty vector
 vvstr get_args_list( const vstr& parenthetical ); // ---------- Break the argument tokens into individual arg expressions
 
