@@ -14,6 +14,22 @@ ostream& operator<<(ostream& os, const P_Val& v) {
     return os;
 }
 
+ostream& operator<<(ostream& os, const P_Obj& v){
+    if( holds_alternative<string>( v ) ){
+        os << get<string>( v );
+    }else if( holds_alternative<P_Val>( v ) ){
+        os << get<P_Val>( v );
+    }
+    return os;
+}
+
+
+DataType type_of( const P_Obj& obj ){
+    if( holds_alternative<string>( obj ) ){  return STRING;   }
+    if( holds_alternative<P_Val >( obj ) ){  return LITERAL;  }
+    return ERROR;
+}
+
 
 P_Val make_nan(){     return P_Val{ nan("") };    }
 P_Val make_double(){  return P_Val{ 0.0 }; /*--*/ }

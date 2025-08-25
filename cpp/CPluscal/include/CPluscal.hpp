@@ -103,6 +103,19 @@ typedef variant<double,llong,char,bool> P_Val; // Primitive Values // WARNING: A
 
 ostream& operator<<(ostream& os, const P_Val& v);
 
+typedef variant<string,P_Val> P_Obj; // Generic Pascal Object
+typedef vector<P_Obj> /*---*/ vobj;
+
+enum DataType{
+    LITERAL,
+    STRING,
+    ERROR,
+};
+
+DataType type_of( const P_Obj& obj );
+
+ostream& operator<<(ostream& os, const P_Obj& v);
+
 P_Val make_nan();
 P_Val make_double();
 P_Val make_llong();
@@ -314,8 +327,7 @@ class CPC_Parser{ public:
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////// interpreter.cpp /////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-typedef variant<string,P_Val> P_Obj; // Generic Pascal Object
-typedef vector<P_Obj> /*---*/ vobj;
+
 
 class Context;
 typedef shared_ptr<Context> CntxPtr;
@@ -350,7 +362,7 @@ class CPC_Interpreter : public std::enable_shared_from_this<CPC_Interpreter>{ pu
     CPC_Interpreter();
 
     /// Arithmetic ///
-    P_Val calculate( const vstr& expr, CntxPtr cntx ); // Implements a stack-based calculator
+    P_Val calculate( const vobj& expr, CntxPtr cntx ); // Implements a stack-based calculator
 
     /// Built-In Functions ///
     P_Val writeln( const vobj& args, CntxPtr cntx ); // Basic print followed by a newline

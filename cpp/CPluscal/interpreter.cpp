@@ -269,11 +269,24 @@ P_Val infix_op( const P_Val& v1, const string& op, const P_Val& v2 ){
 }
 
 
+vstr as_vstr( const vobj& expr ){
+    stringstream toString;
+    string /*-*/ token;
+    vstr /*---*/ rtnVec;
+    for( const P_Obj& item : expr ){
+        toString << item;
+        token = toString.str();
+        toString.str("");
+        toString.clear();
+        rtnVec.push_back( token );
+    }
+    return rtnVec;
+}
 
 
-
-P_Val CPC_Interpreter::calculate( const vstr& expr, CntxPtr cntx ){
+P_Val CPC_Interpreter::calculate( const vobj& expr, CntxPtr cntx ){
     // Implements a stack-based calculator
+    vstr /*----*/ sExpr  = as_vstr( expr );
     P_Val /*---*/ result = make_nan(); 
     string /*--*/ lastOp = "";
     size_t /*--*/ N /**/ = expr.size();
@@ -287,7 +300,7 @@ P_Val CPC_Interpreter::calculate( const vstr& expr, CntxPtr cntx ){
     P_Val /*---*/ currVal;
     NodePtr /*-*/ funcCall = nullptr;
     
-    if( p_func_math_expr( expr ) ){
+    if( p_func_math_expr( sExpr ) ){
         // cout << endl << "BGN!-----------------" << endl << endl;
         for( const string& tkn : expr ){
 

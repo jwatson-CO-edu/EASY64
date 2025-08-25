@@ -81,6 +81,8 @@
         "__mutex_base": "cpp",
         "__split_buffer": "cpp",
         "locale": "cpp",
-        "queue": "cpp"
+        "queue": "cpp",
+        "__hash_table": "cpp",
+        "__tree": "cpp"
     }
 }
