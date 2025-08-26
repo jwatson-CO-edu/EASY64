@@ -47,7 +47,7 @@ vstr get_parenthetical( const vstr& expr, size_t bgn ){
     return rtnVec;
 }
 
-vobj get_parenthetical( const vobj& expr, size_t bgn = 0 ){
+vobj get_parenthetical( const vobj& expr, size_t bgn ){
     // Get the contents of balanced parentheses starting at `bgn`
     size_t depth = 1;
     size_t i     = bgn+1;
@@ -237,8 +237,8 @@ vvstr get_args_list( const vstr& parenthetical ){
     contents.push_back(","); // Terminator hack
     vstr  arg;
     vvstr args;
-    for( const string& token : parenthetical ){
-        if( token == "," ){  if( arg.size() ){  args.push_back( arg );  }  }
+    for( const string& token : contents ){
+        if( token == "," ){  if( arg.size() ){  args.push_back( arg ); arg.clear();  }  }
         else{  arg.push_back( token );  }
     }
     return args;
@@ -292,7 +292,7 @@ NodePtr CPC_Parser::build_source_tree( const vvstr& lineTokens, ParseMode bgnMod
     NodePtr   varSctn = nullptr;
     NodePtr   typSctn = nullptr;
     NodePtr   codeSec = nullptr;
-    bool /**/ _VERB   = false;
+    bool /**/ _VERB   = true;
     
     // For every line of tokens, do ...
     for( const vstr& tknLin : lineTokens ){
@@ -386,6 +386,7 @@ NodePtr CPC_Parser::build_source_tree( const vvstr& lineTokens, ParseMode bgnMod
                 block = get_args_list( expr );
                 root->edges.push_back( NodePtr{ new ProgNode{ ARGUMENTS , expr } } );
                 for( const vstr& arg : block ){
+                    if( _VERB ) cout << "\t\tArgument: " << arg << endl;
                     root->edges.back()->edges.push_back( NodePtr{ new ProgNode{ EXPRESSION, arg } } );
                 }
                 codeSec->edges.push_back( root );

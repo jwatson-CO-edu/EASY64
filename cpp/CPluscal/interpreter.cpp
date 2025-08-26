@@ -67,7 +67,7 @@ string repeat_char( size_t N, char chr = ' ' ){
 }
 
 
-P_Val CPC_Interpreter::writeln( const vobj& args, CntxPtr cntx ){
+P_Obj CPC_Interpreter::writeln( const vobj& args, CntxPtr cntx ){
     // Basic print followed by a newline
     P_Val /*--*/ val;
     P_Val /*--*/ vArg;
@@ -202,13 +202,13 @@ P_Val CPC_Interpreter::writeln( const vobj& args, CntxPtr cntx ){
 }
 
 
-P_Val CPC_Interpreter::sqrt( const vobj& args, CntxPtr cntx ){
+P_Obj CPC_Interpreter::sqrt( const vobj& args, CntxPtr cntx ){
     // Compute the square root of the expression
     return P_Val{ std::sqrt( as_double( calculate( args, cntx ) ) ) };
 }
 
 
-P_Val CPC_Interpreter::read( const vobj& args, CntxPtr cntx ){
+P_Obj CPC_Interpreter::read( const vobj& args, CntxPtr cntx ){
     // Read input from the user
     string input;
     vstr   sArgs = as_vstr( args );
@@ -318,7 +318,7 @@ P_Val CPC_Interpreter::calculate( const vobj& expr, CntxPtr cntx ){
                         funcCall = NodePtr{ new ProgNode{ FUNCTION, get_sub_vec( expr, i, i+subExp.size()+2 ) } };
                         funcCall->edges.push_back( NodePtr{ new ProgNode{ IDENTIFIER, vstr{ tkn } } } );
                         funcCall->edges.push_back( NodePtr{ new ProgNode{ ARGUMENTS , subExp } } );
-                        lastVal  = interpret( funcCall, cntx );
+                        lastVal  = get<P_Val>( interpret( funcCall, cntx ) );
                         funcCall = nullptr;
 
                     /// Variable / Constant ///
@@ -386,18 +386,23 @@ P_Val CPC_Interpreter::calculate( const vobj& expr, CntxPtr cntx ){
 
 
 
-P_Val CPC_Interpreter::interpret( NodePtr root, CntxPtr cntx ){
+P_Obj CPC_Interpreter::interpret( NodePtr root, CntxPtr cntx ){
     // RUN THE CODE (Source Tree)!
     P_Obj   ident;
+    string  sIdent;
     P_Val   value;
     string  valStr;
     CntxPtr nextCntx;
     vobj    tknLin;
+    vobj    calcdArgs;
+    vstr    strLin;
     P_Val   bgn;
     P_Val   end;
     P_Val   cur;
-    P_Val   rtnVal = make_nan();
-    bool    _VERB = false;
+    P_Obj   rtnVal = make_nan();
+    size_t  i = 0;
+    size_t  N = 0;
+    bool    _VERB = true;
     if( !cntx ){  cntx = context; }
 
     if( _VERB ) cout << "Node with " << root->edges.size() << " child nodes., Code: " << root->tokens << endl;
@@ -413,6 +418,11 @@ P_Val CPC_Interpreter::interpret( NodePtr root, CntxPtr cntx ){
         case CODE_BLC:
             if( _VERB ) cout << "Run code block!" << endl;
             for( const NodePtr node : root->edges ){  interpret( node, cntx );  }
+            break;
+
+        case EXPRESSION:
+            if( _VERB ) cout << "Calc expression!" << endl;
+            rtnVal = calculate( root->tokens, cntx );
             break;
 
         ///// Constant Declaration ////////////////////////////////////////
@@ -483,16 +493,26 @@ P_Val CPC_Interpreter::interpret( NodePtr root, CntxPtr cntx ){
         ///// Function Call ///////////////////////////////////////////////
         case FUNCTION:
             // FIXME: NEED TO BUILD A CONTEXT ACCORDING TO THE ARGS!
+            
             nextCntx = CntxPtr{ new Context{} };
             nextCntx->parent = cntx;
             ident  = root->edges[0]->tokens[0];
-            tknLin = root->edges[1]->tokens;
-            if( ident == "writeln" ){
-                writeln( tknLin, nextCntx );
-            }else if( ident == "sqrt" ){
-                rtnVal = sqrt( tknLin, nextCntx );
-            }else if( ident == "read" ){
-                rtnVal = read( tknLin, nextCntx );
+            sIdent = as_string( ident );
+            if( _VERB ) cout << "Exec Function, " << sIdent << "!" << endl;
+            N /**/ = root->edges.size();
+            calcdArgs.clear();
+            calcdArgs.reserve( N-1 );
+            if( _VERB ) cout << "\tProcess " << (N-1) << "args!" << endl;
+            for( i = 1; i < N; ++i ){  
+                calcdArgs.push_back( interpret( root->edges[i], cntx ) );  
+                if( _VERB ) cout << "\tArg " << i << " : " << root->edges[i]->tokens << " --to-> " << calcdArgs[i-1] << endl;
+            }
+            if( sIdent == "writeln" ){
+                writeln( calcdArgs, nextCntx );
+            }else if( sIdent == "sqrt" ){
+                rtnVal = sqrt( calcdArgs, nextCntx );
+            }else if( sIdent == "read" ){
+                rtnVal = read( calcdArgs, nextCntx );
             }
             break;
 
@@ -503,16 +523,18 @@ P_Val CPC_Interpreter::interpret( NodePtr root, CntxPtr cntx ){
             nextCntx->parent = cntx;
             tknLin = root->tokens;
             ident  = tknLin[1];
-            bgn = nextCntx->get_value_by_name( tknLin[ vstr_find_index( tknLin, ":=" ) +1 ] );
-            end = nextCntx->get_value_by_name( tknLin[ vstr_find_index( tknLin, "to" ) +1 ] );
+            sIdent = as_string( ident );
+            strLin = as_vstr( tknLin );
+            bgn = nextCntx->get_value_by_name( strLin[ vstr_find_index( strLin, ":=" ) +1 ] );
+            end = nextCntx->get_value_by_name( strLin[ vstr_find_index( strLin, "to" ) +1 ] );
             cur = bgn;
-            nextCntx->set_value_by_name( ident, bgn );
+            nextCntx->set_value_by_name( sIdent, bgn );
             while( cur < end ){
                 if( _VERB ) cout << "\tLoop Iteration " << cur << " < " << end << ", " << root->edges.size() << endl;
                 if( _VERB ) cout << "\tExec: " << root->edges[0]->tokens << endl;
                 interpret( root->edges[0], nextCntx );
                 cur += P_Val{1};
-                nextCntx->set_value_by_name( ident, cur );
+                nextCntx->set_value_by_name( sIdent, cur );
             }
             break;
 

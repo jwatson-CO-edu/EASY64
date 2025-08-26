@@ -20,16 +20,16 @@ int main( int argc, char *argv[] ){
 
     CntxPtr /*---*/ cntx{ new Context{} };
     CPC_Interpreter cpc{};
-    cout << cpc.calculate( expr0, cntx ) << endl; //   5
-    cout << cpc.calculate( expr1, cntx ) << endl; //  14
-    cout << cpc.calculate( expr2, cntx ) << endl; //  10
-    cout << cpc.calculate( expr3, cntx ) << endl; //  26
-    cout << cpc.calculate( expr4, cntx ) << endl; //  70
-    cout << cpc.calculate( expr5, cntx ) << endl; // 370
-    cout << cpc.calculate( expr6, cntx ) << endl; // 300
-    cout << cpc.calculate( expr7, cntx ) << endl; // 170
-    cout << cpc.calculate( expr8, cntx ) << endl; //  -1
-    cout << cpc.calculate( expr9, cntx ) << endl; // -10
-    cout << cpc.calculate( exprA, cntx ) << endl; //   2.8
-    cout << cpc.calculate( exprB, cntx ) << endl; //  -0.9
+    cout << cpc.calculate( as_vobj( expr0 ), cntx ) << endl; //   5
+    cout << cpc.calculate( as_vobj( expr1 ), cntx ) << endl; //  14
+    cout << cpc.calculate( as_vobj( expr2 ), cntx ) << endl; //  10
+    cout << cpc.calculate( as_vobj( expr3 ), cntx ) << endl; //  26
+    cout << cpc.calculate( as_vobj( expr4 ), cntx ) << endl; //  70
+    cout << cpc.calculate( as_vobj( expr5 ), cntx ) << endl; // 370
+    cout << cpc.calculate( as_vobj( expr6 ), cntx ) << endl; // 300
+    cout << cpc.calculate( as_vobj( expr7 ), cntx ) << endl; // 170
+    cout << cpc.calculate( as_vobj( expr8 ), cntx ) << endl; //  -1
+    cout << cpc.calculate( as_vobj( expr9 ), cntx ) << endl; // -10
+    cout << cpc.calculate( as_vobj( exprA ), cntx ) << endl; //   2.8
+    cout << cpc.calculate( as_vobj( exprB ), cntx ) << endl; //  -0.9
 }

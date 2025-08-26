@@ -103,8 +103,18 @@ typedef variant<double,llong,char,bool> P_Val; // Primitive Values // WARNING: A
 
 ostream& operator<<(ostream& os, const P_Val& v);
 
-typedef variant<string,P_Val> P_Obj; // Generic Pascal Object
-typedef vector<P_Obj> /*---*/ vobj;
+enum ErrType{
+    UNDEFINED,
+};
+
+struct P_Err{
+    // Generic Error Container
+    ErrType typ;
+    string  msg;
+};
+
+typedef variant<string,P_Val,P_Err> P_Obj; // Generic Pascal Object
+typedef vector<P_Obj> /*---------*/ vobj;
 
 enum DataType{
     LITERAL,
@@ -131,10 +141,10 @@ P_Val operator-( const P_Val& lhs, const P_Val& rhs ); // Subtract two numeric v
 P_Val operator*( const P_Val& lhs, const P_Val& rhs ); // Multiply two numeric variants
 P_Val operator/( const P_Val& lhs, const P_Val& rhs ); // Divide two numeric variants
 P_Val pow( const P_Val& lhs, const P_Val& rhs ); // ----- Raise `lhs` to the `rhs` power
-double as_double( const P_Val& val );
+double as_double( const P_Obj& val );
 
-vstr as_vstr( const vobj& expr );
-vobj as_vobj( const vstr& expr );
+vstr   as_vstr( const vobj& expr );
+vobj   as_vobj( const vstr& expr );
 string as_string( const P_Obj& obj );
 
 
@@ -371,12 +381,12 @@ class CPC_Interpreter : public std::enable_shared_from_this<CPC_Interpreter>{ pu
     P_Val calculate( const vobj& expr, CntxPtr cntx ); // Implements a stack-based calculator
 
     /// Built-In Functions ///
-    P_Val writeln( const vobj& args, CntxPtr cntx ); // Basic print followed by a newline
-    P_Val sqrt( const vobj& args, CntxPtr cntx ); // Compute the square root of the expression
-    P_Val read( const vobj& args, CntxPtr cntx ); // Read input from the user
+    P_Obj writeln( const vobj& args, CntxPtr cntx ); // Basic print followed by a newline
+    P_Obj sqrt( const vobj& args, CntxPtr cntx ); // Compute the square root of the expression
+    P_Obj read( const vobj& args, CntxPtr cntx ); // Read input from the user
 
     /// Code Execution ///
-    P_Val interpret( NodePtr sourceTree, CntxPtr cntx = nullptr ); // RUN THE CODE (Source Tree)!
+    P_Obj interpret( NodePtr sourceTree, CntxPtr cntx = nullptr ); // RUN THE CODE (Source Tree)!
 };
 
 

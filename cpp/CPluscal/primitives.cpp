@@ -176,11 +176,15 @@ P_Val pow( const P_Val& lhs, const P_Val& rhs ){
 }
 
 
-double as_double( const P_Val& val ){
+double as_double( const P_Obj& val ){
     // Raise `lhs` to the `rhs` power
     // Using std::visit to handle all possible type combinations
-    double rtnDbbl;
-    visit( [&](auto&& rtnVal) -> void {  rtnDbbl = static_cast<double>( rtnVal );  }, val );
+    double rtnDbbl = nan("");
+    P_Val  rtnPVal;
+    if( type_of( val ) == LITERAL ){  
+        rtnPVal = get<P_Val>( val );
+        visit( [&](auto&& rtnVal) -> void {  rtnDbbl = static_cast<double>( rtnVal );  }, rtnPVal );
+    }
     return rtnDbbl;
 }
 
