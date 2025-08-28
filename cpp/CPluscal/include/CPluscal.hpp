@@ -105,6 +105,7 @@ ostream& operator<<(ostream& os, const P_Val& v);
 
 enum ErrType{
     UNDEFINED,
+    SYNTAX,
 };
 
 struct P_Err{
@@ -112,6 +113,8 @@ struct P_Err{
     ErrType typ;
     string  msg;
 };
+
+P_Err make_err_syntax( string msg = "" );
 
 typedef variant<string,P_Val,P_Err> P_Obj; // Generic Pascal Object
 typedef vector<P_Obj> /*---------*/ vobj;
@@ -235,6 +238,8 @@ bool p_letter( const char& q ); // ------------------------- Return True if `q` 
 bool p_digit( const char& q ); // -------------------------- Return True if `q` matches a digit, otherwise return False
 // Return True for strings that are: 1. Not symbols, 2. Begin with a letter, 3. Are composed of alphanumeric chars
 bool p_identifier( const string& q ); 
+bool p_string_token( const string& q ); // Does this token represent a string?
+bool p_string_token( const P_Obj&  q ); // Does this `P_Obj` represent a string?
 // Handle the case when reserved symbols are substrings of each other (2 tokens only!)
 vstr attempt_reserved_symbol_merge( const vstr& tokens ); 
 // Return a vector of tokenized strings that a separated by whitespace within `expStr`
@@ -313,7 +318,6 @@ bool  p_math_op( const string& q ); // ------------------------ Is this string a
 bool  p_vstr_has_str( const vstr& vec, const string& q ); // -- Return true if the `vstr` contains `q`
 vstr  get_parenthetical( const vstr& expr, size_t bgn = 0 ); // Get the contents of balanced parentheses starting at `bgn`
 vobj  get_parenthetical( const vobj& expr, size_t bgn = 0 ); // Get the contents of balanced parentheses starting at `bgn`
-vstr  get_func_args( const vstr& expr ); // ------------------- Return the function arguments in `expr`, Otherwise return an empty vector
 vvstr get_args_list( const vstr& parenthetical ); // ---------- Break the argument tokens into individual arg expressions
 
 enum ParseMode{ 

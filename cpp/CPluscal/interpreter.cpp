@@ -52,14 +52,6 @@ void Context::print_variable_state(){
 
 ////////// BUILT-IN FUNCTIONS //////////////////////////////////////////////////////////////////////
 
-bool p_string_token( const string& q ){
-    // Does this token represent a string?
-    if( q.front() != '\'' ){  return false;  }
-    if( q.back()  != '\'' ){  return false;  }
-    return true;
-}
-
-
 string repeat_char( size_t N, char chr = ' ' ){
     string rtnStr = "";
     for( size_t ii = 0; ii < N; ++ii ){  rtnStr += chr;  }
@@ -276,9 +268,13 @@ P_Val infix_op( const P_Val& v1, const string& op, const P_Val& v2 ){
 
 P_Val CPC_Interpreter::calculate( const vobj& expr, CntxPtr cntx ){
     // Implements a stack-based calculator
+    bool /*----*/ _VERB    = true;
+    if( _VERB ) cout << endl << "............ about to calc ...." << endl;
     vstr /*----*/ sExpr  = as_vstr( expr );
+    if( _VERB ) cout << endl << "............ default return val ...." << endl;
     P_Val /*---*/ result = make_nan(); 
     string /*--*/ lastOp = "";
+    if( _VERB ) cout << endl << "............ how many? ...." << endl;
     size_t /*--*/ N /**/ = expr.size();
     size_t /*--*/ i /**/ = 0;
     size_t /*--*/ skip   = 0;
@@ -289,23 +285,25 @@ P_Val CPC_Interpreter::calculate( const vobj& expr, CntxPtr cntx ){
     P_Val /*---*/ prevVal;
     P_Val /*---*/ currVal;
     NodePtr /*-*/ funcCall = nullptr;
+    if( _VERB ) cout << endl << "............ start? ...." << sExpr << endl;
+    // cout << p_func_math_expr( sExpr ) << endl;
     
     if( p_func_math_expr( sExpr ) ){
-        // cout << endl << "BGN!-----------------" << endl << endl;
+        if( _VERB ) cout << endl << "BGN!-----------------" << endl << endl;
         for( const string& tkn : sExpr ){
 
-            // cout << "## Iter: " << i << ", Token: " << tkn << ", `lastVal`: " << lastVal << ", `lastOp`: " << lastOp 
-            //      << ", Skip: " << skip << " ##" << endl;
+            if( _VERB ) cout << "## Iter: " << i << ", Token: " << tkn << ", `lastVal`: " << lastVal << ", `lastOp`: " << lastOp 
+                             << ", Skip: " << skip << " ##" << endl;
 
             if( skip > 0 ){
                 --skip;
-                // cout << ">skip!>" << endl;
+                if( _VERB ) cout << ">skip!>" << endl;
                 ++i; continue;
             }
             if( p_number_string( tkn ) || (tkn == "(") || p_identifier( tkn ) ){
                 if( tkn == "(" ){
                     subExp  = get_parenthetical( expr, i );
-                    // cout << endl << "PARENTHETICAL: " << subExp << endl << endl;
+                    if( _VERB ) cout << endl << "PARENTHETICAL: " << subExp << endl << endl;
                     skip    = subExp.size()+1;
                     lastVal = calculate( subExp, cntx );
                 }else if( p_number_string( tkn ) ){
@@ -313,8 +311,9 @@ P_Val CPC_Interpreter::calculate( const vobj& expr, CntxPtr cntx ){
                 }else if( p_identifier( tkn ) ){
 
                     /// Function Call ///
-                    if( sExpr[i+1] == "(" ){
-                        subExp   = get_parenthetical( expr, i+1 );
+                    if( ((i+1)<N) && (sExpr[i+1] == "(") ){
+                        subExp   = get_parenthetical( expr, i );
+                        cout << "Fetch Args: " << subExp << endl;
                         funcCall = NodePtr{ new ProgNode{ FUNCTION, get_sub_vec( expr, i, i+subExp.size()+2 ) } };
                         funcCall->edges.push_back( NodePtr{ new ProgNode{ IDENTIFIER, vstr{ tkn } } } );
                         funcCall->edges.push_back( NodePtr{ new ProgNode{ ARGUMENTS , subExp } } );
@@ -322,22 +321,25 @@ P_Val CPC_Interpreter::calculate( const vobj& expr, CntxPtr cntx ){
                         funcCall = nullptr;
 
                     /// Variable / Constant ///
-                    }else{  lastVal = cntx->get_value_by_name( tkn );  }
+                    }else{  
+                        cout << "Fetch value stored in \"" << tkn << "\"" << endl;
+                        lastVal = cntx->get_value_by_name( tkn );  
+                    }
 
                 }else{
                     cerr << "MATH TOKEN NOT RECOGNIZED: " << tkn << endl;
                     return make_nan();
                 }
-                // cout << "Got Value: " << lastVal << endl;
+                if( _VERB ) cout << "Got Value: " << lastVal << endl;
                 if( oprs.size() && (PEMDAS( lastOp ) <= PEMDAS( oprs.top() )) ){
-                    // cout << lastOp << " <= " << oprs.top() << endl;
+                    if( _VERB ) cout << lastOp << " <= " << oprs.top() << endl;
                     prevVal = vals.top();
                     vals.pop();
                     vals.push( infix_op( prevVal, lastOp, lastVal ) );
                     lastOp = "";
                     lastVal = make_nan();
                 }else if( oprs.size() && (PEMDAS( lastOp ) > PEMDAS( oprs.top() )) ){
-                    // cout << lastOp << " > " << oprs.top() << endl;
+                    if( _VERB ) cout << lastOp << " > " << oprs.top() << endl;
                     currVal = vals.top();
                     vals.pop();
                     prevVal = vals.top();
@@ -357,15 +359,15 @@ P_Val CPC_Interpreter::calculate( const vobj& expr, CntxPtr cntx ){
                 
             }else if( p_math_op( tkn ) ){
                 lastOp = tkn;
-                // cout << "Got Op: " << lastOp << endl;
+                if( _VERB ) cout << "Got Op: " << lastOp << endl;
                 if( !p_nan( lastVal ) ){
                     vals.push( lastVal );
                 }else{  return lastVal;  }
             }
 
-            // cout << "\n/// Stack State ///" << endl  
-            //      << "Values:" << vals << endl
-            //      << "Ops: _ " << oprs << endl << endl;
+            if( _VERB ) cout << "\n/// Stack State ///" << endl  
+                             << "Values:" << vals << endl
+                             << "Ops: _ " << oprs << endl << endl;
 
             ++i;
         }
@@ -376,12 +378,12 @@ P_Val CPC_Interpreter::calculate( const vobj& expr, CntxPtr cntx ){
             lastOp  = oprs.top(); oprs.pop();
             lastVal = vals.top(); vals.pop();
             prevVal = vals.top(); vals.pop();
-            // cout << prevVal << " " << lastOp << " " << lastVal << endl;
+            if( _VERB ) cout << prevVal << " " << lastOp << " " << lastVal << endl;
             vals.push( infix_op( prevVal, lastOp, lastVal ) );
         }
     }
-    // cout << endl << "------------END!---> " << vals.top() << endl << endl;
-    return vals.top();
+    if( _VERB ) cout << endl << "------------END!---> " << endl << endl;
+    return (vals.size() ? vals.top() : make_nan());
 }
 
 
@@ -393,6 +395,7 @@ P_Obj CPC_Interpreter::interpret( NodePtr root, CntxPtr cntx ){
     P_Val   value;
     string  valStr;
     CntxPtr nextCntx;
+    NodePtr node;
     vobj    tknLin;
     vobj    calcdArgs;
     vstr    strLin;
@@ -421,8 +424,16 @@ P_Obj CPC_Interpreter::interpret( NodePtr root, CntxPtr cntx ){
             break;
 
         case EXPRESSION:
-            if( _VERB ) cout << "Calc expression!" << endl;
-            rtnVal = calculate( root->tokens, cntx );
+            if( _VERB ) cout << "Calc expression!: " << root->tokens << endl;
+            if( p_func_math_expr( as_vstr( root->tokens ) ) ){
+                rtnVal = P_Obj{ calculate( root->tokens, cntx ) };
+            }else if( (root->tokens.size() == 1) && p_string_token( root->tokens[0] ) ){
+                rtnVal = root->tokens[0];
+            }else{
+                cerr << "BAD EXPRESSION: " << root->tokens << endl;
+                rtnVal = P_Obj{ make_err_syntax() };
+            }
+            
             break;
 
         ///// Constant Declaration ////////////////////////////////////////
@@ -502,10 +513,10 @@ P_Obj CPC_Interpreter::interpret( NodePtr root, CntxPtr cntx ){
             N /**/ = root->edges.size();
             calcdArgs.clear();
             calcdArgs.reserve( N-1 );
-            if( _VERB ) cout << "\tProcess " << (N-1) << "args!" << endl;
+            if( _VERB ) cout << "\tProcess " << (N-1) << " args!" << endl;
             for( i = 1; i < N; ++i ){  
                 calcdArgs.push_back( interpret( root->edges[i], cntx ) );  
-                if( _VERB ) cout << "\tArg " << i << " : " << root->edges[i]->tokens << " --to-> " << calcdArgs[i-1] << endl;
+                if( _VERB ) cout << "\tArg " << i << " : " << root->edges[i]->tokens << " --to-> " << calcdArgs.back() << endl;
             }
             if( sIdent == "writeln" ){
                 writeln( calcdArgs, nextCntx );

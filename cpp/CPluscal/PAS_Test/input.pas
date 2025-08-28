@@ -5,7 +5,7 @@ var
 
 begin
 
-    read( x );
+    read( 'x' );
     writeln( sqrt( x ) );
 
 end.

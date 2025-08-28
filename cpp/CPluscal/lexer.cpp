@@ -81,6 +81,18 @@ bool p_identifier( const string& q ){
     return true;
 }
 
+bool p_string_token( const string& q ){
+    // Does this token represent a string?
+    if( q.front() != '\'' ){  return false;  }
+    if( q.back()  != '\'' ){  return false;  }
+    return true;
+}
+
+bool p_string_token( const P_Obj& q ){
+    // Does this `P_Obj` represent a string?
+    if( type_of( q ) == STRING ){  return p_string_token( get<string>( q ) );  }else{  return false;  }
+}
+
 vstr attempt_reserved_symbol_merge( const vstr& tokens ){
     // Handle the case when reserved symbols are substrings of each other (2 tokens only!)
     vstr /*----*/ rtnTokens;

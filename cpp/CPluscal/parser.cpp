@@ -32,16 +32,20 @@ bool p_vstr_has_str( const vstr& vec, const string& q ){
 
 vstr get_parenthetical( const vstr& expr, size_t bgn ){
     // Get the contents of balanced parentheses starting at `bgn`
-    size_t depth = 1;
-    size_t i     = bgn+1;
+    size_t depth = 0;
+    size_t i     = bgn;
     size_t N     = expr.size();
     vstr   rtnVec;
     string elem;
+    bool   start = false;
     while( i < N ){
         elem = expr[i];
         if( elem == "(" ){  ++depth;  }
         if( elem == ")" ){  --depth;  }
-        if( depth > 0 ){  rtnVec.push_back( elem );  }else{  break;  }
+        cout << "\t\t\t" << elem << ", " << depth << ", " << start << endl;
+        if( depth > 0 ){  
+            if( start ){  rtnVec.push_back( expr[i] );  }else{  start = true;  }
+        }
         ++i;
     }
     return rtnVec;
@@ -49,17 +53,21 @@ vstr get_parenthetical( const vstr& expr, size_t bgn ){
 
 vobj get_parenthetical( const vobj& expr, size_t bgn ){
     // Get the contents of balanced parentheses starting at `bgn`
-    size_t depth = 1;
-    size_t i     = bgn+1;
+    size_t depth = 0;
+    size_t i     = bgn;
     size_t N     = expr.size();
     vobj   rtnVec;
     string elem;
     vstr   sExpr = as_vstr( expr );
+    bool   start   = false;
     while( i < N ){
         elem = sExpr[i];
         if( elem == "(" ){  ++depth;  }
         if( elem == ")" ){  --depth;  }
-        if( depth > 0 ){  rtnVec.push_back( expr[i] );  }else{  break;  }
+        cout << "\t\t\t" << elem << ", " << depth << ", " << start << endl;
+        if( depth > 0 ){  
+            if( start ){  rtnVec.push_back( expr[i] );  }else{  start = true;  }
+        }
         ++i;
     }
     return rtnVec;
@@ -146,9 +154,11 @@ bool p_func_math_expr( const vstr& tokens, bool allowComma ){
     size_t N    = tokens.size();
     size_t skip = 0;
     vstr   tkns;
+    cout << "What size?" << endl;    
     if( tokens.size() == 0 ){  return false;  }
     if( !p_balanced_parens( tokens ) ){  return false; }
     for( const string& token : tokens ){
+        if( p_string_token( token ) ){  return false;  }
         if( skip > 0 ){
             --skip;
             ++i; continue;
@@ -161,8 +171,8 @@ bool p_func_math_expr( const vstr& tokens, bool allowComma ){
             (token == ")") || 
             ( allowComma ? (token == ",") : false )
         ) ){  return false;  }
-        if( p_identifier( token ) && (tokens[i+1] == "(") ){
-            tkns = get_parenthetical( tokens, i+1 );
+        if( ((i+1)<N) && p_identifier( token ) && (tokens[i+1] == "(") ){
+            tkns = get_parenthetical( tokens, i );
             skip = tkns.size()+1;
             if( !p_func_math_expr( tkns, true ) ){  return false;  }
         }
@@ -220,17 +230,6 @@ bool p_function_call( const vstr& expr ){
 }
 
 
-vstr get_func_args( const vstr& expr ){
-    // Return the function arguments in `expr`, Otherwise return an empty vector
-    // ASSUMPTION: ENTIRE FUNCTION CALL IS ON THE SAME LINE
-    size_t openDex = vstr_find_index( expr, "(" );
-    size_t closDex = vstr_find_index( expr, ")" );
-    if( openDex == SIZE_MAX ){  return vstr{};  }
-    if( closDex == SIZE_MAX ){  return vstr{};  }
-    return get_sub_vec( expr, openDex+1, closDex );
-}
-
-
 vvstr get_args_list( const vstr& parenthetical ){
     // Break the argument tokens into individual arg expressions
     vstr contents = parenthetical;
@@ -238,8 +237,12 @@ vvstr get_args_list( const vstr& parenthetical ){
     vstr  arg;
     vvstr args;
     for( const string& token : contents ){
-        if( token == "," ){  if( arg.size() ){  args.push_back( arg ); arg.clear();  }  }
-        else{  arg.push_back( token );  }
+        if( token == "," ){  
+            if( arg.size() ){  
+                args.push_back( arg ); 
+                arg.clear();  
+            }  
+        }else{  arg.push_back( token );  }
     }
     return args;
 }
@@ -382,12 +385,12 @@ NodePtr CPC_Parser::build_source_tree( const vvstr& lineTokens, ParseMode bgnMod
                 if( _VERB ) cout << "\tFunction Call!" << endl;
                 root = NodePtr{ new ProgNode{ FUNCTION, tknLin } };
                 root->edges.push_back( NodePtr{ new ProgNode{ IDENTIFIER, get_sub_vec( tknLin, 0, 1 ) } } );
-                expr  = get_func_args( tknLin );
+                expr  = get_parenthetical( tknLin );
                 block = get_args_list( expr );
-                root->edges.push_back( NodePtr{ new ProgNode{ ARGUMENTS , expr } } );
+                if( _VERB ) cout << "\tExpression: " << tknLin << " ~~paren~> " << expr.size() << " tokens --to-> " << block.size() << " args!" << endl;
                 for( const vstr& arg : block ){
                     if( _VERB ) cout << "\t\tArgument: " << arg << endl;
-                    root->edges.back()->edges.push_back( NodePtr{ new ProgNode{ EXPRESSION, arg } } );
+                    root->edges.push_back( NodePtr{ new ProgNode{ EXPRESSION, arg } } );
                 }
                 codeSec->edges.push_back( root );
 
