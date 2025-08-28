@@ -36,6 +36,8 @@ using std::variant, std::get, std::holds_alternative;
 using std::nan, std::isnan;
 #include <cstdlib>
 using std::strtoull;
+#include <algorithm>
+using std::min;
 
 ///// Aliases /////////////////////////////////////////////////////////////
 typedef size_t /*-------*/ ullong;
@@ -118,6 +120,7 @@ P_Err make_err_syntax( string msg = "" );
 
 typedef variant<string,P_Val,P_Err> P_Obj; // Generic Pascal Object
 typedef vector<P_Obj> /*---------*/ vobj;
+typedef vector<vobj> /*----------*/ vvobj;
 
 enum DataType{
     LITERAL,

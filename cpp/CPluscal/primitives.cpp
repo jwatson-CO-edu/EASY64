@@ -225,7 +225,7 @@ string as_string( const P_Obj& obj ){
     return toString.str();
 }
 
-P_Err make_err_syntax( string msg = "" ){
+P_Err make_err_syntax( string msg ){
     return P_Err{
         SYNTAX,
         "SYNTAX ERROR: " + msg

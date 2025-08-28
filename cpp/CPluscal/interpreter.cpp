@@ -200,26 +200,58 @@ P_Obj CPC_Interpreter::sqrt( const vobj& args, CntxPtr cntx ){
 }
 
 
+vstr vstr_remove( const vstr& vec, const string& remStr ){
+    vstr rtnVec;
+    for( const string& q : vec ){  if( q != remStr ){  rtnVec.push_back( q );  }  }
+    return rtnVec;
+}
+
+vstr vstr_filter( const vstr& vec, bool (*filterFunc)(const string &) ){
+    vstr rtnVec;
+    for( const string& q : vec ){  if( filterFunc( q ) ){  rtnVec.push_back( q );  }  }
+    return rtnVec;
+}
+
+
+string unwrap_string( const string& strStr ){
+    if( p_string_token( strStr ) ){  return strStr.substr( 1, strStr.size()-2 );  }else{  return strStr;  }
+}
+
+vstr unwrap_strings( const vstr& vStrStr ){
+    vstr rtnVec;
+    rtnVec.reserve( vStrStr.size() );
+    for( const string& str : vStrStr ){  rtnVec.push_back( unwrap_string( str ) );  }
+    return rtnVec;
+}
+
+
 P_Obj CPC_Interpreter::read( const vobj& args, CntxPtr cntx ){
     // Read input from the user
     string input;
-    vstr   sArgs = as_vstr( args );
-
+    string ident;
+    vstr   names = unwrap_strings( vstr_filter( as_vstr( args ), p_string_token ) );
+    vstr   values;
+    size_t N = 0;
+    size_t i = 0;
+    P_Obj  rtnVal = P_Obj{ make_nan() };
     // Read Input
-    cout << endl << "Input, then [Enter]: ";
+    cout << endl << "Input for " << args << "separated by commas,\nthen press [Enter]: ";
     cin >> input;
-    
     // Discard the remaining newline character after reading the number
     cin.ignore( std::numeric_limits<std::streamsize>::max(), '\n' );
-
     cout << endl;
-    if( p_number_string( input ) && sArgs.size() ){
-        if( cntx->set_value_by_name( sArgs[0], str_2_primitive( input ) ) ){
-            return cntx->get_value_by_name( sArgs[0] );
-        }else{  return make_nan();  }
-    }else{
-        return make_nan();
+
+    values = vstr_remove( tokenize( input ), ",");
+    N      = names.size();
+
+    for( const string& npt_i : values ){
+        if( (i<N) && p_number_string( npt_i ) ){
+            cntx->set_value_by_name( names[i], str_2_primitive( npt_i ) );
+            rtnVal = P_Obj{ cntx->get_value_by_name( names[i] ) };
+        }
+        ++i;
     }
+    return rtnVal;
 }
 
 
