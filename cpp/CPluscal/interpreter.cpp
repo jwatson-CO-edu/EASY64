@@ -433,7 +433,6 @@ P_Obj CPC_Interpreter::interpret( NodePtr root, CntxPtr cntx ){
                 cerr << "BAD EXPRESSION: " << root->tokens << endl;
                 rtnVal = P_Obj{ make_err_syntax() };
             }
-            
             break;
 
         ///// Constant Declaration ////////////////////////////////////////
