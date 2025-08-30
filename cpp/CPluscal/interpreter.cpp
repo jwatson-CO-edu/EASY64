@@ -235,7 +235,7 @@ P_Obj CPC_Interpreter::read( const vobj& args, CntxPtr cntx ){
     size_t i = 0;
     P_Obj  rtnVal = P_Obj{ make_nan() };
     // Read Input
-    cout << endl << "Input for " << args << "separated by commas,\nthen press [Enter]: ";
+    cout << endl << "Input for " << args << " separated by commas,\nthen press [Enter]: ";
     cin >> input;
     // Discard the remaining newline character after reading the number
     cin.ignore( std::numeric_limits<std::streamsize>::max(), '\n' );
@@ -295,12 +295,9 @@ P_Val infix_op( const P_Val& v1, const string& op, const P_Val& v2 ){
 }
 
 
-
-
-
 P_Val CPC_Interpreter::calculate( const vobj& expr, CntxPtr cntx ){
     // Implements a stack-based calculator
-    bool /*----*/ _VERB    = true;
+    bool /*----*/ _VERB = true;
     if( _VERB ) cout << endl << "............ about to calc ...." << endl;
     vstr /*----*/ sExpr  = as_vstr( expr );
     if( _VERB ) cout << endl << "............ default return val ...." << endl;
@@ -311,6 +308,7 @@ P_Val CPC_Interpreter::calculate( const vobj& expr, CntxPtr cntx ){
     size_t /*--*/ i /**/ = 0;
     size_t /*--*/ skip   = 0;
     vobj /*----*/ subExp;
+    vvobj /*---*/ block;
     stack<string> oprs;
     stack<P_Val>  vals;
     P_Val /*---*/ lastVal;
@@ -344,11 +342,15 @@ P_Val CPC_Interpreter::calculate( const vobj& expr, CntxPtr cntx ){
 
                     /// Function Call ///
                     if( ((i+1)<N) && (sExpr[i+1] == "(") ){
+                        cout << "Function Call!" << endl;
                         subExp   = get_parenthetical( expr, i );
+                        block    = get_args_list( subExp );
                         cout << "Fetch Args: " << subExp << endl;
                         funcCall = NodePtr{ new ProgNode{ FUNCTION, get_sub_vec( expr, i, i+subExp.size()+2 ) } };
                         funcCall->edges.push_back( NodePtr{ new ProgNode{ IDENTIFIER, vstr{ tkn } } } );
-                        funcCall->edges.push_back( NodePtr{ new ProgNode{ ARGUMENTS , subExp } } );
+                        for( const vobj& oExpr : block ){
+                            funcCall->edges.push_back( NodePtr{ new ProgNode{ EXPRESSION , oExpr } } );
+                        }
                         lastVal  = get<P_Val>( interpret( funcCall, cntx ) );
                         funcCall = nullptr;
 
@@ -417,7 +419,6 @@ P_Val CPC_Interpreter::calculate( const vobj& expr, CntxPtr cntx ){
     if( _VERB ) cout << endl << "------------END!---> " << endl << endl;
     return (vals.size() ? vals.top() : make_nan());
 }
-
 
 
 P_Obj CPC_Interpreter::interpret( NodePtr root, CntxPtr cntx ){
@@ -546,8 +547,9 @@ P_Obj CPC_Interpreter::interpret( NodePtr root, CntxPtr cntx ){
             calcdArgs.reserve( N-1 );
             if( _VERB ) cout << "\tProcess " << (N-1) << " args!" << endl;
             for( i = 1; i < N; ++i ){  
+                cout << "About to interpret " << root->edges[i]->tokens << endl;
                 calcdArgs.push_back( interpret( root->edges[i], cntx ) );  
-                if( _VERB ) cout << "\tArg " << i << " : " << root->edges[i]->tokens << " --to-> " << calcdArgs.back() << endl;
+                if( _VERB ) cout << "\tArg " << i << ": " << root->edges[i]->tokens << " --to-> " << calcdArgs.back() << endl;
             }
             if( sIdent == "writeln" ){
                 writeln( calcdArgs, nextCntx );

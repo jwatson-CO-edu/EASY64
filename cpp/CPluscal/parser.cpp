@@ -154,7 +154,7 @@ bool p_func_math_expr( const vstr& tokens, bool allowComma ){
     size_t N    = tokens.size();
     size_t skip = 0;
     vstr   tkns;
-    cout << "What size?" << endl;    
+    // cout << "What size?" << endl;    
     if( tokens.size() == 0 ){  return false;  }
     if( !p_balanced_parens( tokens ) ){  return false; }
     for( const string& token : tokens ){
@@ -238,6 +238,26 @@ vvstr get_args_list( const vstr& parenthetical ){
     vvstr args;
     for( const string& token : contents ){
         if( token == "," ){  
+            if( arg.size() ){  
+                args.push_back( arg ); 
+                arg.clear();  
+            }  
+        }else{  arg.push_back( token );  }
+    }
+    return args;
+}
+
+
+vvobj get_args_list( const vobj& parenthetical ){
+    // Break the argument tokens into individual arg expressions
+    vobj contents = parenthetical;
+    contents.push_back( P_Obj{","} ); // Terminator hack
+    vobj   arg;
+    vvobj  args;
+    string sToken;
+    for( const P_Obj& token : contents ){
+        if( type_of( token ) == STRING ){  sToken = as_string( token );  }else{  sToken = "";  }
+        if( sToken == "," ){  
             if( arg.size() ){  
                 args.push_back( arg ); 
                 arg.clear();  

@@ -322,6 +322,7 @@ bool  p_vstr_has_str( const vstr& vec, const string& q ); // -- Return true if t
 vstr  get_parenthetical( const vstr& expr, size_t bgn = 0 ); // Get the contents of balanced parentheses starting at `bgn`
 vobj  get_parenthetical( const vobj& expr, size_t bgn = 0 ); // Get the contents of balanced parentheses starting at `bgn`
 vvstr get_args_list( const vstr& parenthetical ); // ---------- Break the argument tokens into individual arg expressions
+vvobj get_args_list( const vobj& parenthetical ); // ---------- Break the argument tokens into individual arg expressions
 
 enum ParseMode{ 
     // What is the parser working on?
